@@ -1,17 +1,17 @@
 {
-  "name": "@your-repository-name/hello",
+  "name": "@sorce/hello",
   "version": "0.0.1",
-  "description": "Example hello world package in the your-repository-name repository.",
+  "description": "Example hello world package in the sorce repository.",
   "license": "MIT",
-  "author": "your-author-name",
+  "author": "Damian Tarnawski",
   "contributors": [],
-  "homepage": "https://github.com/your-nickname/your-repository-name#readme",
+  "homepage": "https://github.com/thetarnav/sorce#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-nickname/your-repository-name.git"
+    "url": "git+https://github.com/thetarnav/sorce.git"
   },
   "bugs": {
-    "url": "https://github.com/your-nickname/your-repository-name/issues"
+    "url": "https://github.com/thetarnav/sorce/issues"
   },
   "keywords": [
     "solid"
@@ -57,7 +57,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "solid-js": "^1.6.9"
+    "solid-js": "^1.7.7"
   },
   "peerDependencies": {
     "solid-js": "^1.6.0"
