@@ -49,4 +49,63 @@ export const vec: {
 
 export const ZERO_VEC = vec(0, 0)
 
+export const zero = () => vec(0, 0)
+
+export function force_vec(distance: number, angle: number): Vector {
+    const x = distance * Math.cos(angle)
+    const y = distance * Math.sin(angle)
+    return vec(x, y)
+}
+
+export function vec_subtract(position: Vector, velocity: Vector): void {
+    position.x -= velocity.x
+    position.y -= velocity.y
+}
+
+export function vec_difference(position: Vector, velocity: Vector): Vector {
+    return vec(position.x - velocity.x, position.y - velocity.y)
+}
+
+export function vec_add(position: Vector, velocity: Vector): void {
+    position.x += velocity.x
+    position.y += velocity.y
+}
+
+export function vec_sum(position: Vector, velocity: Vector): Vector {
+    return vec(position.x + velocity.x, position.y + velocity.y)
+}
+
+export function vec_multiply(position: Vector, velocity: Vector | number): void {
+    if (typeof velocity === 'number') {
+        position.x *= velocity
+        position.y *= velocity
+        return
+    }
+    position.x *= velocity.x
+    position.y *= velocity.y
+}
+
+export function vec_product(position: Vector, velocity: Vector): Vector {
+    return vec(position.x * velocity.x, position.y * velocity.y)
+}
+
+export function vec_divide(position: Vector, velocity: Vector): void {
+    position.x /= velocity.x
+    position.y /= velocity.y
+}
+
+export function vec_quotient(position: Vector, velocity: Vector): Vector {
+    return vec(position.x / velocity.x, position.y / velocity.y)
+}
+
+export function vec_distance(a: Vector, b: Vector): number {
+    const x = a.x - b.x
+    const y = a.y - b.y
+    return Math.sqrt(x * x + y * y)
+}
+
+export function vec_angle(a: Vector, b: Vector): number {
+    return Math.atan2(b.y - a.y, b.x - a.x)
+}
+
 export type Segment = [Vector, Vector]

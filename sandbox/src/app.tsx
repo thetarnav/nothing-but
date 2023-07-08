@@ -1,4 +1,4 @@
-import { type Component, For } from 'solid-js'
+import { type Component, For, onCleanup } from 'solid-js'
 import { graph, s, trig } from './lib'
 import clsx from 'clsx'
 
@@ -27,6 +27,18 @@ export const App: Component = () => {
 
     const isDragging = s.selector(dragging)
 
+    function setDragging(node: graph.Node | undefined) {
+        if (node === undefined) {
+            const node = dragging.value
+            if (node === undefined) return
+            node.locked = false
+            s.set(dragging, undefined)
+            return
+        }
+        node.locked = true
+        s.set(dragging, node)
+    }
+
     function handleDragEvent(e: MouseEvent) {
         const node = dragging.value
         if (node === undefined) return
@@ -54,12 +66,22 @@ export const App: Component = () => {
         s.trigger(nodes)
     }
 
+    const loop = () => {
+        s.mutate(nodes, nodes => {
+            graph.updateNodePositions(nodes)
+        })
+
+        raf = requestAnimationFrame(loop)
+    }
+    let raf = requestAnimationFrame(loop)
+    onCleanup(() => cancelAnimationFrame(raf))
+
     return (
         <div
             ref={container}
             class="w-80vw h-80vw m-10vw bg-dark-9 relative"
-            onMouseUp={e => s.set(dragging, undefined)}
-            onMouseLeave={e => s.set(dragging, undefined)}
+            onMouseUp={e => setDragging(undefined)}
+            onMouseLeave={e => setDragging(undefined)}
             onMouseMove={handleDragEvent}
         >
             <svg class="absolute w-full h-full">
@@ -89,7 +111,7 @@ export const App: Component = () => {
                         onMouseDown={e => {
                             if (dragging.value !== undefined) return
 
-                            s.set(dragging, node)
+                            setDragging(node)
 
                             handleDragEvent(e)
                         }}
