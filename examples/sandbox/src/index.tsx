@@ -3,6 +3,6 @@
 import './index.scss'
 
 import { render } from 'solid-js/web'
-import { App } from './appp'
+import { App } from './app'
 
 render(() => <App />, document.getElementById('root') as HTMLElement)
