@@ -11,7 +11,7 @@
     "plugins": [],
     "overrides": [
         {
-            "files": "*.yml",
+            "files": ["*.yml", "*.yaml"],
             "options": {
                 "tabWidth": 2
             }
