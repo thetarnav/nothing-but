@@ -48,3 +48,5 @@ export const vec: {
 } = (...args: [any]) => new Vector(...args)
 
 export const ZERO_VEC = vec(0, 0)
+
+export type Segment = [Vector, Vector]

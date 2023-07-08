@@ -1,4 +1,4 @@
-import { createSignal, type Component, For, createSelector } from 'solid-js'
+import { type Component, For } from 'solid-js'
 import { graph, s, trig } from './lib'
 import clsx from 'clsx'
 
@@ -10,9 +10,8 @@ export const App: Component = () => {
         new graph.Node(trig.vec(-20, -15)),
         new graph.Node(trig.vec(35, -10)),
         new graph.Node(trig.vec(15, 40)),
+        new graph.Node(trig.vec(-30, 30)),
     ])
-
-    const trackNodes = <T,>(v: T) => (nodes.get(), v)
 
     const edges = s.signal<graph.Edge[]>([
         graph.connect(nodes.value[0]!, nodes.value[1]!),
@@ -20,6 +19,7 @@ export const App: Component = () => {
         graph.connect(nodes.value[0]!, nodes.value[3]!),
         graph.connect(nodes.value[2]!, nodes.value[4]!),
         graph.connect(nodes.value[1]!, nodes.value[5]!),
+        graph.connect(nodes.value[1]!, nodes.value[6]!),
     ])
 
     const dragging = s.signal<graph.Node>()
@@ -66,11 +66,11 @@ export const App: Component = () => {
                 <For each={edges.value}>
                     {edge => (
                         <line
-                            class="stroke-current stroke-cyan"
-                            x1={`${(nodes.value, edges.value, edge.a.position.x) + 50}%`}
-                            y1={`${50 - (nodes.value, edges.value, edge.a.position.y)}%`}
-                            x2={`${(nodes.value, edges.value, edge.b.position.x) + 50}%`}
-                            y2={`${50 - (nodes.value, edges.value, edge.b.position.y)}%`}
+                            class="stroke-cyan stroke-0.2%"
+                            x1={`${(nodes.value, edges.value, edge[0].position.x) + 50}%`}
+                            y1={`${50 - (nodes.value, edges.value, edge[0].position.y)}%`}
+                            x2={`${(nodes.value, edges.value, edge[1].position.x) + 50}%`}
+                            y2={`${50 - (nodes.value, edges.value, edge[1].position.y)}%`}
                         />
                     )}
                 </For>
