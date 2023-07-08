@@ -1,9 +1,9 @@
-// import transformerDirectives from '@unocss/transformer-directives'
+import transformerDirectives from '@unocss/transformer-directives'
 import { defineConfig, presetUno } from 'unocss'
 
 export default defineConfig({
     presets: [presetUno()],
-    // transformers: [transformerDirectives()],
+    transformers: [transformerDirectives()],
     theme: {
         // colors: colors,
     },

@@ -1,11 +1,19 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+html {
+    font-size: 22px;
+    font-family: 'VT323', monospace;
+    color-scheme: dark;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+@media screen and (max-width: 52rem) {
+    html {
+        font-size: 18px;
+    }
+}
+
+*::selection {
+    --at-apply: bg-light text-dark;
+}
+
+body {
+    --at-apply: bg-dark;
 }
