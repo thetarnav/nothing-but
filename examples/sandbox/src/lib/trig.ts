@@ -41,4 +41,10 @@ export class Vector {
     }
 }
 
-export const ZERO_VEC = new Vector(0, 0)
+export const vec: {
+    (str: VecString): Vector
+    (vec: Pointable): Vector
+    (x: number, y?: number): Vector
+} = (...args: [any]) => new Vector(...args)
+
+export const ZERO_VEC = vec(0, 0)
