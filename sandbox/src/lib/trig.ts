@@ -51,6 +51,10 @@ export const ZERO_VEC = vec(0, 0)
 
 export const zero = () => vec(0, 0)
 
+export function vec_equals(a: Vector, b: Vector): boolean {
+    return a.x === b.x && a.y === b.y
+}
+
 export function force_vec(distance: number, angle: number): Vector {
     const x = distance * Math.cos(angle)
     const y = distance * Math.sin(angle)

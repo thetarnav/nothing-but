@@ -49,24 +49,37 @@ export function updateNodePositions(nodes: Node[]): void {
         }
 
         const velocity = trig.vec_difference(node.position, node.last_position)
-        trig.vec_multiply(velocity, 0.99)
+        trig.vec_multiply(velocity, 0.97)
 
         for (const edge of node.edges) {
-            const other = edge[0] === node ? edge[1] : edge[0],
-                distance = trig.vec_distance(node.position, other.position),
-                force = distance * 0.001,
-                angle = trig.vec_angle(node.position, other.position),
+            const other_node = edge[0] === node ? edge[1] : edge[0],
+                distance = trig.vec_distance(node.position, other_node.position),
+                force = distance * 0.002,
+                angle = trig.vec_angle(node.position, other_node.position),
                 force_vector = trig.force_vec(force, angle)
+
+            trig.vec_add(velocity, force_vector)
+        }
+
+        for (const other_node of nodes) {
+            if (other_node === node) continue
+
+            const distance = trig.vec_distance(node.position, other_node.position),
+                force = 0.04 / distance,
+                angle = trig.vec_angle(other_node.position, node.position),
+                force_vector = trig.force_vec(force, angle)
+
             trig.vec_add(velocity, force_vector)
         }
 
         const new_position = trig.vec_sum(node.position, velocity)
-
         new_positions.set(node, new_position)
     }
 
     for (const [node, new_position] of new_positions) {
+        const d = trig.vec_distance(node.position, new_position)
         node.last_position = node.position
+        if (d < 0.01) continue
         node.position = new_position
     }
 }
