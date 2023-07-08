@@ -29,6 +29,7 @@
     "tsup-preset-solid": "^0.1.8",
     "turbo": "^1.10.7",
     "typescript": "^5.1.6",
+    "unocss": "^0.53.4",
     "vite": "^4.4.2",
     "vite-plugin-solid": "^2.7.0",
     "vitest": "^0.33.0"

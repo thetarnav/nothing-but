@@ -1,8 +1,10 @@
 /* @refresh reload */
 
-import './index.scss'
+import '@unocss/reset/tailwind-compat.css'
+import 'virtual:uno.css'
+import './styles.scss'
 
 import { render } from 'solid-js/web'
 import { App } from './app'
 
-render(() => <App />, document.getElementById('root') as HTMLElement)
+render(() => <App />, document.getElementById('root')!)
