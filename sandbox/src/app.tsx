@@ -4,13 +4,19 @@ import clsx from 'clsx'
 
 export const App: Component = () => {
     const nodes = s.signal<graph.Node[]>([
-        new graph.Node(trig.vec(0, 0)),
-        new graph.Node(trig.vec(0, 20)),
-        new graph.Node(trig.vec(20, 0)),
-        new graph.Node(trig.vec(-20, -15)),
-        new graph.Node(trig.vec(35, -10)),
-        new graph.Node(trig.vec(15, 40)),
-        new graph.Node(trig.vec(-30, 30)),
+        new graph.Node(trig.vec(0, 0)), // 0
+        new graph.Node(trig.vec(0, 20)), // 1
+        new graph.Node(trig.vec(20, 0)), // 2
+        new graph.Node(trig.vec(-20, -15)), // 3
+        new graph.Node(trig.vec(35, -10)), // 4
+        new graph.Node(trig.vec(15, 40)), // 5
+        new graph.Node(trig.vec(-30, 30)), // 6
+
+        new graph.Node(trig.vec(-20, 20)), // 7
+        new graph.Node(trig.vec(-25, -5)), // 8
+        new graph.Node(trig.vec(-30, 10)), // 9
+
+        new graph.Node(trig.vec(-15, -25)), // 10
     ])
 
     const edges = s.signal<graph.Edge[]>([
@@ -20,6 +26,10 @@ export const App: Component = () => {
         graph.connect(nodes.value[2]!, nodes.value[4]!),
         graph.connect(nodes.value[1]!, nodes.value[5]!),
         graph.connect(nodes.value[1]!, nodes.value[6]!),
+        graph.connect(nodes.value[4]!, nodes.value[5]!),
+
+        graph.connect(nodes.value[7]!, nodes.value[8]!),
+        graph.connect(nodes.value[7]!, nodes.value[9]!),
     ])
 
     const dragging = s.signal<graph.Node>()

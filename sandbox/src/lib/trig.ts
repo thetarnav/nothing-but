@@ -47,18 +47,12 @@ export const vec: {
     (x: number, y?: number): Vector
 } = (...args: [any]) => new Vector(...args)
 
-export const ZERO_VEC = vec(0, 0)
+export const ZERO = vec(0, 0)
 
 export const zero = () => vec(0, 0)
 
 export function vec_equals(a: Vector, b: Vector): boolean {
     return a.x === b.x && a.y === b.y
-}
-
-export function force_vec(distance: number, angle: number): Vector {
-    const x = distance * Math.cos(angle)
-    const y = distance * Math.sin(angle)
-    return vec(x, y)
 }
 
 export function vec_subtract(position: Vector, velocity: Vector): void {
@@ -70,7 +64,10 @@ export function vec_difference(position: Vector, velocity: Vector): Vector {
     return vec(position.x - velocity.x, position.y - velocity.y)
 }
 
-export function vec_add(position: Vector, velocity: Vector): void {
+export function vec_add(position: Vector, velocity: Vector | Force): void {
+    if (velocity instanceof Force) {
+        velocity = force_to_vec(velocity)
+    }
     position.x += velocity.x
     position.y += velocity.y
 }
@@ -110,6 +107,45 @@ export function vec_distance(a: Vector, b: Vector): number {
 
 export function vec_angle(a: Vector, b: Vector): number {
     return Math.atan2(b.y - a.y, b.x - a.x)
+}
+
+export class Force {
+    distance: number
+    angle: number
+
+    constructor(a: Vector, b: Vector)
+    constructor(distance: number, angle: number)
+    constructor(a: number | Vector, b: number | Vector) {
+        if (typeof a === 'object') {
+            this.angle = vec_angle(a, b as Vector)
+            this.distance = vec_distance(a, b as Vector)
+        } else {
+            this.distance = a
+            this.angle = b as number
+        }
+    }
+
+    *[Symbol.iterator]() {
+        yield this.distance
+        yield this.angle
+    }
+}
+
+export const force: {
+    (a: Vector, b: Vector): Force
+    (distance: number, angle: number): Force
+} = (...args: [any, any]) => new Force(...args)
+
+export function force_to_vec(force: Force): Vector
+export function force_to_vec(distance: number, angle: number): Vector
+export function force_to_vec(distance: number | Force, angle?: number): Vector {
+    if (typeof distance === 'object') {
+        angle = distance.angle
+        distance = distance.distance
+    }
+    const x = distance * Math.cos(angle!)
+    const y = distance * Math.sin(angle!)
+    return vec(x, y)
 }
 
 export type Segment = [Vector, Vector]

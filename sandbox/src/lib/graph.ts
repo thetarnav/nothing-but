@@ -48,28 +48,44 @@ export function updateNodePositions(nodes: Node[]): void {
             continue
         }
 
+        /*
+            inertia
+        */
         const velocity = trig.vec_difference(node.position, node.last_position)
         trig.vec_multiply(velocity, 0.97)
 
+        /*
+            towards the edges
+        */
         for (const edge of node.edges) {
-            const other_node = edge[0] === node ? edge[1] : edge[0],
-                distance = trig.vec_distance(node.position, other_node.position),
-                force = distance * 0.002,
-                angle = trig.vec_angle(node.position, other_node.position),
-                force_vector = trig.force_vec(force, angle)
+            const node_b = edge[0] === node ? edge[1] : edge[0]
 
-            trig.vec_add(velocity, force_vector)
+            const force = trig.force(node.position, node_b.position)
+            force.distance *= 0.002
+
+            trig.vec_add(velocity, force)
         }
 
-        for (const other_node of nodes) {
-            if (other_node === node) continue
+        /*
+            away from other nodes
+        */
+        for (const node_b of nodes) {
+            if (node_b === node) continue
 
-            const distance = trig.vec_distance(node.position, other_node.position),
-                force = 0.04 / distance,
-                angle = trig.vec_angle(other_node.position, node.position),
-                force_vector = trig.force_vec(force, angle)
+            const force = trig.force(node_b.position, node.position)
+            force.distance = 0.04 / force.distance
 
-            trig.vec_add(velocity, force_vector)
+            trig.vec_add(velocity, force)
+        }
+
+        /*
+            towards the center
+        */
+        {
+            const force = trig.force(node.position, trig.ZERO)
+            force.distance *= 0.0005
+
+            trig.vec_add(velocity, force)
         }
 
         const new_position = trig.vec_sum(node.position, velocity)
