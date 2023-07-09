@@ -39,19 +39,13 @@ export function addNodeEdges(node: Node, seen: Set<Node>, edges: Edge[]): void {
 }
 
 export function updateNodePositions(nodes: Node[]): void {
-    const new_positions = new Map<Node, trig.Vector>()
-
     for (const node of nodes) {
         /*
             inertia
         */
         trig.vec_multiply(node.velocity, 0.8)
 
-        if (node.locked) {
-            new_positions.set(node, node.position)
-            node.velocity = trig.zero()
-            continue
-        }
+        if (node.locked) continue
 
         /*
             away from other nodes
@@ -93,15 +87,12 @@ export function updateNodePositions(nodes: Node[]): void {
 
             trig.vec_add(node.velocity, force)
         }
-
-        const new_position = trig.vec_sum(node.position, node.velocity)
-        new_positions.set(node, new_position)
     }
 
-    for (const [node, new_position] of new_positions) {
-        const d = trig.vec_distance(node.position, new_position)
-        if (d > 0.013) {
-            node.position = new_position
+    for (const node of nodes) {
+        const d = trig.vec_distance(node.velocity, trig.ZERO)
+        if (d > 0.015) {
+            trig.vec_add(node.position, node.velocity)
         }
     }
 }

@@ -1,6 +1,34 @@
 import { type Component, For, onCleanup } from 'solid-js'
 import { graph, math, s, trig } from './lib'
 import clsx from 'clsx'
+import la_raw from './la.json'
+
+function getLAGraph() {
+    const nodes: graph.Node[] = la_raw.map(
+        () => new graph.Node(trig.vec(math.randomIntFrom(-50, 50), math.randomIntFrom(-50, 50))),
+    )
+
+    const edges: graph.Edge[] = []
+
+    for (let i = 0; i < la_raw.length; i++) {
+        const node = nodes[i]!
+        const raw = la_raw[i]!
+
+        for (const raw_b of raw.links) {
+            const b_name = raw_b.file
+
+            const b_index = la_raw.findIndex(raw => raw.file === b_name)
+
+            if (b_index === -1) continue
+
+            const node_b = nodes[b_index]!
+
+            edges.push(graph.connect(node, node_b))
+        }
+    }
+
+    return { nodes, edges }
+}
 
 function getInitialGraph() {
     const nodes: graph.Node[] = [
@@ -55,7 +83,7 @@ function getInitialGraph() {
 }
 
 function generateInitialGraph() {
-    const length = 124
+    const length = 256
 
     const nodes: graph.Node[] = Array.from({ length }, () => new graph.Node(trig.zero()))
     const edges: graph.Edge[] = []
@@ -81,6 +109,7 @@ function generateInitialGraph() {
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
     const initialGraph = generateInitialGraph()
+    // const initialGraph = getLAGraph()
 
     const nodes = s.signal(initialGraph.nodes)
     const edges = s.signal(initialGraph.edges)
@@ -129,12 +158,16 @@ export const App: Component = () => {
         s.trigger(nodes)
     }
 
+    const start = performance.now()
+
     const loop = () => {
         s.mutate(nodes, nodes => {
             graph.updateNodePositions(nodes)
         })
 
+        // if (performance.now() - start < 2000) {
         raf = requestAnimationFrame(loop)
+        // }
     }
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))
@@ -159,7 +192,7 @@ export const App: Component = () => {
                         />
                     )}
                 </For>
-                <For each={nodes.value}>
+                {/* <For each={nodes.value}>
                     {node => (
                         <line
                             class="stroke-violet stroke-0.2%"
@@ -169,7 +202,7 @@ export const App: Component = () => {
                             y2={`${50 - (nodes.value, node.position.y + node.velocity.y * 20)}%`}
                         />
                     )}
-                </For>
+                </For> */}
             </svg>
             <For each={nodes.value}>
                 {node => (
