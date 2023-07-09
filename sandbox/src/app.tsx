@@ -55,29 +55,24 @@ function getInitialGraph() {
 }
 
 function generateInitialGraph() {
-    const length = 100
+    const length = 124
 
-    const nodes: graph.Node[] = new Array(length)
+    const nodes: graph.Node[] = Array.from({ length }, () => new graph.Node(trig.zero()))
     const edges: graph.Edge[] = []
 
     for (let i = 0; i < length; i++) {
-        nodes[i] = new graph.Node(trig.zero())
-        // nodes[i] = new graph.Node(
-        //     trig.vec(math.randomIntFrom(-50, 50), math.randomIntFrom(-50, 50)),
-        // )
-
-        if (i === 0) continue
-
         const node = nodes[i]!
-        const node_b = nodes[math.randomInt(i)]!
+
+        if (node.edges.length > 0 && Math.random() < 0.8) continue
+
+        let b_index = math.randomInt(length)
+        let node_b = nodes[b_index]!
+
+        if (node_b === node) {
+            node_b = nodes[(b_index + 1) % length]!
+        }
 
         edges.push(graph.connect(node, node_b))
-
-        if (Math.random() < 0.1) {
-            const node_c = nodes[math.randomInt(i)]!
-            if (node_c === node_b) continue
-            edges.push(graph.connect(node, node_c))
-        }
     }
 
     return { nodes, edges }
