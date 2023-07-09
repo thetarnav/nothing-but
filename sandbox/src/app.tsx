@@ -17,6 +17,15 @@ export const App: Component = () => {
         new graph.Node(trig.vec(-30, 10)), // 9
 
         new graph.Node(trig.vec(-15, -25)), // 10
+
+        new graph.Node(trig.vec(25, -25)), // 11
+        new graph.Node(trig.vec(20, -25)), // 12
+        new graph.Node(trig.vec(20, -20)), // 13
+        new graph.Node(trig.vec(25, -20)), // 14
+        new graph.Node(trig.vec(30, -20)), // 15
+        new graph.Node(trig.vec(30, -25)), // 16
+        new graph.Node(trig.vec(30, -30)), // 17
+        new graph.Node(trig.vec(25, -30)), // 18
     ])
 
     const edges = s.signal<graph.Edge[]>([
@@ -30,6 +39,16 @@ export const App: Component = () => {
 
         graph.connect(nodes.value[7]!, nodes.value[8]!),
         graph.connect(nodes.value[7]!, nodes.value[9]!),
+
+        graph.connect(nodes.value[7]!, nodes.value[12]!),
+
+        graph.connect(nodes.value[11]!, nodes.value[12]!),
+        graph.connect(nodes.value[11]!, nodes.value[13]!),
+        graph.connect(nodes.value[11]!, nodes.value[14]!),
+        graph.connect(nodes.value[11]!, nodes.value[15]!),
+        graph.connect(nodes.value[11]!, nodes.value[16]!),
+        graph.connect(nodes.value[11]!, nodes.value[17]!),
+        graph.connect(nodes.value[11]!, nodes.value[18]!),
     ])
 
     const dragging = s.signal<graph.Node>()
