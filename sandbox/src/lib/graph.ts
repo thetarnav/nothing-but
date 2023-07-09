@@ -1,4 +1,4 @@
-import { trig } from '.'
+import { math, trig } from '.'
 
 export class Node {
     position: trig.Vector
@@ -45,12 +45,31 @@ export function updateNodePositions(nodes: Node[]): void {
         /*
             inertia
         */
-        trig.vec_multiply(node.velocity, 0.97)
+        trig.vec_multiply(node.velocity, 0.8)
 
         if (node.locked) {
             new_positions.set(node, node.position)
             node.velocity = trig.zero()
             continue
+        }
+
+        /*
+            away from other nodes
+        */
+        for (const node_b of nodes) {
+            if (node_b === node) continue
+
+            let d = trig.vec_distance(node_b.position, node.position)
+
+            if (d === 0) {
+                node.position.x += math.random(2) - 1
+                node.position.y += math.random(2) - 1
+                d = trig.vec_distance(node_b.position, node.position)
+            }
+
+            const angle = trig.vec_angle(node_b.position, node.position)
+            const force = trig.force_to_vec(0.1 / d, angle)
+            trig.vec_add(node.velocity, force)
         }
 
         /*
@@ -60,19 +79,7 @@ export function updateNodePositions(nodes: Node[]): void {
             const node_b = edge[0] === node ? edge[1] : edge[0]
 
             const force = trig.force(node.position, node_b.position)
-            force.distance *= 0.002
-
-            trig.vec_add(node.velocity, force)
-        }
-
-        /*
-            away from other nodes
-        */
-        for (const node_b of nodes) {
-            if (node_b === node) continue
-
-            const force = trig.force(node_b.position, node.position)
-            force.distance = 0.04 / force.distance
+            force.distance *= 0.02
 
             trig.vec_add(node.velocity, force)
         }
@@ -82,7 +89,7 @@ export function updateNodePositions(nodes: Node[]): void {
         */
         {
             const force = trig.force(node.position, trig.ZERO)
-            force.distance *= 0.0005
+            force.distance *= 0.005
 
             trig.vec_add(node.velocity, force)
         }
@@ -93,7 +100,7 @@ export function updateNodePositions(nodes: Node[]): void {
 
     for (const [node, new_position] of new_positions) {
         const d = trig.vec_distance(node.position, new_position)
-        if (d > 0.01) {
+        if (d > 0.013) {
             node.position = new_position
         }
     }

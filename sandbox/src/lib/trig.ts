@@ -64,7 +64,12 @@ export function vec_difference(position: Vector, velocity: Vector): Vector {
     return vec(position.x - velocity.x, position.y - velocity.y)
 }
 
-export function vec_add(position: Vector, velocity: Vector | Force): void {
+export function vec_add(position: Vector, velocity: Vector | Force | number): void {
+    if (typeof velocity === 'number') {
+        position.x += velocity
+        position.y += velocity
+        return
+    }
     if (velocity instanceof Force) {
         velocity = force_to_vec(velocity)
     }

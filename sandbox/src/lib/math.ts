@@ -1,9 +1,10 @@
-const { abs, floor, random } = Math
+export const random = (max: number) => Math.random() * max
 
-export const randomInt = (max: number) => floor(random() * max)
-export const randomIntFrom = (min: number, max: number) => floor(random() * (max - min)) + min
+export const randomInt = (max: number) => Math.floor(Math.random() * max)
+export const randomIntFrom = (min: number, max: number) =>
+    Math.floor(Math.random() * (max - min)) + min
 
-export const randomFromTo = (min: number, max: number) => random() * (max - min) + min
+export const randomFromTo = (min: number, max: number) => Math.random() * (max - min) + min
 
 export const clamp = (value: number, min: number, max: number) =>
     Math.min(Math.max(value, min), max)
@@ -30,7 +31,7 @@ export const wrap = (value: number, min: number, max: number) =>
 export const bounce = (value: number, min: number, max: number) => {
     const range = max - min,
         remainder = wrap(value - min, 0, 2 * range),
-        distance = abs(remainder - range)
+        distance = Math.abs(remainder - range)
     return max - distance
 }
 
@@ -42,7 +43,7 @@ export const mapRange = (
     out_max: number,
 ) => ((value - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
 
-export const numberEquals = (a: number, b: number) => abs(a - b) < Number.EPSILON
+export const numberEquals = (a: number, b: number) => Math.abs(a - b) < Number.EPSILON
 
 export const between = (a: number, b: number, c: number): boolean => {
     if (a > c) [a, c] = [c, a]
