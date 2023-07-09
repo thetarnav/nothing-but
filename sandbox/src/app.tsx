@@ -159,12 +159,23 @@ export const App: Component = () => {
                         />
                     )}
                 </For>
+                <For each={nodes.value}>
+                    {node => (
+                        <line
+                            class="stroke-violet stroke-0.2%"
+                            x1={`${(nodes.value, node.position.x) + 50}%`}
+                            y1={`${50 - (nodes.value, node.position.y)}%`}
+                            x2={`${(nodes.value, node.position.x + node.velocity.x * 20) + 50}%`}
+                            y2={`${50 - (nodes.value, node.position.y + node.velocity.y * 20)}%`}
+                        />
+                    )}
+                </For>
             </svg>
             <For each={nodes.value}>
                 {node => (
                     <div
                         class={clsx(
-                            'absolute w-3 h-3 rounded-full -mt-1.5 -ml-1.5',
+                            'absolute w-2% h-2% rounded-full -mt-1% -ml-1%',
                             isDragging(node) ? 'bg-cyan' : 'bg-red',
                         )}
                         style={{

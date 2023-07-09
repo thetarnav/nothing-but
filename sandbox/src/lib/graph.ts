@@ -68,7 +68,7 @@ export function updateNodePositions(nodes: Node[]): void {
             }
 
             const angle = trig.vec_angle(node_b.position, node.position)
-            const force = trig.force_to_vec(0.2 / d, angle)
+            const force = trig.force_to_vec(0.25 / d, angle)
             trig.vec_add(node.velocity, force)
         }
 
@@ -89,7 +89,7 @@ export function updateNodePositions(nodes: Node[]): void {
         */
         {
             const force = trig.force(node.position, trig.ZERO)
-            force.distance *= 0.013
+            force.distance *= 0.015
 
             trig.vec_add(node.velocity, force)
         }
