@@ -38,14 +38,9 @@ export function addNodeEdges(node: Node, seen: Set<Node>, edges: Edge[]): void {
     seen.add(node)
 }
 
-export function updateNodePositions(nodes: Node[]): void {
+export function updateNodePositions(nodes: readonly Node[], edges: readonly Edge[]): void {
     for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i]!
-
-        if (node.locked) {
-            node.velocity = trig.zero()
-            continue
-        }
 
         /*
             inertia
@@ -79,18 +74,6 @@ export function updateNodePositions(nodes: Node[]): void {
         }
 
         /*
-            towards the edges
-        */
-        for (const edge of node.edges) {
-            const node_b = edge[0] === node ? edge[1] : edge[0]
-
-            const force = trig.force(node.position, node_b.position)
-            force.distance *= 0.02
-
-            trig.vec_add(node.velocity, force)
-        }
-
-        /*
             towards the center
         */
         {
@@ -101,7 +84,26 @@ export function updateNodePositions(nodes: Node[]): void {
         }
     }
 
+    /*
+        towards the edges
+    */
+    for (const [node_a, node_b] of edges) {
+        let distance = trig.vec_distance(node_a.position, node_b.position)
+        distance *= 0.02
+
+        const angle = trig.vec_angle(node_a.position, node_b.position)
+        const force = trig.force_to_vec(distance, angle)
+
+        trig.vec_add(node_a.velocity, force)
+        trig.vec_add(node_b.velocity, -force.x, -force.y)
+    }
+
+    /*
+        commit
+    */
     for (const node of nodes) {
+        if (node.locked) continue
+
         const d = trig.vec_distance(node.velocity, trig.ZERO)
         if (d > 0.015) {
             trig.vec_add(node.position, node.velocity)

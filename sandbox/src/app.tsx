@@ -160,7 +160,7 @@ export const App: Component = () => {
 
     const loop = () => {
         s.mutate(nodes, nodes => {
-            graph.updateNodePositions(nodes)
+            graph.updateNodePositions(nodes, edges.value)
         })
 
         // if (performance.now() - start < 2000) {
