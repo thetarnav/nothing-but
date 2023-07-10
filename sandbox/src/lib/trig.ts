@@ -64,17 +64,19 @@ export function vec_difference(position: Vector, velocity: Vector): Vector {
     return vec(position.x - velocity.x, position.y - velocity.y)
 }
 
-export function vec_add(position: Vector, velocity: Vector | Force | number): void {
-    if (typeof velocity === 'number') {
-        position.x += velocity
-        position.y += velocity
+export function vec_add(position: Vector, velocity: Vector | Force | number): void
+export function vec_add(position: Vector, x: number, y: number): void
+export function vec_add(position: Vector, x: Vector | Force | number, y?: number): void {
+    if (typeof x === 'number') {
+        position.x += x
+        position.y += y ?? x
         return
     }
-    if (velocity instanceof Force) {
-        velocity = force_to_vec(velocity)
+    if (x instanceof Force) {
+        x = force_to_vec(x)
     }
-    position.x += velocity.x
-    position.y += velocity.y
+    position.x += x.x
+    position.y += x.y
 }
 
 export function vec_sum(position: Vector, velocity: Vector): Vector {

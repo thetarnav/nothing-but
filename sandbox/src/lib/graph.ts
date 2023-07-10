@@ -39,19 +39,29 @@ export function addNodeEdges(node: Node, seen: Set<Node>, edges: Edge[]): void {
 }
 
 export function updateNodePositions(nodes: Node[]): void {
-    for (const node of nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]!
+
+        if (node.locked) {
+            node.velocity = trig.zero()
+            continue
+        }
+
         /*
             inertia
         */
         trig.vec_multiply(node.velocity, 0.8)
 
-        if (node.locked) continue
+        // trig.vec_add(
+        //     node.velocity,
+        //     trig.vec(math.randomFrom(-0.5, 0.5), math.randomFrom(-0.5, 0.5)),
+        // )
 
         /*
             away from other nodes
         */
-        for (const node_b of nodes) {
-            if (node_b === node) continue
+        for (let j = i + 1; j < nodes.length; j++) {
+            const node_b = nodes[j]!
 
             let d = trig.vec_distance(node_b.position, node.position)
 
@@ -63,7 +73,9 @@ export function updateNodePositions(nodes: Node[]): void {
 
             const angle = trig.vec_angle(node_b.position, node.position)
             const force = trig.force_to_vec(0.25 / d, angle)
+
             trig.vec_add(node.velocity, force)
+            trig.vec_add(node_b.velocity, -force.x, -force.y)
         }
 
         /*

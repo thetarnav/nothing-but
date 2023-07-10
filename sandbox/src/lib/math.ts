@@ -1,10 +1,9 @@
 export const random = (max: number) => Math.random() * max
+export const randomFrom = (min: number, max: number) => Math.random() * (max - min) + min
 
 export const randomInt = (max: number) => Math.floor(Math.random() * max)
 export const randomIntFrom = (min: number, max: number) =>
     Math.floor(Math.random() * (max - min)) + min
-
-export const randomFromTo = (min: number, max: number) => Math.random() * (max - min) + min
 
 export const clamp = (value: number, min: number, max: number) =>
     Math.min(Math.max(value, min), max)

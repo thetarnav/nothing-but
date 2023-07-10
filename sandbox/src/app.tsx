@@ -82,9 +82,7 @@ function getInitialGraph() {
     return { nodes, edges }
 }
 
-function generateInitialGraph() {
-    const length = 256
-
+function generateInitialGraph(length: number = 256) {
     const nodes: graph.Node[] = Array.from({ length }, () => new graph.Node(trig.zero()))
     const edges: graph.Edge[] = []
 
@@ -108,7 +106,7 @@ function generateInitialGraph() {
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    const initialGraph = generateInitialGraph()
+    const initialGraph = generateInitialGraph(512)
     // const initialGraph = getLAGraph()
 
     const nodes = s.signal(initialGraph.nodes)
@@ -181,7 +179,7 @@ export const App: Component = () => {
             onMouseMove={handleDragEvent}
         >
             <svg class="absolute w-full h-full">
-                <For each={edges.value}>
+                {/* <For each={edges.value}>
                     {edge => (
                         <line
                             class="stroke-gray stroke-0.2%"
@@ -191,7 +189,7 @@ export const App: Component = () => {
                             y2={`${50 - (nodes.value, edges.value, edge[1].position.y)}%`}
                         />
                     )}
-                </For>
+                </For> */}
                 {/* <For each={nodes.value}>
                     {node => (
                         <line
@@ -208,12 +206,14 @@ export const App: Component = () => {
                 {node => (
                     <div
                         class={clsx(
-                            'absolute w-2% h-2% rounded-full -mt-1% -ml-1%',
+                            'absolute top-0 left-0 w-2% h-2% rounded-full -mt-1% -ml-1%',
                             isDragging(node) ? 'bg-cyan' : 'bg-red',
                         )}
                         style={{
-                            left: `${(nodes.value, node.position.x) + 50}%`,
-                            top: `${50 - (nodes.value, node.position.y)}%`,
+                            translate: `calc(${(nodes.value, node.position.x) + 50} * 0.8vw) calc(${
+                                50 - (nodes.value, node.position.y)
+                            } * 0.8vw) 0.0001px`,
+                            'will-change': 'translate',
                         }}
                         onMouseDown={e => {
                             if (dragging.value !== undefined) return
