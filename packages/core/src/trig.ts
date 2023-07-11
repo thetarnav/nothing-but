@@ -1,7 +1,7 @@
 export type Pointable = { get x(): number; get y(): number }
 export type VecString = `(${number}, ${number})`
 
-export class Vector {
+export class Vec {
     x: number
     y: number
 
@@ -42,31 +42,31 @@ export class Vector {
 }
 
 export const vec: {
-    (str: VecString): Vector
-    (vec: Pointable): Vector
-    (x: number, y?: number): Vector
-} = (...args: [any]) => new Vector(...args)
+    (str: VecString): Vec
+    (vec: Pointable): Vec
+    (x: number, y?: number): Vec
+} = (...args: [any]) => new Vec(...args)
 
 export const ZERO = vec(0, 0)
 
 export const zero = () => vec(0, 0)
 
-export function vec_equals(a: Vector, b: Vector): boolean {
+export function vec_equals(a: Vec, b: Vec): boolean {
     return a.x === b.x && a.y === b.y
 }
 
-export function vec_subtract(position: Vector, velocity: Vector): void {
+export function vec_subtract(position: Vec, velocity: Vec): void {
     position.x -= velocity.x
     position.y -= velocity.y
 }
 
-export function vec_difference(position: Vector, velocity: Vector): Vector {
+export function vec_difference(position: Vec, velocity: Vec): Vec {
     return vec(position.x - velocity.x, position.y - velocity.y)
 }
 
-export function vec_add(position: Vector, velocity: Vector | Force | number): void
-export function vec_add(position: Vector, x: number, y: number): void
-export function vec_add(position: Vector, x: Vector | Force | number, y?: number): void {
+export function vec_add(position: Vec, velocity: Vec | Force | number): void
+export function vec_add(position: Vec, x: number, y: number): void
+export function vec_add(position: Vec, x: Vec | Force | number, y?: number): void {
     if (typeof x === 'number') {
         position.x += x
         position.y += y ?? x
@@ -79,11 +79,11 @@ export function vec_add(position: Vector, x: Vector | Force | number, y?: number
     position.y += x.y
 }
 
-export function vec_sum(position: Vector, velocity: Vector): Vector {
+export function vec_sum(position: Vec, velocity: Vec): Vec {
     return vec(position.x + velocity.x, position.y + velocity.y)
 }
 
-export function vec_multiply(position: Vector, velocity: Vector | number): void {
+export function vec_multiply(position: Vec, velocity: Vec | number): void {
     if (typeof velocity === 'number') {
         position.x *= velocity
         position.y *= velocity
@@ -93,26 +93,26 @@ export function vec_multiply(position: Vector, velocity: Vector | number): void 
     position.y *= velocity.y
 }
 
-export function vec_product(position: Vector, velocity: Vector): Vector {
+export function vec_product(position: Vec, velocity: Vec): Vec {
     return vec(position.x * velocity.x, position.y * velocity.y)
 }
 
-export function vec_divide(position: Vector, velocity: Vector): void {
+export function vec_divide(position: Vec, velocity: Vec): void {
     position.x /= velocity.x
     position.y /= velocity.y
 }
 
-export function vec_quotient(position: Vector, velocity: Vector): Vector {
+export function vec_quotient(position: Vec, velocity: Vec): Vec {
     return vec(position.x / velocity.x, position.y / velocity.y)
 }
 
-export function vec_distance(a: Vector, b: Vector): number {
+export function vec_distance(a: Vec, b: Vec): number {
     const x = a.x - b.x
     const y = a.y - b.y
     return Math.sqrt(x * x + y * y)
 }
 
-export function vec_angle(a: Vector, b: Vector): number {
+export function vec_angle(a: Vec, b: Vec): number {
     return Math.atan2(b.y - a.y, b.x - a.x)
 }
 
@@ -120,12 +120,12 @@ export class Force {
     distance: number
     angle: number
 
-    constructor(a: Vector, b: Vector)
+    constructor(a: Vec, b: Vec)
     constructor(distance: number, angle: number)
-    constructor(a: number | Vector, b: number | Vector) {
+    constructor(a: number | Vec, b: number | Vec) {
         if (typeof a === 'object') {
-            this.angle = vec_angle(a, b as Vector)
-            this.distance = vec_distance(a, b as Vector)
+            this.angle = vec_angle(a, b as Vec)
+            this.distance = vec_distance(a, b as Vec)
         } else {
             this.distance = a
             this.angle = b as number
@@ -139,13 +139,13 @@ export class Force {
 }
 
 export const force: {
-    (a: Vector, b: Vector): Force
+    (a: Vec, b: Vec): Force
     (distance: number, angle: number): Force
 } = (...args: [any, any]) => new Force(...args)
 
-export function force_to_vec(force: Force): Vector
-export function force_to_vec(distance: number, angle: number): Vector
-export function force_to_vec(distance: number | Force, angle?: number): Vector {
+export function force_to_vec(force: Force): Vec
+export function force_to_vec(distance: number, angle: number): Vec
+export function force_to_vec(distance: number | Force, angle?: number): Vec {
     if (typeof distance === 'object') {
         angle = distance.angle
         distance = distance.distance
@@ -155,4 +155,4 @@ export function force_to_vec(distance: number | Force, angle?: number): Vector {
     return vec(x, y)
 }
 
-export type Segment = [Vector, Vector]
+export type Segment = [Vec, Vec]
