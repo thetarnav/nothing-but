@@ -80,6 +80,8 @@ export function updateNodePositions(graph: Graph): void {
         */
         trig.vec_multiply(node.velocity, INERTIA_STRENGTH)
 
+        // trig.vec_add(node.velocity, math.randomFrom(-0.02, 0.02), math.randomFrom(-0.02, 0.02))
+
         /*
             away from other nodes
         */
@@ -141,35 +143,44 @@ export function updateNodePositions3(graph: Graph): void {
 
         trig.vec_multiply(node.velocity, INERTIA_STRENGTH)
 
-        const origin_force = trig.force(node.position, trig.ZERO)
-        origin_force.distance *= ORIGIN_STRENGTH
+        /*
+            towards the center
+        */
+        {
+            const dx = node.position.x * -ORIGIN_STRENGTH
+            const dy = node.position.y * -ORIGIN_STRENGTH
 
-        trig.vec_add(node.velocity, origin_force)
+            trig.vec_add(node.velocity, dx, dy)
+        }
 
         for (let j = i - 1; j >= 0; j--) {
-            const node_x = x_order[j]!
+            const node_b = x_order[j]!
 
-            if (node.position.x - node_x.position.x > 20) break
+            let dx = node.position.x - node_b.position.x
 
-            const d = trig.vec_distance(node_x.position, node.position)
+            if (dx > 20) break
 
-            const angle = trig.vec_angle(node_x.position, node.position)
-            const force = trig.force_to_vec(REPULSION_STRENGTH / d, angle)
+            let dy = node.position.y - node_b.position.y
+            const mod = REPULSION_STRENGTH / (dx * dx + dy * dy)
+            dx *= mod
+            dy *= mod
 
-            trig.vec_add(node.velocity, force)
+            trig.vec_add(node.velocity, dx, dy)
         }
 
         for (let j = i + 1; j < x_order.length; j++) {
-            const node_x = x_order[j]!
+            const node_b = x_order[j]!
 
-            if (node_x.position.x - node.position.x > 20) break
+            let dx = node.position.x - node_b.position.x
 
-            const d = trig.vec_distance(node_x.position, node.position)
+            if (dx < -20) break
 
-            const angle = trig.vec_angle(node_x.position, node.position)
-            const force = trig.force_to_vec(REPULSION_STRENGTH / d, angle)
+            let dy = node.position.y - node_b.position.y
+            const mod = REPULSION_STRENGTH / (dx * dx + dy * dy)
+            dx *= mod
+            dy *= mod
 
-            trig.vec_add(node.velocity, force)
+            trig.vec_add(node.velocity, dx, dy)
         }
     }
 
@@ -177,14 +188,11 @@ export function updateNodePositions3(graph: Graph): void {
         towards the edges
     */
     for (const [node_a, node_b] of edges) {
-        let distance = trig.vec_distance(node_a.position, node_b.position)
-        distance *= ATTRACTION_STRENGTH
+        const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
+        const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
 
-        const angle = trig.vec_angle(node_a.position, node_b.position)
-        const force = trig.force_to_vec(distance, angle)
-
-        trig.vec_add(node_a.velocity, force)
-        trig.vec_add(node_b.velocity, -force.x, -force.y)
+        trig.vec_add(node_a.velocity, dx, dy)
+        trig.vec_add(node_b.velocity, -dx, -dy)
     }
 
     commit: for (let i = 0; i < x_order.length; i++) {
@@ -192,7 +200,8 @@ export function updateNodePositions3(graph: Graph): void {
 
         // if (node.locked) continue
 
-        const d = trig.vec_distance(node.velocity, trig.ZERO)
+        const { x, y } = node.velocity,
+            d = Math.sqrt(x * x + y * y)
         if (d > MIN_VELOCITY) {
             trig.vec_add(node.position, node.velocity)
         }
@@ -210,14 +219,14 @@ export function updateNodePositions3(graph: Graph): void {
         }
     }
 
-    // /*
-    //     check if the order is correct
-    // */
-    // for (let i = 1; i < x_order.length; i++) {
-    //     if (x_order[i - 1]!.position.x > x_order[i]!.position.x) {
-    //         console.log('order is wrong')
-    //         debugger
-    //         break
-    //     }
-    // }
+    /*
+        check if the order is correct
+    */
+    for (let i = 1; i < x_order.length; i++) {
+        if (x_order[i - 1]!.position.x > x_order[i]!.position.x) {
+            console.log('order is wrong')
+            debugger
+            break
+        }
+    }
 }

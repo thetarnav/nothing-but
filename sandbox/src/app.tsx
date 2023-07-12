@@ -5,7 +5,7 @@ import { generateInitialGraph } from './init'
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    const force_graph = generateInitialGraph(256)
+    const force_graph = generateInitialGraph(1024)
     // const initialGraph = getLAGraph()
 
     const signal = s.signal(force_graph)
@@ -57,13 +57,13 @@ export const App: Component = () => {
     const start = performance.now()
 
     const loop = () => {
-        graph.updateNodePositions(force_graph)
+        graph.updateNodePositions3(force_graph)
 
         s.trigger(signal)
 
-        // if (performance.now() - start < 2000) {
-        raf = requestAnimationFrame(loop)
-        // }
+        if (performance.now() - start < 2000) {
+            raf = requestAnimationFrame(loop)
+        }
     }
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))
