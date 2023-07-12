@@ -135,6 +135,76 @@ export function updateNodePositions(graph: Graph): void {
     }
 }
 
+export function updateNodePositions2(graph: Graph): void {
+    const { nodes, edges } = graph
+
+    for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i]!
+
+        /*
+            inertia
+        */
+        trig.vec_multiply(node.velocity, INERTIA_STRENGTH)
+
+        // trig.vec_add(node.velocity, math.randomFrom(-0.02, 0.02), math.randomFrom(-0.02, 0.02))
+
+        /*
+            away from other nodes
+        */
+        for (let j = i + 1; j < nodes.length; j++) {
+            const node_b = nodes[j]!
+
+            const dx = node.position.x - node_b.position.x,
+                dy = node.position.y - node_b.position.y,
+                d = Math.sqrt(dx * dx + dy * dy)
+
+            if (d >= 20) continue
+
+            const force = REPULSION_STRENGTH * (1 - d / 20),
+                mx = (dx / d) * force,
+                my = (dy / d) * force
+
+            trig.vec_add(node.velocity, mx, my)
+            trig.vec_add(node_b.velocity, -mx, -my)
+        }
+
+        /*
+            towards the center
+        */
+        {
+            const dx = node.position.x * -ORIGIN_STRENGTH
+            const dy = node.position.y * -ORIGIN_STRENGTH
+
+            trig.vec_add(node.velocity, dx, dy)
+        }
+    }
+
+    /*
+        towards the edges
+    */
+    for (const [node_a, node_b] of edges) {
+        const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
+        const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
+
+        trig.vec_add(node_a.velocity, dx, dy)
+        trig.vec_add(node_b.velocity, -dx, -dy)
+    }
+
+    /*
+        commit
+    */
+    for (const node of nodes) {
+        if (node.locked) continue
+
+        const { x, y } = node.velocity,
+            d = Math.sqrt(x * x + y * y)
+
+        if (d > MIN_VELOCITY) {
+            trig.vec_add(node.position, node.velocity)
+        }
+    }
+}
+
 export function updateNodePositions3(graph: Graph): void {
     const { x_order, edges } = graph
 
@@ -161,9 +231,13 @@ export function updateNodePositions3(graph: Graph): void {
             if (dx > 20) break
 
             let dy = node.position.y - node_b.position.y
-            const mod = REPULSION_STRENGTH / (dx * dx + dy * dy)
-            dx *= mod
-            dy *= mod
+
+            // const d = Math.sqrt(dx * dx + dy * dy)
+
+            // const mod = math.mapRange(d, 0, 20, REPULSION_STRENGTH, 0)
+            // const mod = ((d) * ( -REPULSION_STRENGTH)) / (20) + REPULSION_STRENGTH
+            dx = (dx * -REPULSION_STRENGTH) / 20 + REPULSION_STRENGTH
+            dy = (dy * -REPULSION_STRENGTH) / 20 + REPULSION_STRENGTH
 
             trig.vec_add(node.velocity, dx, dy)
         }
@@ -176,9 +250,9 @@ export function updateNodePositions3(graph: Graph): void {
             if (dx < -20) break
 
             let dy = node.position.y - node_b.position.y
-            const mod = REPULSION_STRENGTH / (dx * dx + dy * dy)
-            dx *= mod
-            dy *= mod
+
+            dx = (dx * -REPULSION_STRENGTH) / -20 + REPULSION_STRENGTH
+            dy = (dy * -REPULSION_STRENGTH) / -20 + REPULSION_STRENGTH
 
             trig.vec_add(node.velocity, dx, dy)
         }

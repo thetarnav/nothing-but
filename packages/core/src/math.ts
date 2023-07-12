@@ -42,6 +42,8 @@ export const mapRange = (
     out_max: number,
 ) => ((value - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
 
+export const toPercent = (value: number, min: number, max: number) => (value - min) / (max - min)
+
 export const numberEquals = (a: number, b: number) => Math.abs(a - b) < Number.EPSILON
 
 export const between = (a: number, b: number, c: number): boolean => {
