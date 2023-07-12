@@ -82,6 +82,25 @@ importers:
         specifier: ^1.7.7
         version: 1.7.7
 
+  sandbox:
+    dependencies:
+      '@solid-primitives/event-listener':
+        specifier: ^2.2.13
+        version: 2.2.13(solid-js@1.7.7)
+      clsx:
+        specifier: ^1.2.1
+        version: 1.2.1
+      solid-js:
+        specifier: ^1.7.7
+        version: 1.7.7
+    devDependencies:
+      '@unocss/reset':
+        specifier: ^0.53.4
+        version: 0.53.4
+      sass:
+        specifier: ^1.63.6
+        version: 1.63.6
+
 packages:
 
   /@ampproject/remapping@2.2.1:
@@ -951,6 +970,23 @@ packages:
   /@sinclair/typebox@0.27.8:
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
     dev: true
+
+  /@solid-primitives/event-listener@2.2.13(solid-js@1.7.7):
+    resolution: {integrity: sha512-8GtVEq0ECZoa5Klo1jjfGPfwg0zVJ8TNnNkWu8FqRkh0CkhbhCVJAKwjleem9K/qL6zUDfJihLjhqGBTBbb+8w==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.2.0(solid-js@1.7.7)
+      solid-js: 1.7.7
+    dev: false
+
+  /@solid-primitives/utils@6.2.0(solid-js@1.7.7):
+    resolution: {integrity: sha512-T62WlLwKkbmicsw/xpwMQyv9MmZRSaVyutXfS5icc9v0cb8qGMUxRxr5LVvZHYQCZ9DEFboZB0r711xsbVBbeA==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      solid-js: 1.7.7
+    dev: false
 
   /@tootallnate/once@2.0.0:
     resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}

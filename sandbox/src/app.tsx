@@ -2,10 +2,11 @@ import { type Component, For, onCleanup } from 'solid-js'
 import { graph, s } from '../../packages/core/src'
 import clsx from 'clsx'
 import { generateInitialGraph } from './init'
+import { createEventListenerMap } from '@solid-primitives/event-listener'
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    const force_graph = generateInitialGraph(128)
+    const force_graph = generateInitialGraph(1024)
     // const initialGraph = getLAGraph()
 
     const signal = s.signal(force_graph)
@@ -39,17 +40,12 @@ export const App: Component = () => {
         const pos_x = x * 100 - 50
         const pos_y = 50 - y * 100
 
-        if (
-            (pos_x === node.position.x && pos_y === node.position.y) ||
-            pos_x < -50 ||
-            pos_x > 50 ||
-            pos_y < -50 ||
-            pos_y > 50
-        )
-            return
+        if (pos_x === node.position.x && pos_y === node.position.y) return
 
         node.position.x = pos_x
         node.position.y = pos_y
+
+        graph.correctNodeOrder(force_graph, node)
 
         s.trigger(signal)
     }
@@ -68,16 +64,16 @@ export const App: Component = () => {
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))
 
+    createEventListenerMap(document, {
+        mouseup: e => setDragging(undefined),
+        mouseleave: e => setDragging(undefined),
+        mousemove: handleDragEvent,
+    })
+
     return (
-        <div
-            ref={container}
-            class="w-80vw h-80vw m-10vw bg-dark-9 relative overflow-hidden"
-            onMouseUp={e => setDragging(undefined)}
-            onMouseLeave={e => setDragging(undefined)}
-            onMouseMove={handleDragEvent}
-        >
+        <div ref={container} class="w-80vw h-80vw m-10vw bg-dark-9 relative overflow-hidden">
             <svg class="absolute w-full h-full">
-                <For each={signal.value.edges}>
+                {/* <For each={signal.value.edges}>
                     {edge => (
                         <line
                             class="stroke-gray stroke-0.2%"
@@ -87,7 +83,7 @@ export const App: Component = () => {
                             y2={`${50 - (signal.value, edge[1].position.y)}%`}
                         />
                     )}
-                </For>
+                </For> */}
                 {/* <For each={signal.value.nodes}>
                     {node => (
                         <line
