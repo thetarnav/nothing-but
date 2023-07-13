@@ -90,8 +90,8 @@ export function checkOrder(graph: Graph): boolean {
 }
 
 export const INERTIA_STRENGTH = 0.8
-export const REPULSION_STRENGTH = 0.25
-export const REPULSION_DISTANCE = 20
+export const REPULSION_STRENGTH = 0.35
+export const REPULSION_DISTANCE = 18
 export const ATTRACTION_STRENGTH = 0.02
 export const ORIGIN_STRENGTH = 0.015
 export const MIN_VELOCITY = 0.015

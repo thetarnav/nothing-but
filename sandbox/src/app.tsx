@@ -1,4 +1,4 @@
-import { type Component, onCleanup, type JSX } from 'solid-js'
+import { type Component, onCleanup, type JSX, createMemo } from 'solid-js'
 import { graph, s } from '../../packages/core/src'
 import clsx from 'clsx'
 import { generateInitialGraph } from './init'
@@ -11,33 +11,53 @@ export function ForceGraph(props: {
     node: RootPoolFactory<graph.Node, JSX.Element>
 }): JSX.Element {
     const useNodeEl = createRootPool(props.node)
-
     const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
+
+    const useLine = createRootPool(
+        () => (<line class="stroke-gray stroke-0.2%" />) as SVGLineElement,
+    )
+    const lines = createMemo(() => props.graph.edges.map(useLine))
 
     const start = performance.now()
 
     const loop = () => {
         graph.updatePositionsOptimized(props.graph)
 
-        const els = nodeEls()
-        const nodes = props.graph.nodes
+        const els = nodeEls(),
+            { nodes, edges } = props.graph
 
         for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i]!
-            const el = els[i]! as HTMLElement
+            const node = nodes[i]!,
+                el = els[i]! as HTMLElement
+
             el.style.translate = `calc(${node.position.x + 50} * 0.8vw) calc(${
                 50 - node.position.y
-            } * 0.8vw) 0.0001px`
+            } * 0.8vw)`
         }
 
-        // if (performance.now() - start < 2000) {
-        raf = requestAnimationFrame(loop)
-        // }
+        for (let i = 0; i < edges.length; i++) {
+            const [node_a, node_b] = edges[i]!,
+                line = lines()[i]!
+
+            line.x1.baseVal.valueAsString = `${node_a.position.x + 50}%`
+            line.y1.baseVal.valueAsString = `${50 - node_a.position.y}%`
+            line.x2.baseVal.valueAsString = `${node_b.position.x + 50}%`
+            line.y2.baseVal.valueAsString = `${50 - node_b.position.y}%`
+        }
+
+        if (performance.now() - start < 2000) {
+            raf = requestAnimationFrame(loop)
+        }
     }
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))
 
-    return <>{nodeEls()}</>
+    return (
+        <>
+            <svg class="absolute w-full h-full">{lines()}</svg>
+            {nodeEls()}
+        </>
+    )
 }
 
 export const App: Component = () => {
@@ -90,30 +110,6 @@ export const App: Component = () => {
     let container!: HTMLDivElement
     return (
         <div ref={container} class="w-80vw h-80vw m-10vw bg-dark-9 relative overflow-hidden">
-            <svg class="absolute w-full h-full">
-                {/* <For each={signal.value.edges}>
-                    {edge => (
-                        <line
-                            class="stroke-gray stroke-0.2%"
-                            x1={`${(signal.value, edge[0].position.x) + 50}%`}
-                            y1={`${50 - (signal.value, edge[0].position.y)}%`}
-                            x2={`${(signal.value, edge[1].position.x) + 50}%`}
-                            y2={`${50 - (signal.value, edge[1].position.y)}%`}
-                        />
-                    )}
-                </For> */}
-                {/* <For each={signal.value.nodes}>
-                    {node => (
-                        <line
-                            class="stroke-violet stroke-0.2%"
-                            x1={`${(signal.value, node.position.x) + 50}%`}
-                            y1={`${50 - (signal.value, node.position.y)}%`}
-                            x2={`${(signal.value, node.position.x + node.velocity.x * 20) + 50}%`}
-                            y2={`${50 - (signal.value, node.position.y + node.velocity.y * 20)}%`}
-                        />
-                    )}
-                </For> */}
-            </svg>
             <ForceGraph
                 graph={force_graph}
                 node={node => (
