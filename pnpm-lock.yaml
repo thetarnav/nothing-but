@@ -87,6 +87,15 @@ importers:
       '@solid-primitives/event-listener':
         specifier: ^2.2.13
         version: 2.2.13(solid-js@1.7.7)
+      '@solid-primitives/keyed':
+        specifier: ^1.2.0
+        version: 1.2.0(solid-js@1.7.7)
+      '@solid-primitives/refs':
+        specifier: ^1.0.4
+        version: 1.0.4(solid-js@1.7.7)
+      '@solid-primitives/rootless':
+        specifier: ^1.4.1
+        version: 1.4.1(solid-js@1.7.7)
       clsx:
         specifier: ^1.2.1
         version: 1.2.1
@@ -973,6 +982,32 @@ packages:
 
   /@solid-primitives/event-listener@2.2.13(solid-js@1.7.7):
     resolution: {integrity: sha512-8GtVEq0ECZoa5Klo1jjfGPfwg0zVJ8TNnNkWu8FqRkh0CkhbhCVJAKwjleem9K/qL6zUDfJihLjhqGBTBbb+8w==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.2.0(solid-js@1.7.7)
+      solid-js: 1.7.7
+    dev: false
+
+  /@solid-primitives/keyed@1.2.0(solid-js@1.7.7):
+    resolution: {integrity: sha512-0DuTeJdxWjCTu73XnDZs24JzfXckBnpvCfQ6Mf/kTPKkMZJh7tjkBnZEk48ckrE9xmwat9stIdfrBmZctsepIw==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      solid-js: 1.7.7
+    dev: false
+
+  /@solid-primitives/refs@1.0.4(solid-js@1.7.7):
+    resolution: {integrity: sha512-BxZKkct0OIyADWIoA9UITm+3G5Xb3IkOa0nZd40SgOK5DtMqpXFIEPUkJ/woPB90WqlM9UvvuiJHUyAjMeAmCw==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.2.0(solid-js@1.7.7)
+      solid-js: 1.7.7
+    dev: false
+
+  /@solid-primitives/rootless@1.4.1(solid-js@1.7.7):
+    resolution: {integrity: sha512-h7VBUk8usD76Eh1a4wT17PcGtIRxGPlLuJ4Mf7roCNu46W5cc9DAoz8M6XebuZWVKeUkML/JuPMZQSV0mLo2Fw==}
     peerDependencies:
       solid-js: ^1.6.12
     dependencies:

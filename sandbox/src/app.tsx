@@ -1,18 +1,51 @@
-import { type Component, For, onCleanup } from 'solid-js'
+import { type Component, onCleanup, type JSX } from 'solid-js'
 import { graph, s } from '../../packages/core/src'
 import clsx from 'clsx'
 import { generateInitialGraph } from './init'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
+import { createRootPool, RootPoolFactory } from '@solid-primitives/rootless'
+import { resolveElements } from '@solid-primitives/refs'
+
+export function ForceGraph(props: {
+    graph: graph.Graph
+    node: RootPoolFactory<graph.Node, JSX.Element>
+}): JSX.Element {
+    const useNodeEl = createRootPool(props.node)
+
+    const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
+
+    const start = performance.now()
+
+    const loop = () => {
+        graph.updatePositionsOptimized(props.graph)
+
+        const els = nodeEls()
+        const nodes = props.graph.nodes
+
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i]!
+            const el = els[i]! as HTMLElement
+            el.style.translate = `calc(${node.position.x + 50} * 0.8vw) calc(${
+                50 - node.position.y
+            } * 0.8vw) 0.0001px`
+        }
+
+        // if (performance.now() - start < 2000) {
+        raf = requestAnimationFrame(loop)
+        // }
+    }
+    let raf = requestAnimationFrame(loop)
+    onCleanup(() => cancelAnimationFrame(raf))
+
+    return <>{nodeEls()}</>
+}
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
     const force_graph = generateInitialGraph(1024)
     // const initialGraph = getLAGraph()
 
-    const signal = s.signal(force_graph)
-
     const dragging = s.signal<graph.Node>()
-    let container!: HTMLDivElement
 
     const isDragging = s.selector(dragging)
 
@@ -46,23 +79,7 @@ export const App: Component = () => {
         node.position.y = pos_y
 
         graph.correctNodeOrder(force_graph, node)
-
-        s.trigger(signal)
     }
-
-    const start = performance.now()
-
-    const loop = () => {
-        graph.updatePositionsOptimized(force_graph)
-
-        s.trigger(signal)
-
-        if (performance.now() - start < 2000) {
-            raf = requestAnimationFrame(loop)
-        }
-    }
-    let raf = requestAnimationFrame(loop)
-    onCleanup(() => cancelAnimationFrame(raf))
 
     createEventListenerMap(document, {
         mouseup: e => setDragging(undefined),
@@ -70,6 +87,7 @@ export const App: Component = () => {
         mousemove: handleDragEvent,
     })
 
+    let container!: HTMLDivElement
     return (
         <div ref={container} class="w-80vw h-80vw m-10vw bg-dark-9 relative overflow-hidden">
             <svg class="absolute w-full h-full">
@@ -96,31 +114,25 @@ export const App: Component = () => {
                     )}
                 </For> */}
             </svg>
-            <For each={signal.value.nodes}>
-                {node => (
+            <ForceGraph
+                graph={force_graph}
+                node={node => (
                     <div
                         class={clsx(
                             'absolute top-0 left-0 w-2% h-2% rounded-full -mt-1% -ml-1%',
-                            isDragging(node) ? 'bg-cyan' : 'bg-red',
+                            isDragging(node()) ? 'bg-cyan' : 'bg-red',
                         )}
-                        style={{
-                            translate: `calc(${
-                                (signal.value, node.position.x) + 50
-                            } * 0.8vw) calc(${
-                                50 - (signal.value, node.position.y)
-                            } * 0.8vw) 0.0001px`,
-                            'will-change': 'translate',
-                        }}
+                        style="will-change: translate"
                         onMouseDown={e => {
                             if (dragging.value !== undefined) return
 
-                            setDragging(node)
+                            setDragging(node())
 
                             handleDragEvent(e)
                         }}
                     ></div>
                 )}
-            </For>
+            />
         </div>
     )
 }
