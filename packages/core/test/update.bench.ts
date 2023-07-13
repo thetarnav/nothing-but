@@ -28,21 +28,21 @@ function generateExampleGraph(length: number): graph.Graph {
 }
 
 const fns = {
-    1: graph.updateNodePositions,
-    2: graph.updateNodePositions2,
-    3: graph.updateNodePositions3,
+    Accurate: graph.updatePositionsAccurate,
+    Optimized: graph.updatePositionsOptimized,
 }
 
 ;[
     // 64,
-    256, 512, 1024,
+    // 256,
+    512, 1024,
 ].forEach(n => {
     describe(`update ${n} nodes`, () => {
         for (const [name, fn] of Object.entries(fns)) {
             const graph = generateExampleGraph(n)
 
             bench(name, () => {
-                for (let i = 0; i < 48; i++) fn(graph)
+                for (let i = 0; i < 24; i++) fn(graph)
             })
         }
     })

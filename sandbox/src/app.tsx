@@ -53,13 +53,13 @@ export const App: Component = () => {
     const start = performance.now()
 
     const loop = () => {
-        graph.updateNodePositions2(force_graph)
+        graph.updatePositionsOptimized(force_graph)
 
         s.trigger(signal)
 
-        // if (performance.now() - start < 2000) {
-        raf = requestAnimationFrame(loop)
-        // }
+        if (performance.now() - start < 2000) {
+            raf = requestAnimationFrame(loop)
+        }
     }
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))

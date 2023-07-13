@@ -52,15 +52,6 @@ export function randomizeNodePositions(nodes: readonly Node[]): void {
 
 export function resetOrder(graph: Graph): void {
     graph.x_order = graph.nodes.slice().sort((a, b) => a.position.x - b.position.x)
-    // graph.y_order = graph.nodes.slice().sort((a, b) => a.position.y - b.position.y)
-
-    // for (let i = 0; i < graph.x_order.length; i++) {
-    //     graph.x_order[i]!.i_x = i
-    // }
-
-    // for (let i = 0; i < graph.y_order.length; i++) {
-    //     graph.y_order[i]!.i_y = i
-    // }
 }
 
 /**
@@ -100,22 +91,16 @@ export function checkOrder(graph: Graph): boolean {
 
 export const INERTIA_STRENGTH = 0.8
 export const REPULSION_STRENGTH = 0.25
+export const REPULSION_DISTANCE = 20
 export const ATTRACTION_STRENGTH = 0.02
 export const ORIGIN_STRENGTH = 0.015
 export const MIN_VELOCITY = 0.015
 
-export function updateNodePositions(graph: Graph): void {
+export function updatePositionsAccurate(graph: Graph): void {
     const { nodes, edges } = graph
 
     for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i]!
-
-        /*
-            inertia
-        */
-        trig.vec_multiply(node.velocity, INERTIA_STRENGTH)
-
-        // trig.vec_add(node.velocity, math.randomFrom(-0.02, 0.02), math.randomFrom(-0.02, 0.02))
+        const { position, velocity } = nodes[i]!
 
         /*
             away from other nodes
@@ -123,25 +108,23 @@ export function updateNodePositions(graph: Graph): void {
         for (let j = i + 1; j < nodes.length; j++) {
             const node_b = nodes[j]!
 
-            let dx = node.position.x - node_b.position.x
-            let dy = node.position.y - node_b.position.y
+            let dx = position.x - node_b.position.x
+            let dy = position.y - node_b.position.y
             const mod = REPULSION_STRENGTH / (dx * dx + dy * dy)
             dx *= mod
             dy *= mod
 
-            trig.vec_add(node.velocity, dx, dy)
-            trig.vec_add(node_b.velocity, -dx, -dy)
+            velocity.x += dx
+            velocity.y += dy
+            node_b.velocity.x -= dx
+            node_b.velocity.y -= dy
         }
 
         /*
             towards the center
         */
-        {
-            const dx = node.position.x * -ORIGIN_STRENGTH
-            const dy = node.position.y * -ORIGIN_STRENGTH
-
-            trig.vec_add(node.velocity, dx, dy)
-        }
+        velocity.x += position.x * -ORIGIN_STRENGTH
+        velocity.y += position.y * -ORIGIN_STRENGTH
     }
 
     /*
@@ -151,129 +134,69 @@ export function updateNodePositions(graph: Graph): void {
         const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
         const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
 
-        trig.vec_add(node_a.velocity, dx, dy)
-        trig.vec_add(node_b.velocity, -dx, -dy)
+        node_a.velocity.x += dx
+        node_a.velocity.y += dy
+        node_b.velocity.x -= dx
+        node_b.velocity.y -= dy
     }
 
     /*
         commit
     */
-    for (const node of nodes) {
-        if (node.locked) continue
+    for (const { velocity, position, locked } of nodes) {
+        /*
+            inertia
+        */
+        velocity.x *= INERTIA_STRENGTH
+        velocity.y *= INERTIA_STRENGTH
 
-        const { x, y } = node.velocity,
+        if (locked) continue
+
+        const { x, y } = velocity,
             d = Math.sqrt(x * x + y * y)
 
         if (d > MIN_VELOCITY) {
-            trig.vec_add(node.position, node.velocity)
+            position.x += x
+            position.y += y
         }
     }
 }
 
-export function updateNodePositions2(graph: Graph): void {
-    const { nodes, edges } = graph
+export function updatePositionsOptimized(graph: Graph): void {
+    const { x_order, edges } = graph
 
-    for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i]!
+    for (let i = 0; i < x_order.length; i++) {
+        const { velocity, position } = x_order[i]!
 
-        // trig.vec_add(node.velocity, math.randomFrom(-0.02, 0.02), math.randomFrom(-0.02, 0.02))
+        /*
+            towards the center
+        */
+        velocity.x += position.x * -ORIGIN_STRENGTH
+        velocity.y += position.y * -ORIGIN_STRENGTH
 
         /*
             away from other nodes
         */
-        for (let j = i + 1; j < nodes.length; j++) {
-            const node_b = nodes[j]!
-
-            const dx = node.position.x - node_b.position.x,
-                dy = node.position.y - node_b.position.y,
-                d = Math.sqrt(dx * dx + dy * dy)
-
-            if (d >= 20) continue
-
-            const force = REPULSION_STRENGTH * (1 - d / 20),
-                mx = (dx / d) * force,
-                my = (dy / d) * force
-
-            trig.vec_add(node.velocity, mx, my)
-            trig.vec_add(node_b.velocity, -mx, -my)
-        }
-
-        /*
-            towards the center
-        */
-        {
-            const dx = node.position.x * -ORIGIN_STRENGTH
-            const dy = node.position.y * -ORIGIN_STRENGTH
-
-            trig.vec_add(node.velocity, dx, dy)
-        }
-    }
-
-    /*
-        towards the edges
-    */
-    for (const [node_a, node_b] of edges) {
-        const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
-        const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
-
-        trig.vec_add(node_a.velocity, dx, dy)
-        trig.vec_add(node_b.velocity, -dx, -dy)
-    }
-
-    /*
-        commit
-    */
-    for (const node of nodes) {
-        /*
-            inertia
-        */
-        trig.vec_multiply(node.velocity, INERTIA_STRENGTH)
-
-        if (node.locked) continue
-
-        const { x, y } = node.velocity,
-            d = Math.sqrt(x * x + y * y)
-
-        if (d > MIN_VELOCITY) {
-            trig.vec_add(node.position, node.velocity)
-        }
-    }
-}
-
-export function updateNodePositions3(graph: Graph): void {
-    const { x_order, edges } = graph
-
-    for (let i = 0; i < x_order.length; i++) {
-        const node = x_order[i]!
-
-        /*
-            towards the center
-        */
-        {
-            const dx = node.position.x * -ORIGIN_STRENGTH
-            const dy = node.position.y * -ORIGIN_STRENGTH
-
-            trig.vec_add(node.velocity, dx, dy)
-        }
-
         for (let j = i + 1; j < x_order.length; j++) {
             const node_b = x_order[j]!
 
-            const dx = node.position.x - node_b.position.x
+            const dx = position.x - node_b.position.x
 
-            if (dx <= -20) break
+            if (dx <= -REPULSION_DISTANCE) break
 
-            const dy = node.position.y - node_b.position.y,
+            const dy = position.y - node_b.position.y,
                 d = Math.sqrt(dx * dx + dy * dy)
 
-            if (d >= 20) continue
+            if (d >= REPULSION_DISTANCE) continue
 
-            const force = REPULSION_STRENGTH * (1 - d / 20),
+            const force = REPULSION_STRENGTH * (1 - d / REPULSION_DISTANCE),
                 mx = (dx / d) * force,
                 my = (dy / d) * force
 
-            trig.vec_add(node.velocity, mx, my)
-            trig.vec_add(node_b.velocity, -mx, -my)
+            velocity.x += mx
+            velocity.y += my
+            node_b.velocity.x -= mx
+            node_b.velocity.y -= my
         }
     }
 
@@ -284,43 +207,39 @@ export function updateNodePositions3(graph: Graph): void {
         const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
         const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
 
-        trig.vec_add(node_a.velocity, dx, dy)
-        trig.vec_add(node_b.velocity, -dx, -dy)
+        node_a.velocity.x += dx
+        node_a.velocity.y += dy
+        node_b.velocity.x -= dx
+        node_b.velocity.y -= dy
     }
 
     for (let i = 0; i < x_order.length; i++) {
-        const node = x_order[i]!
+        const { velocity, position, locked } = x_order[i]!
 
         /*
             inertia
         */
-        trig.vec_multiply(node.velocity, INERTIA_STRENGTH)
+        velocity.x *= INERTIA_STRENGTH
+        velocity.y *= INERTIA_STRENGTH
 
         /*
             commit
         */
-        if (!node.locked) {
-            const { x, y } = node.velocity,
+        if (!locked) {
+            const { x, y } = velocity,
                 d = Math.sqrt(x * x + y * y)
+
             if (d > MIN_VELOCITY) {
-                trig.vec_add(node.position, node.velocity)
+                position.x += x
+                position.y += y
             }
         }
 
         /*
             sort
         */
-        for (let j = i - 1; j >= 0 && x_order[j]!.position.x > node.position.x; j--) {
+        for (let j = i - 1; j >= 0 && x_order[j]!.position.x > position.x; j--) {
             ;[x_order[j + 1], x_order[j]] = [x_order[j]!, x_order[j + 1]!]
         }
     }
-
-    /*
-        check order
-    */
-    // const is_ordered = checkOrder(graph)
-
-    // if (!is_ordered) {
-    //     throw new Error('node order is not correct')
-    // }
 }
