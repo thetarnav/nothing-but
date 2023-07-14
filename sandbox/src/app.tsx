@@ -6,6 +6,8 @@ import { createEventListenerMap } from '@solid-primitives/event-listener'
 import { createRootPool, RootPoolFactory } from '@solid-primitives/rootless'
 import { resolveElements } from '@solid-primitives/refs'
 
+const MIN_MOVE = 0.001
+
 export function ForceGraph(props: {
     graph: graph.Graph
     node: RootPoolFactory<graph.Node, JSX.Element>
@@ -20,24 +22,70 @@ export function ForceGraph(props: {
 
     const start = performance.now()
 
+    /*
+        save previous positions to avoid unnecessary DOM updates
+    */
+    const prev_nodes_x: number[] = []
+    const prev_nodes_y: number[] = []
+
+    const prev_edges_x: number[] = []
+    const prev_edges_y: number[] = []
+
     const loop = () => {
         graph.updatePositionsOptimized(props.graph)
 
         const els = nodeEls(),
+            line_els = lines(),
             { nodes, edges } = props.graph
 
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i]!,
-                el = els[i]! as HTMLElement
+                prev_x = prev_nodes_x[i],
+                prev_y = prev_nodes_y[i]
+
+            if (prev_x !== undefined) {
+                const dx = node.position.x - prev_x
+                const dy = node.position.y - prev_y!
+
+                if (dx * dx + dy * dy <= MIN_MOVE) continue
+            }
+
+            prev_nodes_x[i] = node.position.x
+            prev_nodes_y[i] = node.position.y
+
+            const el = els[i]! as HTMLElement
 
             el.style.translate = `calc(${node.position.x + 50} * 0.8vw) calc(${
                 50 - node.position.y
             } * 0.8vw)`
         }
 
+        prev_nodes_x.length = nodes.length
+        prev_nodes_y.length = nodes.length
+
         for (let i = 0; i < edges.length; i++) {
             const [node_a, node_b] = edges[i]!,
-                line = lines()[i]!
+                prev_a_x = prev_edges_x[i * 2],
+                prev_a_y = prev_edges_y[i * 2],
+                prev_b_x = prev_edges_x[i * 2 + 1],
+                prev_b_y = prev_edges_y[i * 2 + 1]
+
+            if (prev_a_x !== undefined) {
+                const dx_a = node_a.position.x - prev_a_x,
+                    dy_a = node_a.position.y - prev_a_y!,
+                    dx_b = node_b.position.x - prev_b_x!,
+                    dy_b = node_b.position.y - prev_b_y!
+
+                if (dx_a * dx_a + dy_a * dy_a <= MIN_MOVE && dx_b * dx_b + dy_b * dy_b <= MIN_MOVE)
+                    continue
+            }
+
+            prev_edges_x[i * 2] = node_a.position.x
+            prev_edges_y[i * 2] = node_a.position.y
+            prev_edges_x[i * 2 + 1] = node_b.position.x
+            prev_edges_y[i * 2 + 1] = node_b.position.y
+
+            const line = line_els[i]!
 
             line.x1.baseVal.valueAsString = `${node_a.position.x + 50}%`
             line.y1.baseVal.valueAsString = `${50 - node_a.position.y}%`
@@ -45,9 +93,12 @@ export function ForceGraph(props: {
             line.y2.baseVal.valueAsString = `${50 - node_b.position.y}%`
         }
 
-        if (performance.now() - start < 2000) {
-            raf = requestAnimationFrame(loop)
-        }
+        prev_edges_x.length = edges.length * 2
+        prev_edges_y.length = edges.length * 2
+
+        // if (performance.now() - start < 3000) {
+        raf = requestAnimationFrame(loop)
+        // }
     }
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))

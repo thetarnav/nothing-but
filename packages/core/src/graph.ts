@@ -152,13 +152,8 @@ export function updatePositionsAccurate(graph: Graph): void {
 
         if (locked) continue
 
-        const { x, y } = velocity,
-            d = Math.sqrt(x * x + y * y)
-
-        if (d > MIN_VELOCITY) {
-            position.x += x
-            position.y += y
-        }
+        position.x += velocity.x
+        position.y += velocity.y
     }
 }
 
@@ -226,13 +221,8 @@ export function updatePositionsOptimized(graph: Graph): void {
             commit
         */
         if (!locked) {
-            const { x, y } = velocity,
-                d = Math.sqrt(x * x + y * y)
-
-            if (d > MIN_VELOCITY) {
-                position.x += x
-                position.y += y
-            }
+            position.x += velocity.x
+            position.y += velocity.y
         }
 
         /*
