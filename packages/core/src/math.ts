@@ -8,20 +8,6 @@ export const randomIntFrom = (min: number, max: number) =>
 export const clamp = (value: number, min: number, max: number) =>
     Math.min(Math.max(value, min), max)
 
-export const pickRandom = <T>(arr: readonly T[]): T | undefined => arr[randomInt(arr.length)]
-
-export function pickRandomExclidingOne<T>(arr: readonly T[], excluding: T): T | undefined {
-    let pick_index = randomInt(arr.length),
-        pick = arr[pick_index]
-
-    if (pick === excluding) {
-        pick_index = (pick_index + 1) % arr.length
-        pick = arr[pick_index]
-    }
-
-    return pick
-}
-
 export const remainder = (a: number, b: number) => ((a % b) + b) % b
 
 export const wrap = (value: number, min: number, max: number) =>
@@ -55,12 +41,4 @@ export const rangesIntersecting = (a1: number, b1: number, a2: number, b2: numbe
     if (a1 > b1) [a1, b1] = [b1, a1]
     if (a2 > b2) [a2, b2] = [b2, a2]
     return a1 <= b2 && a2 <= b1
-}
-
-export function* randomIterate<T>(arr: readonly T[]) {
-    const copy = arr.slice()
-    while (copy.length) {
-        const index = randomInt(copy.length)
-        yield copy.splice(index, 1)[0]
-    }
 }

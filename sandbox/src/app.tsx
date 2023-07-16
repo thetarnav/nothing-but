@@ -31,8 +31,17 @@ export function ForceGraph(props: {
     const prev_edges_x: number[] = []
     const prev_edges_y: number[] = []
 
-    const loop = () => {
-        graph.updatePositionsOptimized(props.graph)
+    let last_timestamp = 0
+    const loop = (timestamp: DOMHighResTimeStamp) => {
+        // console.log('FRAME', timestamp)
+
+        // const delta = timestamp - last_timestamp
+        // const fps = 1000 / delta
+        // last_timestamp = timestamp
+
+        // console.log('FRAME', fps)
+
+        graph.updatePositionsGrid(props.graph)
 
         const els = nodeEls(),
             line_els = lines(),
@@ -103,6 +112,11 @@ export function ForceGraph(props: {
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))
 
+    // setInterval(() => {
+    //     // console.log('INTERVAL')
+    //     graph.updatePositionsOptimized(props.graph)
+    // })
+
     return (
         <>
             <svg class="absolute w-full h-full">{lines()}</svg>
@@ -146,8 +160,14 @@ export const App: Component = () => {
 
         if (pos_x === node.position.x && pos_y === node.position.y) return
 
+        graph.removeNodeFromGrid(force_graph.grid, node)
+
         node.position.x = pos_x
         node.position.y = pos_y
+
+        const idx_x = graph.toGridIndex(node.position.x)
+        const idx_y = graph.toGridIndex(node.position.y)
+        graph.addNodeToGrid(force_graph.grid, node, idx_x, idx_y)
 
         graph.correctNodeOrder(force_graph, node)
     }

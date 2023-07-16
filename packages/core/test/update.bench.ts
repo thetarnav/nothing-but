@@ -1,5 +1,5 @@
 import { describe, bench } from 'vitest'
-import { graph, math, trig } from '../src'
+import { array, graph, math, trig } from '../src'
 
 function generateExampleGraph(length: number): graph.Graph {
     const nodes: graph.Node[] = Array.from(
@@ -28,21 +28,23 @@ function generateExampleGraph(length: number): graph.Graph {
 }
 
 const fns = {
-    Accurate: graph.updatePositionsAccurate,
+    // Accurate: graph.updatePositionsAccurate,
     Optimized: graph.updatePositionsOptimized,
+    Grid: graph.updatePositionsGrid,
 }
 
 ;[
     // 64,
     // 256,
-    512, 1024,
+    // 512,
+    1024, 2048, 4096,
 ].forEach(n => {
     describe(`update ${n} nodes`, () => {
         for (const [name, fn] of Object.entries(fns)) {
             const graph = generateExampleGraph(n)
 
             bench(name, () => {
-                for (let i = 0; i < 24; i++) fn(graph)
+                for (let i = 0; i < 36; i++) fn(graph)
             })
         }
     })
