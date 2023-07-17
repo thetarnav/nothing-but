@@ -6,7 +6,7 @@ export class Graph {
     nodes: Node[] = []
     edges: Edge[] = []
     x_order: Node[] = []
-    grid: GraphGrid = {}
+    x_grid: GraphGrid = {}
 }
 
 export class Node {
@@ -58,12 +58,12 @@ export function randomizeNodePositions(nodes: readonly Node[]): void {
 export function resetOrder(graph: Graph): void {
     graph.x_order = graph.nodes.slice().sort((a, b) => a.position.x - b.position.x)
 
-    graph.grid = {}
+    graph.x_grid = {}
 
     for (const node of graph.nodes) {
         const idx_x = toGridIndex(node.position.x)
         const idx_y = toGridIndex(node.position.y)
-        addNodeToGrid(graph.grid, node, idx_x, idx_y)
+        addNodeToGrid(graph.x_grid, node, idx_x, idx_y)
     }
 }
 
@@ -76,7 +76,7 @@ export function removeNodeFromGrid(grid: GraphGrid, node: Node): void {
         grid_x_idx = toGridIndex(x),
         grid_y_idx = toGridIndex(y),
         arr = grid[grid_x_idx]![grid_y_idx]!,
-        idx = array.binarySearchWith(arr, node, getNodeX)!
+        idx = arr.indexOf(node)!
 
     arr.splice(idx, 1)
 }
@@ -301,7 +301,7 @@ export function updatePositionsOptimized(graph: Graph): void {
 }
 
 export function updatePositionsGrid(graph: Graph): void {
-    const { nodes, edges, grid } = graph
+    const { nodes, edges, x_grid } = graph
 
     for (const node of nodes) {
         const {
@@ -321,11 +321,11 @@ export function updatePositionsGrid(graph: Graph): void {
         /*
             away from other nodes
         */
-        let x_map = grid[node_x_idx]
+        let y_grid = x_grid[node_x_idx]
 
         for (let dy_idx = -1; dy_idx <= 1; dy_idx++) {
             //
-            const arr = x_map![node_y_idx + dy_idx]
+            const arr = y_grid![node_y_idx + dy_idx]
             if (!arr) continue
 
             for (let i = arr.length - 1; i >= 0; i--) {
@@ -353,12 +353,12 @@ export function updatePositionsGrid(graph: Graph): void {
             }
         }
 
-        x_map = grid[node_x_idx + 1]
-        if (!x_map) continue
+        y_grid = x_grid[node_x_idx + 1]
+        if (!y_grid) continue
 
         for (let dy_idx = -1; dy_idx <= 1; dy_idx++) {
             //
-            const arr = x_map![node_y_idx + dy_idx]
+            const arr = y_grid![node_y_idx + dy_idx]
             if (!arr) continue
 
             for (const node_b of arr) {
@@ -406,7 +406,7 @@ export function updatePositionsGrid(graph: Graph): void {
         velocity.y *= INERTIA_STRENGTH
 
         /*
-            commit and correct grid position
+            commit and sort
         */
         if (locked) continue
 
@@ -416,7 +416,7 @@ export function updatePositionsGrid(graph: Graph): void {
             y = position.y + velocity.y,
             x_idx = Math.floor(x / REPULSION_DISTANCE),
             y_idx = Math.floor(y / REPULSION_DISTANCE),
-            order = grid[prev_x_idx]![prev_y_idx]!,
+            order = x_grid[prev_x_idx]![prev_y_idx]!,
             index = order.indexOf(node)!
 
         if (x_idx !== prev_x_idx || y_idx !== prev_y_idx) {
@@ -425,7 +425,7 @@ export function updatePositionsGrid(graph: Graph): void {
             position.x = x
             position.y = y
 
-            addNodeToGrid(grid, node, x_idx, y_idx)
+            addNodeToGrid(x_grid, node, x_idx, y_idx)
         } else {
             position.x = x
             position.y = y
