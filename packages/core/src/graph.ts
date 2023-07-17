@@ -146,7 +146,8 @@ export const INERTIA_STRENGTH = 0.8,
     REPULSION_DISTANCE = 18,
     ATTRACTION_STRENGTH = 0.02,
     ORIGIN_STRENGTH = 0.015,
-    MIN_VELOCITY = 0.015
+    MIN_VELOCITY = 0.015,
+    MIN_MOVE = 0.001
 
 export function updatePositionsAccurate(graph: Graph): void {
     const { nodes, edges } = graph
@@ -272,7 +273,7 @@ export function updatePositionsOptimized(graph: Graph): void {
         /*
             commit
         */
-        if (!locked) {
+        if (!locked && velocity.x * velocity.x + velocity.y * velocity.y > MIN_MOVE) {
             position.x += velocity.x
             position.y += velocity.y
         }
@@ -304,7 +305,6 @@ export function updatePositionsGrid(graph: Graph): void {
         /*
             away from other nodes
         */
-
         const x_idx = toGridIdx(x),
             y_idx = toGridIdx(y)
 
@@ -316,6 +316,7 @@ export function updatePositionsGrid(graph: Graph): void {
             if (!arr) continue
 
             for (let i = arr.length - 1; i >= 0; i--) {
+                //
                 const node_b = arr[i]!,
                     dx = x - node_b.position.x
 
@@ -395,34 +396,34 @@ export function updatePositionsGrid(graph: Graph): void {
         /*
             commit and sort
         */
-        if (locked) continue
+        if (locked || velocity.x * velocity.x + velocity.y * velocity.y <= MIN_MOVE) continue
 
-        const prev_x_idx = toGridIdx(position.x),
-            prev_y_idx = toGridIdx(position.y),
-            x = position.x + velocity.x,
-            y = position.y + velocity.y,
-            x_idx = toGridIdx(x),
-            y_idx = toGridIdx(y),
-            order = x_grid[prev_x_idx]![prev_y_idx]!,
-            order_idx = order.indexOf(node)!
+        const prev_x_idx = toGridIdx(position.x)
+        const prev_y_idx = toGridIdx(position.y)
+
+        position.x += velocity.x
+        position.y += velocity.y
+
+        const x_idx = toGridIdx(position.x)
+        const y_idx = toGridIdx(position.y)
+        const order = x_grid[prev_x_idx]![prev_y_idx]!
+        const order_idx = order.indexOf(node)!
 
         if (x_idx !== prev_x_idx || y_idx !== prev_y_idx) {
             order.splice(order_idx, 1)
 
-            position.x = x
-            position.y = y
-
             addNodeToGrid(x_grid, node, x_idx, y_idx)
         } else {
-            position.x = x
-            position.y = y
-
             if (velocity.x < 0) {
-                for (let i = order_idx - 1; i >= 0 && order[i]!.position.x > x; i--) {
+                for (let i = order_idx - 1; i >= 0 && order[i]!.position.x > position.x; i--) {
                     ;[order[i + 1], order[i]] = [order[i]!, order[i + 1]!]
                 }
             } else {
-                for (let i = order_idx + 1; i < order.length && order[i]!.position.x < x; i++) {
+                for (
+                    let i = order_idx + 1;
+                    i < order.length && order[i]!.position.x < position.x;
+                    i++
+                ) {
                     ;[order[i - 1], order[i]] = [order[i]!, order[i - 1]!]
                 }
             }

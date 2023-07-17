@@ -6,8 +6,6 @@ import { createEventListenerMap } from '@solid-primitives/event-listener'
 import { createRootPool, RootPoolFactory } from '@solid-primitives/rootless'
 import { resolveElements } from '@solid-primitives/refs'
 
-const MIN_MOVE = 0.001
-
 export function ForceGraph(props: {
     graph: graph.Graph
     node: RootPoolFactory<graph.Node, JSX.Element>
@@ -52,12 +50,7 @@ export function ForceGraph(props: {
                 prev_x = prev_nodes_x[i],
                 prev_y = prev_nodes_y[i]
 
-            if (prev_x !== undefined) {
-                const dx = node.position.x - prev_x
-                const dy = node.position.y - prev_y!
-
-                if (dx * dx + dy * dy <= MIN_MOVE) continue
-            }
+            if (prev_x === node.position.x && prev_y === node.position.y) continue
 
             prev_nodes_x[i] = node.position.x
             prev_nodes_y[i] = node.position.y
@@ -79,15 +72,13 @@ export function ForceGraph(props: {
                 prev_b_x = prev_edges_x[i * 2 + 1],
                 prev_b_y = prev_edges_y[i * 2 + 1]
 
-            if (prev_a_x !== undefined) {
-                const dx_a = node_a.position.x - prev_a_x,
-                    dy_a = node_a.position.y - prev_a_y!,
-                    dx_b = node_b.position.x - prev_b_x!,
-                    dy_b = node_b.position.y - prev_b_y!
-
-                if (dx_a * dx_a + dy_a * dy_a <= MIN_MOVE && dx_b * dx_b + dy_b * dy_b <= MIN_MOVE)
-                    continue
-            }
+            if (
+                prev_a_x === node_a.position.x &&
+                prev_a_y === node_a.position.y &&
+                prev_b_x === node_b.position.x &&
+                prev_b_y === node_b.position.y
+            )
+                continue
 
             prev_edges_x[i * 2] = node_a.position.x
             prev_edges_y[i * 2] = node_a.position.y
@@ -127,7 +118,7 @@ export function ForceGraph(props: {
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    const force_graph = generateInitialGraph(1024)
+    const force_graph = generateInitialGraph(7000)
     // const initialGraph = getLAGraph()
 
     const dragging = s.signal<graph.Node>()

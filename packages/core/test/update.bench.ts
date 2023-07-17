@@ -38,14 +38,21 @@ const fns = {
     // 256,
     // 512,
     1024, 2048, 4096,
+    // 6144,
 ].forEach(n => {
     describe(`update ${n} nodes`, () => {
         for (const [name, fn] of Object.entries(fns)) {
             const graph = generateExampleGraph(n)
 
-            bench(name, () => {
-                for (let i = 0; i < 42; i++) fn(graph)
-            })
+            bench(
+                name,
+                () => {
+                    for (let i = 0; i < 36; i++) {
+                        fn(graph)
+                    }
+                },
+                { iterations: 20 },
+            )
         }
     })
 })
