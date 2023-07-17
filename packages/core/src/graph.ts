@@ -61,71 +61,57 @@ export function resetOrder(graph: Graph): void {
     graph.x_grid = {}
 
     for (const node of graph.nodes) {
-        const idx_x = toGridIndex(node.position.x)
-        const idx_y = toGridIndex(node.position.y)
+        const idx_x = toGridIdx(node.position.x),
+            idx_y = toGridIdx(node.position.y)
         addNodeToGrid(graph.x_grid, node, idx_x, idx_y)
     }
 }
 
-export function toGridIndex(xy: number): number {
-    return Math.floor(xy / REPULSION_DISTANCE)
+export function toGridIdx(x: number): number {
+    return Math.floor(x / REPULSION_DISTANCE)
 }
 
-export function removeNodeFromGrid(grid: GraphGrid, node: Node): void {
-    const [x, y] = node.position,
-        grid_x_idx = toGridIndex(x),
-        grid_y_idx = toGridIndex(y),
-        arr = grid[grid_x_idx]![grid_y_idx]!,
-        idx = arr.indexOf(node)!
-
-    arr.splice(idx, 1)
-}
-
-export function addNodeToGrid(grid: GraphGrid, node: Node, x_idx: number, y_idx: number): void {
-    const x_map = grid[x_idx]
+export function addNodeToGrid(grid: GraphGrid, node: Node, idx_x: number, idx_y: number): void {
+    const x_map = grid[idx_x]
 
     if (x_map === undefined) {
-        grid[x_idx] = { [y_idx]: [node] }
+        grid[idx_x] = { [idx_y]: [node] }
         return
     }
 
-    const arr = x_map[y_idx]
+    const arr = x_map[idx_y]
 
     if (arr === undefined) {
-        x_map[y_idx] = [node]
+        x_map[idx_y] = [node]
         return
     }
 
     const { x } = node.position
 
-    let low = 0,
-        high = arr.length - 1,
-        mid: number,
-        guess_node: Node,
-        guess_x: number
+    let i = 0
+    while (i < arr.length && arr[i]!.position.x < x) i++
 
-    while (low <= high) {
-        mid = Math.floor((low + high) / 2)
-        guess_node = arr[mid]!
-        guess_x = guess_node.position.x
-
-        if (guess_x === x) {
-            arr.splice(mid, 0, node)
-            return
-        } else if (guess_x > x) {
-            high = mid - 1
-        } else {
-            low = mid + 1
-        }
-    }
-
-    arr.splice(low, 0, node)
+    arr.splice(i, 0, node)
 }
 
 /**
  * Corrects the order of a single node in the graph.
  */
-export function correctNodeOrder(graph: Graph, node: Node): void {
+export function correctNodeOrder(graph: Graph, node: Node, prev_position: trig.Vec): void {
+    {
+        const { x_grid } = graph,
+            prev_grid_x_idx = toGridIdx(prev_position.x),
+            prev_grid_y_idx = toGridIdx(prev_position.y),
+            arr = x_grid[prev_grid_x_idx]![prev_grid_y_idx]!
+
+        arr.splice(arr.indexOf(node), 1)
+
+        const grid_x_idx = toGridIdx(node.position.x),
+            grid_y_idx = toGridIdx(node.position.y)
+
+        addNodeToGrid(x_grid, node, grid_x_idx, grid_y_idx)
+    }
+
     const { x_order } = graph,
         { x } = node.position,
         index = x_order.indexOf(node)
@@ -155,12 +141,12 @@ export function checkOrder(arr: readonly Node[]): boolean {
     return true
 }
 
-export const INERTIA_STRENGTH = 0.8
-export const REPULSION_STRENGTH = 0.35
-export const REPULSION_DISTANCE = 18
-export const ATTRACTION_STRENGTH = 0.02
-export const ORIGIN_STRENGTH = 0.015
-export const MIN_VELOCITY = 0.015
+export const INERTIA_STRENGTH = 0.8,
+    REPULSION_STRENGTH = 0.35,
+    REPULSION_DISTANCE = 18,
+    ATTRACTION_STRENGTH = 0.02,
+    ORIGIN_STRENGTH = 0.015,
+    MIN_VELOCITY = 0.015
 
 export function updatePositionsAccurate(graph: Graph): void {
     const { nodes, edges } = graph
@@ -315,17 +301,18 @@ export function updatePositionsGrid(graph: Graph): void {
         velocity.x += x * -ORIGIN_STRENGTH
         velocity.y += y * -ORIGIN_STRENGTH
 
-        const node_x_idx = Math.floor(x / REPULSION_DISTANCE),
-            node_y_idx = Math.floor(y / REPULSION_DISTANCE)
-
         /*
             away from other nodes
         */
-        let y_grid = x_grid[node_x_idx]
+
+        const x_idx = toGridIdx(x),
+            y_idx = toGridIdx(y)
+
+        let y_grid = x_grid[x_idx]
 
         for (let dy_idx = -1; dy_idx <= 1; dy_idx++) {
             //
-            const arr = y_grid![node_y_idx + dy_idx]
+            const arr = y_grid![y_idx + dy_idx]
             if (!arr) continue
 
             for (let i = arr.length - 1; i >= 0; i--) {
@@ -353,12 +340,12 @@ export function updatePositionsGrid(graph: Graph): void {
             }
         }
 
-        y_grid = x_grid[node_x_idx + 1]
+        y_grid = x_grid[x_idx + 1]
         if (!y_grid) continue
 
         for (let dy_idx = -1; dy_idx <= 1; dy_idx++) {
             //
-            const arr = y_grid![node_y_idx + dy_idx]
+            const arr = y_grid![y_idx + dy_idx]
             if (!arr) continue
 
             for (const node_b of arr) {
@@ -410,17 +397,17 @@ export function updatePositionsGrid(graph: Graph): void {
         */
         if (locked) continue
 
-        const prev_x_idx = Math.floor(position.x / REPULSION_DISTANCE),
-            prev_y_idx = Math.floor(position.y / REPULSION_DISTANCE),
+        const prev_x_idx = toGridIdx(position.x),
+            prev_y_idx = toGridIdx(position.y),
             x = position.x + velocity.x,
             y = position.y + velocity.y,
-            x_idx = Math.floor(x / REPULSION_DISTANCE),
-            y_idx = Math.floor(y / REPULSION_DISTANCE),
+            x_idx = toGridIdx(x),
+            y_idx = toGridIdx(y),
             order = x_grid[prev_x_idx]![prev_y_idx]!,
-            index = order.indexOf(node)!
+            order_idx = order.indexOf(node)!
 
         if (x_idx !== prev_x_idx || y_idx !== prev_y_idx) {
-            order.splice(index, 1)
+            order.splice(order_idx, 1)
 
             position.x = x
             position.y = y
@@ -431,11 +418,11 @@ export function updatePositionsGrid(graph: Graph): void {
             position.y = y
 
             if (velocity.x < 0) {
-                for (let i = index - 1; i >= 0 && order[i]!.position.x > x; i--) {
+                for (let i = order_idx - 1; i >= 0 && order[i]!.position.x > x; i--) {
                     ;[order[i + 1], order[i]] = [order[i]!, order[i + 1]!]
                 }
             } else {
-                for (let i = index + 1; i < order.length && order[i]!.position.x < x; i++) {
+                for (let i = order_idx + 1; i < order.length && order[i]!.position.x < x; i++) {
                     ;[order[i - 1], order[i]] = [order[i]!, order[i - 1]!]
                 }
             }

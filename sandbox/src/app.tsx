@@ -1,5 +1,5 @@
 import { type Component, onCleanup, type JSX, createMemo } from 'solid-js'
-import { graph, s } from '../../packages/core/src'
+import { graph, s, trig } from '../../packages/core/src'
 import clsx from 'clsx'
 import { generateInitialGraph } from './init'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
@@ -160,16 +160,12 @@ export const App: Component = () => {
 
         if (pos_x === node.position.x && pos_y === node.position.y) return
 
-        graph.removeNodeFromGrid(force_graph.x_grid, node)
+        const prev_pos = trig.vec(node.position)
 
         node.position.x = pos_x
         node.position.y = pos_y
 
-        const idx_x = graph.toGridIndex(node.position.x)
-        const idx_y = graph.toGridIndex(node.position.y)
-        graph.addNodeToGrid(force_graph.x_grid, node, idx_x, idx_y)
-
-        graph.correctNodeOrder(force_graph, node)
+        graph.correctNodeOrder(force_graph, node, prev_pos)
     }
 
     createEventListenerMap(document, {

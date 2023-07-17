@@ -44,7 +44,7 @@ const fns = {
             const graph = generateExampleGraph(n)
 
             bench(name, () => {
-                for (let i = 0; i < 36; i++) fn(graph)
+                for (let i = 0; i < 42; i++) fn(graph)
             })
         }
     })
