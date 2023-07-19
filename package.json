@@ -6,6 +6,7 @@
     "private": true,
     "scripts": {
         "format": "prettier --ignore-path .gitignore -w **/*.{ts,tsx,json,html,css}",
+        "changeset": "changeset",
         "release": "changeset version && changeset publish && pnpm i --no-frozen-lockfile && git commit -am \"Version packages\" && git push --follow-tags"
     },
     "devDependencies": {

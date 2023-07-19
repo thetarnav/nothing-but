@@ -1,7 +1,4 @@
-/**
- * Represents a point in 2D space with x and y coordinates.
- */
-export type Point = { x: number; y: number }
+import type { Position } from './types'
 
 /**
  * Represents a template string type in the format `(${number}, ${number})`.
@@ -31,9 +28,9 @@ export class Vec {
      * @param y - The y-component of the vector.
      */
     constructor(str: VecString)
-    constructor(vec: Point)
+    constructor(vec: Position)
     constructor(x: number, y?: number)
-    constructor(x: number | VecString | Point, y?: number) {
+    constructor(x: number | VecString | Position, y?: number) {
         if (typeof x === 'string') {
             const [xStr, yStr] = x.slice(1, -1).split(', ')
             x = Number(xStr)
@@ -53,7 +50,7 @@ export class Vec {
     toString(): VecString {
         return `(${this.x}, ${this.y})`
     }
-    toJSON(): Point {
+    toJSON(): Position {
         return { x: this.x, y: this.y }
     }
 }
@@ -63,7 +60,7 @@ export class Vec {
  */
 export const vec: {
     (str: VecString): Vec
-    (vec: Point): Vec
+    (vec: Position): Vec
     (x: number, y?: number): Vec
 } = (...args: [any]) => new Vec(...args)
 
