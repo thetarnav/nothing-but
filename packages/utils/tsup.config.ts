@@ -9,7 +9,7 @@ export default defineConfig(
     entries.map(entry => ({ entry: path.join(src, entry) })),
     {
         // Enable this to write export conditions to package.json
-        // writePackageJson: true,
+        writePackageJson: true,
         dropConsole: true,
     },
 )
