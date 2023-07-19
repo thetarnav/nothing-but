@@ -1,7 +1,70 @@
 import { math } from '.'
 
+/**
+ * Check shallow array equality
+ */
+export function equals(a: readonly unknown[], b: readonly unknown[]): boolean {
+    return a === b || (a.length === b.length && a.every((e, i) => e === b[i]))
+}
+
 export function wrap<T>(arr: readonly T[], index: number): T | undefined {
     return arr[math.remainder(index, arr.length)]
+}
+
+/**
+ * Checks if both arrays contain the same values.
+ * Order doesn't matter.
+ * Arrays must not contain duplicates. (be the same lengths)
+ */
+export function includesSameMembers(a: readonly unknown[], b: readonly unknown[]) {
+    if (a === b) return true
+    if (a.length !== b.length) return false
+
+    const copy = b.slice()
+    let found = 0
+
+    a_loop: for (let i = 0; i < a.length; i++) {
+        const a_item = a[i]
+
+        for (let j = found; j < b.length; j++) {
+            const b_item = copy[j]
+
+            if (a_item === b_item) {
+                ;[copy[j], copy[found]] = [copy[found], copy[j]]
+                found = j + 1
+                continue a_loop
+            }
+        }
+
+        return false
+    }
+
+    return true
+}
+
+export function deduped<T>(array: readonly T[]): T[] {
+    return Array.from(new Set(array))
+}
+
+export function mutateFilter<T, S extends T>(
+    array: T[],
+    predicate: (value: T, index: number, array: T[]) => value is S,
+): void
+export function mutateFilter<T>(
+    array: T[],
+    predicate: (value: T, index: number, array: T[]) => unknown,
+): void
+export function mutateFilter<T>(
+    array: T[],
+    predicate: (value: T, index: number, array: T[]) => unknown,
+): void {
+    const temp = array.filter(predicate)
+    array.length = 0
+    array.push.apply(array, temp)
+}
+
+export function remove<T>(array: T[], item: T): void {
+    array.splice(array.indexOf(item), 1)
 }
 
 export const pickRandom = <T>(arr: readonly T[]): T | undefined => arr[math.randomInt(arr.length)]
