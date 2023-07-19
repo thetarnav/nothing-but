@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.2.0
+
+### Minor Changes
+
+-   97ab7cb: Add misc module and more array funcitons
+
 ## 0.1.0
 
 ### Minor Changes
