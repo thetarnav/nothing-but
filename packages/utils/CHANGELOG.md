@@ -1,5 +1,12 @@
 # @nothing-but/utils
 
+## 0.1.0
+
+### Minor Changes
+
+-   63679ef: Add types sumbodule
+-   Add `ease` submodule
+
 ## 0.0.1
 
 ### Patch Changes

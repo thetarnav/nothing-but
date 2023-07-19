@@ -1,3 +1,5 @@
 export * as array from './array'
+export * as ease from './ease'
 export * as math from './math'
 export * as trig from './trig'
+export * as types from './types'
