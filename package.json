@@ -4,6 +4,9 @@
     "author": "Damian Tarnawski <gthetarnav@gmail.com>",
     "license": "MIT",
     "private": true,
+    "scripts": {
+        "format": "prettier --ignore-path .gitignore -w **/*.{ts,tsx,json,html,css}"
+    },
     "devDependencies": {
         "@changesets/cli": "^2.26.2",
         "@types/node": "^18.16.16",
