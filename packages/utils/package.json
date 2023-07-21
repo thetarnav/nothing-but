@@ -15,6 +15,7 @@
     "scripts": {
         "dev": "tsup --watch",
         "build": "tsup",
+        "prepublish": "pnpm build",
         "test": "vitest",
         "typecheck": "tsc --noEmit"
     },
