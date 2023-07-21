@@ -6,6 +6,10 @@
     "private": true,
     "scripts": {
         "format": "prettier --ignore-path .gitignore -w **/*.{ts,tsx,json,html,css}",
+        "build": "turbo run build --filter=./packages/*",
+        "test": "turbo run test --filter=./packages/*",
+        "typecheck": "turbo run typecheck --filter=./packages/*",
+        "build-test": "turbo run build test typecheck --filter=./packages/*",
         "changeset": "changeset",
         "release": "changeset version && changeset publish && git push --follow-tags"
     },

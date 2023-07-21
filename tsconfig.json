@@ -12,10 +12,7 @@
         "forceConsistentCasingInFileNames": true,
         "noPropertyAccessFromIndexSignature": true,
         "noUncheckedIndexedAccess": true,
-        "types": ["node"],
-        "paths": {
-            "configs/*": ["./configs/*"]
-        }
+        "types": ["node"]
     },
     "exclude": ["node_modules", "**/dist/**/*"]
 }
