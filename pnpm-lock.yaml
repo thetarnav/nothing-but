@@ -45,8 +45,8 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0(typescript@5.1.6)
       tsup-preset-solid:
-        specifier: ^2.0.1
-        version: 2.0.1(esbuild@0.18.15)(solid-js@1.7.8)(tsup@7.1.0)
+        specifier: ^2.0.2
+        version: 2.0.2(esbuild@0.18.15)(solid-js@1.7.8)(tsup@7.1.0)
       turbo:
         specifier: ^1.10.9
         version: 1.10.9
@@ -3721,8 +3721,8 @@ packages:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
     dev: true
 
-  /tsup-preset-solid@2.0.1(esbuild@0.18.15)(solid-js@1.7.8)(tsup@7.1.0):
-    resolution: {integrity: sha512-gN0nD2h4909XvpMnSuqgeiKqv+Ao7Y0d1p4VuF0hnQvazBTXrFHX2ImULG4uCsvU73q2zzoDzk5Ei6iACQmk5w==}
+  /tsup-preset-solid@2.0.2(esbuild@0.18.15)(solid-js@1.7.8)(tsup@7.1.0):
+    resolution: {integrity: sha512-5zHKpmhgB7oltWQGpLro14oHhUHH/1VeMgpr//Jg8ChAxc+Dq83zB5su51We9hThD2Q5oQsRDicseeDNI+/U6w==}
     peerDependencies:
       tsup: ^7.0.0
     dependencies:

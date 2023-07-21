@@ -13,8 +13,8 @@ const preset_options: preset.PresetOptions = {
 
 const CI =
     process.env['CI'] === 'true' ||
-    process.env['GITHUB_ACTIONS'] === 'true' ||
     process.env['CI'] === '"1"' ||
+    process.env['GITHUB_ACTIONS'] === 'true' ||
     process.env['GITHUB_ACTIONS'] === '"1"'
 
 export default defineConfig(config => {
