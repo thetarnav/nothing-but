@@ -15,8 +15,8 @@ export const wrap = (value: number, min: number, max: number) =>
 
 export const bounce = (value: number, min: number, max: number) => {
     const range = max - min,
-        remainder = wrap(value - min, 0, 2 * range),
-        distance = Math.abs(remainder - range)
+        rem = wrap(value - min, 0, 2 * range),
+        distance = Math.abs(rem - range)
     return max - distance
 }
 

@@ -5,17 +5,17 @@ import type { Position } from './types'
  *
  * Useful for storing in a Set or Map to check if a point exists.
  */
-export type VecString = `(${number}, ${number})`
+export type VectorString = `(${number}, ${number})`
 
 /**
  * Represents a 2D vector with x and y components.
  */
-export class Vec {
+export class Vector {
     x: number
     y: number
 
     /**
-     * Creates a new Vec instance.
+     * Creates a new vector instance.
      * @param str - A string in the format `(${number}, ${number})`.
      *
      * OR
@@ -27,10 +27,10 @@ export class Vec {
      * @param x - The x-component of the vector.
      * @param y - The y-component of the vector.
      */
-    constructor(str: VecString)
+    constructor(str: VectorString)
     constructor(vec: Position)
     constructor(x: number, y?: number)
-    constructor(x: number | VecString | Position, y?: number) {
+    constructor(x: number | VectorString | Position, y?: number) {
         if (typeof x === 'string') {
             const [xStr, yStr] = x.slice(1, -1).split(', ')
             x = Number(xStr)
@@ -47,7 +47,7 @@ export class Vec {
         yield this.x
         yield this.y
     }
-    toString(): VecString {
+    toString(): VectorString {
         return `(${this.x}, ${this.y})`
     }
     toJSON(): Position {
@@ -56,36 +56,36 @@ export class Vec {
 }
 
 /**
- * Creates a new Vec instance.
+ * Creates a new vector instance.
  */
-export const vec: {
-    (str: VecString): Vec
-    (vec: Position): Vec
-    (x: number, y?: number): Vec
-} = (...args: [any]) => new Vec(...args)
+export const vector: {
+    (str: VectorString): Vector
+    (vector: Position): Vector
+    (x: number, y?: number): Vector
+} = (...args: [any]) => new Vector(...args)
 
 /**
- * A constant Vec representing the zero vector.
+ * A constant vector representing the zero vector.
  */
-export const ZERO = vec(0, 0)
+export const ZERO = vector(0, 0)
 
 /**
- * Creates a new Vec instance representing the zero vector.
- * @returns A Vec instance representing the zero vector.
+ * Creates a new vector instance representing the zero vector.
+ * @returns A vector instance representing the zero vector.
  */
-export const zero = () => vec(0, 0)
+export const zero = () => vector(0, 0)
 
 /**
  * Checks if two vectors are equal.
  */
-export function vecEquals(a: Vec, b: Vec): boolean {
+export function vectorEquals(a: Vector, b: Vector): boolean {
     return a.x === b.x && a.y === b.y
 }
 
 /**
  * Subtracts a vector from another vector in place. The first vector is **mutated**.
  */
-export function vecSubtract(a: Vec, b: Vec): void {
+export function vectorSubtract(a: Vector, b: Vector): void {
     a.x -= b.x
     a.y -= b.y
 }
@@ -94,23 +94,23 @@ export function vecSubtract(a: Vec, b: Vec): void {
  * Calculates the difference between two vectors.
  * @returns The difference vector.
  */
-export function vecDifference(a: Vec, b: Vec): Vec {
-    return vec(a.x - b.x, a.y - b.y)
+export function vectorDifference(a: Vector, b: Vector): Vector {
+    return vector(a.x - b.x, a.y - b.y)
 }
 
 /**
  * Adds a vector or a force to another vector in place. The first vector is **mutated**.
  */
-export function vecAdd(vec: Vec, velocity: Vec | Force | number): void
-export function vecAdd(vec: Vec, x: number, y: number): void
-export function vecAdd(vec: Vec, x: Vec | Force | number, y?: number): void {
+export function vectorAdd(vec: Vector, velocity: Vector | Force | number): void
+export function vectorAdd(vec: Vector, x: number, y: number): void
+export function vectorAdd(vec: Vector, x: Vector | Force | number, y?: number): void {
     if (typeof x === 'number') {
         vec.x += x
         vec.y += y ?? x
         return
     }
     if (x instanceof Force) {
-        x = forceToVec(x)
+        x = forceTovector(x)
     }
     vec.x += x.x
     vec.y += x.y
@@ -120,14 +120,14 @@ export function vecAdd(vec: Vec, x: Vec | Force | number, y?: number): void {
  * Calculates the sum of two vectors.
  * @returns The sum vector.
  */
-export function vecSum(a: Vec, b: Vec): Vec {
-    return vec(a.x + b.x, a.y + b.y)
+export function vectorSum(a: Vector, b: Vector): Vector {
+    return vector(a.x + b.x, a.y + b.y)
 }
 
 /**
  * Multiplies a vector by another vector or a scalar in place. The first vector is **mutated**.
  */
-export function vecMultiply(a: Vec, b: Vec | number): void {
+export function vectorMultiply(a: Vector, b: Vector | number): void {
     if (typeof b === 'number') {
         a.x *= b
         a.y *= b
@@ -141,14 +141,14 @@ export function vecMultiply(a: Vec, b: Vec | number): void {
  * Calculates the product of two vectors.
  * @returns The product vector.
  */
-export function vecProduct(a: Vec, b: Vec): Vec {
-    return vec(a.x * b.x, a.y * b.y)
+export function vectorProduct(a: Vector, b: Vector): Vector {
+    return vector(a.x * b.x, a.y * b.y)
 }
 
 /**
  * Divides a vector by another vector in place. The first vector is **mutated**.
  */
-export function vecDivide(a: Vec, b: Vec): void {
+export function vectorDivide(a: Vector, b: Vector): void {
     a.x /= b.x
     a.y /= b.y
 }
@@ -158,15 +158,15 @@ export function vecDivide(a: Vec, b: Vec): void {
  * (The first vector is divided by the second vector.)
  * @returns The quotient vector.
  */
-export function vecQuotient(a: Vec, b: Vec): Vec {
-    return vec(a.x / b.x, a.y / b.y)
+export function vectorQuotient(a: Vector, b: Vector): Vector {
+    return vector(a.x / b.x, a.y / b.y)
 }
 
 /**
  * Calculates the distance between two vectors.
  * @returns The distance between the vectors.
  */
-export function vecDistance(a: Vec, b: Vec): number {
+export function vectorDistance(a: Vector, b: Vector): number {
     const x = a.x - b.x
     const y = a.y - b.y
     return Math.sqrt(x * x + y * y)
@@ -176,7 +176,7 @@ export function vecDistance(a: Vec, b: Vec): number {
  * Calculates the angle between two vectors.
  * @returns The angle between the vectors in radians.
  */
-export function vecAngle(a: Vec, b: Vec): number {
+export function vectorAngle(a: Vector, b: Vector): number {
     return Math.atan2(b.y - a.y, b.x - a.x)
 }
 
@@ -184,7 +184,7 @@ export function vecAngle(a: Vec, b: Vec): number {
  * Rotates the {@link point} vector by {@link rad} angle (origin is 0,0).
  * The first vector is **mutated**.
  */
-export function vecRotate(point: Vec, rad: number): void {
+export function vectorRotate(point: Vector, rad: number): void {
     const { x, y } = point,
         cos = Math.cos(rad),
         sin = Math.sin(rad)
@@ -199,7 +199,7 @@ export function vecRotate(point: Vec, rad: number): void {
  * @param origin - The origin of the rotation.
  * @param rad - The angle of rotation in radians.
  */
-export function vecRotateAround(point: Vec, origin: Vec, rad: number): void {
+export function vectorRotateAround(point: Vector, origin: Vector, rad: number): void {
     const { x, y } = point,
         { x: ox, y: oy } = origin,
         cos = Math.cos(rad),
@@ -232,12 +232,12 @@ export class Force {
      * @param distance - The magnitude of the force.
      * @param angle - The angle of the force in radians.
      */
-    constructor(delta_x: Vec, delta_y: Vec)
+    constructor(delta_x: Vector, delta_y: Vector)
     constructor(distance: number, angle: number)
-    constructor(a: number | Vec, b: number | Vec) {
+    constructor(a: number | Vector, b: number | Vector) {
         if (typeof a === 'object') {
-            this.angle = vecAngle(a, b as Vec)
-            this.distance = vecDistance(a, b as Vec)
+            this.angle = vectorAngle(a, b as Vector)
+            this.distance = vectorDistance(a, b as Vector)
         } else {
             this.distance = a
             this.angle = b as number
@@ -254,26 +254,26 @@ export class Force {
  * Creates a new Force instance.
  */
 export const force: {
-    (a: Vec, b: Vec): Force
+    (a: Vector, b: Vector): Force
     (distance: number, angle: number): Force
 } = (...args: [any, any]) => new Force(...args)
 
 /**
- * Converts a Force object to a Vec object with x and y components.
+ * Converts a Force object to a vector object with x and y components.
  */
-export function forceToVec(force: Force): Vec
-export function forceToVec(distance: number, angle: number): Vec
-export function forceToVec(distance: number | Force, angle?: number): Vec {
+export function forceTovector(f: Force): Vector
+export function forceTovector(distance: number, angle: number): Vector
+export function forceTovector(distance: number | Force, angle?: number): Vector {
     if (typeof distance === 'object') {
         angle = distance.angle
         distance = distance.distance
     }
     const x = distance * Math.cos(angle!)
     const y = distance * Math.sin(angle!)
-    return vec(x, y)
+    return vector(x, y)
 }
 
 /**
  * Represents a line segment with two endpoints.
  */
-export type Segment = [Vec, Vec]
+export type Segment = [Vector, Vector]
