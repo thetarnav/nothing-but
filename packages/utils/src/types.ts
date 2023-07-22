@@ -81,6 +81,8 @@ export type Simplify<T> = T extends object ? { [K in keyof T]: T[K] } : T
 /** Unboxes type definition, making it more readable */
 export type UnboxLazy<T> = T extends () => infer U ? U : T
 
+export type Prettify<T> = { [K in keyof T]: T[K] } & {}
+
 type RawNarrow<T> =
     | (T extends [] ? [] : never)
     | (T extends string | number | bigint | boolean ? T : never)
