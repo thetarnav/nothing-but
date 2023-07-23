@@ -42,6 +42,12 @@
                 "default": "./dist/array/index.js"
             }
         },
+        "./color": {
+            "import": {
+                "types": "./dist/color/index.d.ts",
+                "default": "./dist/color/index.js"
+            }
+        },
         "./ease": {
             "import": {
                 "types": "./dist/ease/index.d.ts",
@@ -77,6 +83,9 @@
         "*": {
             "array": [
                 "./dist/array/index.d.ts"
+            ],
+            "color": [
+                "./dist/color/index.d.ts"
             ],
             "ease": [
                 "./dist/ease/index.d.ts"
