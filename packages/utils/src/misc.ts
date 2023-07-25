@@ -6,6 +6,11 @@ export const trueFn: () => boolean = () => true
 export const falseFn: () => boolean = () => false
 
 /**
+ * `a ^ b`
+ */
+export const XOR = (a: boolean, b: boolean) => (a ? !b : b)
+
+/**
  * Get entries of an object
  */
 export const entries = Object.entries as <T extends object>(obj: T) => [keyof T, T[keyof T]][]
