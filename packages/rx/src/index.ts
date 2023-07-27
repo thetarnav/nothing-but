@@ -1,11 +1,25 @@
-export type Listener<T> = (value: T) => void
+/*
+
+TODO:
+
+-   [ ] disposing
+-   [ ] join
+-   [ ] derived queue
+-   [ ] computed
+-   [ ] context
+-   [ ] resource
+-   [ ] diamond
+
+*/
+
+export type Observer_Callback<T> = (value: T) => void
 
 export type Unsubscribe = () => void
 
 export class Observable<T = undefined> {
-    listeners: Listener<T>[] = []
+    observers: Observer_Callback<T>[] = []
 
-    subscribe(listener: Listener<T>): Unsubscribe {
+    subscribe(listener: Observer_Callback<T>): Unsubscribe {
         return subscribe(this, listener)
     }
 }
@@ -13,12 +27,15 @@ export class Observable<T = undefined> {
 export function publish(source: Observable, value?: undefined): void
 export function publish<T>(source: Observable<T>, value: T): void
 export function publish<T>(source: Observable<T>, value: T): void {
-    for (const listener of source.listeners) {
+    for (const listener of source.observers) {
         listener(value)
     }
 }
 
-export function unsubscribe<T>({ listeners }: Observable<T>, listener: Listener<T>): void {
+export function unsubscribe<T>(
+    { observers: listeners }: Observable<T>,
+    listener: Observer_Callback<T>,
+): void {
     for (let i = 0; i < listeners.length; i++) {
         if (listeners[i] === listener) {
             listeners.splice(i, 1)
@@ -27,12 +44,12 @@ export function unsubscribe<T>({ listeners }: Observable<T>, listener: Listener<
     }
 }
 
-export function subscribe<T>(to: Observable<T>, listener: Listener<T>): Unsubscribe {
-    to.listeners.push(listener)
+export function subscribe<T>(to: Observable<T>, listener: Observer_Callback<T>): Unsubscribe {
+    to.observers.push(listener)
     return () => unsubscribe(to, listener)
 }
 
-export class Signal<T> extends Observable<T> {
+export class Signal<T> extends Observable<Signal<T>> {
     constructor(public value: T) {
         super()
     }
@@ -44,78 +61,69 @@ export function signal<T>(initial_value: T): Signal<T> {
     return new Signal(initial_value)
 }
 
-let current_scheduler: Scheduler | undefined
-
-export class Scheduler {
-    effects = new Set<Effect<any>>()
-    scheduled: boolean = false
+export function set<T>(signal: Signal<T>, value: T): void {
+    signal.value = value
+    publish(signal, signal)
 }
 
-export function scheduler_push(scheduler: Scheduler, eff: Effect<any>): void {
-    scheduler.effects.add(eff)
-    if (!scheduler.scheduled) {
-        scheduler.scheduled = true
-        queueMicrotask(() => {
-            scheduler.scheduled = false
-            current_scheduler = scheduler
-            try {
-                for (const eff of scheduler.effects) {
-                    run(eff)
-                }
-            } finally {
-                current_scheduler = undefined
-                scheduler.effects.clear()
-            }
-        })
+export class Derived<TSource, TValue> extends Signal<TValue> {
+    constructor(
+        public source: Observable<TSource>,
+        public fn: (source_value: TSource) => TValue,
+        initial_value: TValue,
+    ) {
+        super(initial_value)
+    }
+}
+
+let current_scheduler: Scheduler<any> | undefined
+
+export class Scheduler<T> {
+    effects: Effect<T>[] = []
+}
+
+export function flush(scheduler: Scheduler<any>): void {
+    if (scheduler.effects.length === 0) return
+
+    const prev_scheduler = current_scheduler
+    current_scheduler = scheduler
+    const set = new Set<Effect<any>>()
+    try {
+        for (const eff of scheduler.effects) {
+            if (set.has(eff)) continue
+            set.add(eff)
+            eff.fn(eff.source.value)
+        }
+    } finally {
+        current_scheduler = prev_scheduler
+        scheduler.effects.length = 0
     }
 }
 
 export class Effect<T> {
     constructor(
-        public source: Observable<T>,
+        public source: Signal<T>,
         public fn: (value: T) => void,
-        public scheduler: Scheduler,
+        public scheduler: Scheduler<T>,
     ) {}
 }
 
+// TODO should run immediately probably
 export function effect<T>(
-    source: Observable<T>,
+    source: Signal<T>,
     fn: (value: T) => void,
     scheduler = current_scheduler ?? new Scheduler(),
 ): Effect<T> {
     const effect = new Effect(source, fn, scheduler)
-    source.subscribe(value => scheduler_push(scheduler, effect))
+    source.subscribe(() => schedule(effect))
     return effect
 }
 
-export function run<T>(effect: Effect<T>): void {
-    effect.fn((effect.source as any).value)
+export function schedule<T>(eff: Effect<T>): void {
+    const scheduler = eff.scheduler
+    scheduler.effects.push(eff)
+
+    if (scheduler.effects.length === 1) {
+        queueMicrotask(() => flush(scheduler))
+    }
 }
-
-export function set<T>(signal: Signal<T>, value: T): void {
-    publish(signal, (signal.value = value))
-}
-
-;(() => {
-    const count = signal(0)
-
-    const root_obs = new Observable()
-    const root = effect(root_obs, () => {
-        console.log('root')
-
-        effect(count, n => {
-            console.log('count:', n)
-        })
-
-        effect(count, n => {
-            console.log('_count:', n)
-        })
-    })
-    run(root)
-
-    set(count, 1)
-
-    publish(root_obs)
-
-    set(count, 2)
-})()
