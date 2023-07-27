@@ -9,6 +9,7 @@ TODO:
 -   [ ] context
 -   [ ] resource
 -   [ ] diamond
+-   [ ] observables working with derived and effects
 
 */
 
@@ -66,16 +67,6 @@ export function set<T>(signal: Signal<T>, value: T): void {
     publish(signal, signal)
 }
 
-export class Derived<TSource, TValue> extends Signal<TValue> {
-    constructor(
-        public source: Observable<TSource>,
-        public fn: (source_value: TSource) => TValue,
-        initial_value: TValue,
-    ) {
-        super(initial_value)
-    }
-}
-
 let current_scheduler: Scheduler<any> | undefined
 
 export class Scheduler<T> {
@@ -126,4 +117,24 @@ export function schedule<T>(eff: Effect<T>): void {
     if (scheduler.effects.length === 1) {
         queueMicrotask(() => flush(scheduler))
     }
+}
+
+export class Derived<TSource, TValue> extends Signal<TValue> {
+    constructor(
+        public source: Signal<TSource>,
+        public fn: (source_value: TSource) => TValue,
+        initial_value: TValue,
+    ) {
+        super(initial_value)
+    }
+}
+
+export function derived<TSource, TValue>(
+    source: Signal<TSource>,
+    fn: (source_value: TSource) => TValue,
+    initial_value?: TValue,
+): Derived<TSource, TValue> {
+    const derived = new Derived(source, fn, initial_value as TValue)
+    source.subscribe(v => set(derived, fn(v.value)))
+    return derived
 }

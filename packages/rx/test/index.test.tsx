@@ -1,8 +1,48 @@
 import * as vi from 'vitest'
 import * as rx from '../src'
 
-vi.describe('effects', () => {
-    vi.it('effects', async () => {
+vi.describe('.', () => {
+    vi.test('observable', () => {
+        const obs = new rx.Observable<number>()
+
+        const captured: number[] = []
+
+        rx.subscribe(obs, v => {
+            captured.push(v)
+        })
+        vi.expect(captured).toEqual([])
+
+        rx.publish(obs, 1)
+        vi.expect(captured).toEqual([1])
+
+        rx.publish(obs, 2)
+        vi.expect(captured).toEqual([1, 2])
+    })
+
+    vi.test('observable signal', () => {
+        const obs = rx.signal(0)
+
+        const captured: number[] = []
+
+        rx.subscribe(obs, sig => {
+            captured.push(sig.value)
+        })
+        vi.expect(captured).toEqual([])
+
+        rx.set(obs, 1)
+        vi.expect(captured).toEqual([1])
+
+        rx.set(obs, 2)
+        vi.expect(captured).toEqual([1, 2])
+
+        obs.value = 3
+        vi.expect(captured).toEqual([1, 2])
+
+        rx.publish(obs, obs)
+        vi.expect(captured).toEqual([1, 2, 3])
+    })
+
+    vi.test('effects', async () => {
         const count = rx.signal(1)
 
         const runs: [number, number, number] = [0, 0, 0]
@@ -58,5 +98,14 @@ vi.describe('effects', () => {
                 resolve()
             })
         })
+    })
+
+    vi.test('derived', () => {
+        const count = rx.signal(1)
+        const doubled = rx.derived(count, n => n * 2)
+
+        vi.expect(doubled.value).toBe(2)
+        rx.set(count, 2)
+        vi.expect(doubled.value).toBe(4)
     })
 })
