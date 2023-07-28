@@ -138,8 +138,8 @@ export function updatePositions(graph: Graph): void {
         /*
             towards the origin
         */
-        velocity.x += x * -ORIGIN_STRENGTH
-        velocity.y += y * -ORIGIN_STRENGTH
+        velocity.x -= x * ORIGIN_STRENGTH
+        velocity.y -= y * ORIGIN_STRENGTH
 
         /*
             away from other nodes
@@ -147,8 +147,8 @@ export function updatePositions(graph: Graph): void {
             and apply the force to both nodes
         */
         const idx = to_grid_idx(position),
-            dy_max = idx <= n_cells - axis_cells ? 1 : 0,
             dy_min = idx >= axis_cells ? -1 : 0,
+            dy_max = idx <= n_cells - axis_cells ? 1 : 0,
             at_right_edge = idx % axis_cells === axis_cells - 1
 
         for (let dy_idx = dy_min; dy_idx <= dy_max; dy_idx++) {

@@ -1,13 +1,13 @@
-import { math, trig } from '@nothing-but/utils'
+import { trig } from '@nothing-but/utils'
 import { bench, describe } from 'vitest'
 import * as graph from '../src'
 // import * as graph2 from '../src/index2'
 
 function generateExampleGraph(mod: typeof graph, length: number): graph.Graph {
-    const nodes: graph.Node[] = Array.from(
-        { length },
-        () => new mod.Node(trig.vector(math.random_from(-50, 50), math.random_from(-50, 50))),
-    )
+    const nodes: graph.Node[] = Array.from({ length }, () => new graph.Node(trig.vector(0, 0)))
+
+    graph.randomizeNodePositions(nodes)
+
     const edges: graph.Edge[] = []
 
     for (let i = 0; i < length; i++) {

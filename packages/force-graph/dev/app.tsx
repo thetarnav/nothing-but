@@ -45,20 +45,19 @@ export function ForceGraph(props: {
             { nodes, edges } = props.graph
 
         for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i]!,
+            const { position } = nodes[i]!,
+                { x, y } = position,
                 prev_x = prev_nodes[i * 2],
                 prev_y = prev_nodes[i * 2 + 1]
 
-            if (prev_x === node.position.x && prev_y === node.position.y) continue
+            if (prev_x === x && prev_y === y) continue
 
-            prev_nodes[i * 2] = node.position.x
-            prev_nodes[i * 2 + 1] = node.position.y
+            prev_nodes[i * 2] = x
+            prev_nodes[i * 2 + 1] = y
 
             const el = els[i]! as HTMLElement
 
-            el.style.translate = `calc(${node.position.x + 50} * 0.8vw) calc(${
-                50 - node.position.y
-            } * 0.8vw)`
+            el.style.translate = `calc(${x + 50} * 0.8vw) calc(${y + 50} * 0.8vw)`
         }
 
         for (let i = 0; i < edges.length; i++) {
@@ -83,10 +82,10 @@ export function ForceGraph(props: {
 
             const line = line_els[i]!
 
-            line.x1.baseVal.valueAsString = `${node_a.position.x + 50}%`
-            line.y1.baseVal.valueAsString = `${50 - node_a.position.y}%`
-            line.x2.baseVal.valueAsString = `${node_b.position.x + 50}%`
-            line.y2.baseVal.valueAsString = `${50 - node_b.position.y}%`
+            line.x1.baseVal.valueAsString = node_a.position.x + 50 + '%'
+            line.y1.baseVal.valueAsString = node_a.position.y + 50 + '%'
+            line.x2.baseVal.valueAsString = node_b.position.x + 50 + '%'
+            line.y2.baseVal.valueAsString = node_b.position.y + 50 + '%'
         }
 
         prev_nodes.length = nodes.length * 2
@@ -114,7 +113,7 @@ export function ForceGraph(props: {
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    const force_graph = generateInitialGraph(1024)
+    const force_graph = generateInitialGraph(512)
     // const initialGraph = getLAGraph()
 
     const dragging = s.signal<graph.Node>()
@@ -143,7 +142,7 @@ export const App: Component = () => {
         const x = (e.clientX - rect.left) / rect.width
         const y = (e.clientY - rect.top) / rect.height
         const pos_x = x * 100 - 50
-        const pos_y = 50 - y * 100
+        const pos_y = y * 100 - 50
 
         if (pos_x === node.position.x && pos_y === node.position.y) return
 
