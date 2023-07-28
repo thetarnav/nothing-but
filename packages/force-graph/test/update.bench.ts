@@ -1,11 +1,12 @@
 import { math, trig } from '@nothing-but/utils'
 import { bench, describe } from 'vitest'
 import * as graph from '../src'
+// import * as graph2 from '../src/index2'
 
-function generateExampleGraph(length: number): graph.Graph {
+function generateExampleGraph(mod: typeof graph, length: number): graph.Graph {
     const nodes: graph.Node[] = Array.from(
         { length },
-        () => new graph.Node(trig.vector(math.random_from(-50, 50), math.random_from(-50, 50))),
+        () => new mod.Node(trig.vector(math.random_from(-50, 50), math.random_from(-50, 50))),
     )
     const edges: graph.Edge[] = []
 
@@ -15,15 +16,15 @@ function generateExampleGraph(length: number): graph.Graph {
         const node = nodes[i]!
         const node_b = nodes[(i + 1) % length]!
 
-        edges.push(graph.connect(node, node_b))
+        edges.push(mod.connect(node, node_b))
     }
 
-    const new_graph = new graph.Graph()
+    const new_graph = new mod.Graph()
 
     new_graph.nodes = nodes
     new_graph.edges = edges
 
-    graph.resetOrder(new_graph)
+    mod.resetOrder(new_graph)
 
     return new_graph
 }
@@ -31,7 +32,14 @@ function generateExampleGraph(length: number): graph.Graph {
 const fns = {
     // Accurate: graph.updatePositionsAccurate,
     // Optimized: graph.updatePositionsOptimized,
-    Grid: graph.updatePositions,
+    1: {
+        fn: graph.updatePositions,
+        mod: graph,
+    },
+    // 2: {
+    //     fn: graph2.updatePositions,
+    //     mod: graph2,
+    // },
 }
 
 ;[
@@ -42,8 +50,8 @@ const fns = {
     // 6144,
 ].forEach(n => {
     describe(`update ${n} nodes`, () => {
-        for (const [name, fn] of Object.entries(fns)) {
-            const graph = generateExampleGraph(n)
+        for (const [name, { fn, mod }] of Object.entries(fns)) {
+            const graph = generateExampleGraph(mod, n)
 
             bench(
                 name,
@@ -52,7 +60,7 @@ const fns = {
                         fn(graph)
                     }
                 },
-                // { iterations: 20 },
+                { iterations: 14 },
             )
         }
     })

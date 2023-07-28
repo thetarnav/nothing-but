@@ -3,13 +3,11 @@ import { math, trig } from '@nothing-but/utils'
 /**
  * Spatial grid looking up surrounding nodes by their position.
  *
- * The first index is the x position of the node divided by the repulsion distance.
+ * The first index is the matrix cell calculated from the x and y position of the node.
  *
- * The second index is the y position of the node divided by the repulsion distance.
- *
- * The third index is the index of the node in the array, sorted by x position.
+ * The second index is the index of the node in the call array, sorted by x position.
  */
-export type GraphGrid = Node[][][]
+export type GraphGrid = Node[][]
 
 export class Graph {
     nodes: Node[] = []
@@ -39,10 +37,15 @@ export const INERTIA_STRENGTH = 0.8,
     MIN_MOVE = 0.001,
     GRID_RADIUS = 100
 
-const n_redius_cells = Math.ceil(GRID_RADIUS / REPULSION_DISTANCE),
-    n_cells = n_redius_cells * 2
+const radius_cells = Math.ceil(GRID_RADIUS / REPULSION_DISTANCE),
+    axis_cells = radius_cells * 2,
+    n_cells = axis_cells * axis_cells
 
-const to_grid_idx = (x: number): number => Math.floor(x / REPULSION_DISTANCE) + n_redius_cells
+const to_grid_idx = (pos: trig.Vector): number => {
+    const xi = Math.floor(pos.x / REPULSION_DISTANCE) + radius_cells
+    const yi = Math.floor(pos.y / REPULSION_DISTANCE) + radius_cells
+    return xi + yi * axis_cells
+}
 // const get_node_x = (node: Node): number => node.position.x
 
 export function connect(a: Node, b: Node): Edge {
@@ -77,25 +80,22 @@ export function randomizeNodePositions(nodes: readonly Node[]): void {
 }
 
 export function resetOrder(graph: Graph): void {
-    const array_init = { length: n_cells }
-    graph.grid = Array.from(array_init, () => Array.from(array_init, () => []))
+    graph.grid = Array.from({ length: n_cells }, () => [])
 
     for (const node of graph.nodes) {
-        const idx_x = to_grid_idx(node.position.x),
-            idx_y = to_grid_idx(node.position.y)
-        addNodeToGrid(graph.grid, node, idx_x, idx_y)
+        const idx = to_grid_idx(node.position)
+        addNodeToGrid(graph.grid, node, idx)
     }
 }
 
-export function addNodeToGrid(grid: GraphGrid, node: Node, idx_x: number, idx_y: number): void {
-    const y_grid = grid[idx_x]!,
-        arr = y_grid[idx_y]!,
+export function addNodeToGrid(grid: GraphGrid, node: Node, idx: number): void {
+    const order = grid[idx]!,
         { x } = node.position
 
     let i = 0
-    while (i < arr.length && arr[i]!.position.x < x) i++
+    while (i < order.length && order[i]!.position.x < x) i++
 
-    arr.splice(i, 0, node)
+    order.splice(i, 0, node)
 }
 
 /**
@@ -103,47 +103,64 @@ export function addNodeToGrid(grid: GraphGrid, node: Node, idx_x: number, idx_y:
  */
 export function correctNodeOrder(graph: Graph, node: Node, prev_position: trig.Vector): void {
     const { grid: x_grid } = graph,
-        prev_grid_x_idx = to_grid_idx(prev_position.x),
-        prev_grid_y_idx = to_grid_idx(prev_position.y),
-        arr = x_grid[prev_grid_x_idx]![prev_grid_y_idx]!
+        prev_grid_idx = to_grid_idx(prev_position),
+        order = x_grid[prev_grid_idx]!
 
-    arr.splice(arr.indexOf(node), 1)
+    order.splice(order.indexOf(node), 1)
 
-    const grid_x_idx = to_grid_idx(node.position.x),
-        grid_y_idx = to_grid_idx(node.position.y)
+    const grid_idx = to_grid_idx(node.position)
 
-    addNodeToGrid(x_grid, node, grid_x_idx, grid_y_idx)
+    addNodeToGrid(x_grid, node, grid_idx)
+}
+
+export function pushNodesAway(a: Node, b: Node, dx: number, dy: number): void {
+    const d = Math.sqrt(dx * dx + dy * dy)
+
+    if (d >= REPULSION_DISTANCE) return
+
+    const force = REPULSION_STRENGTH * (1 - d / REPULSION_DISTANCE),
+        mx = (dx / d) * force,
+        my = (dy / d) * force
+
+    a.velocity.x += mx
+    a.velocity.y += my
+    b.velocity.x -= mx
+    b.velocity.y -= my
 }
 
 export function updatePositions(graph: Graph): void {
-    const { nodes, edges, grid: x_grid } = graph
+    const { nodes, edges, grid } = graph
 
     for (const node of nodes) {
         const { velocity, position } = node,
             { x, y } = position
 
         /*
-            towards the center
+            towards the origin
         */
         velocity.x += x * -ORIGIN_STRENGTH
         velocity.y += y * -ORIGIN_STRENGTH
 
         /*
             away from other nodes
+            look only at the nodes right to the current node
+            and apply the force to both nodes
         */
-        const x_idx = to_grid_idx(x),
-            y_idx = to_grid_idx(y)
+        const idx = to_grid_idx(position),
+            dy_max = idx <= n_cells - axis_cells ? 1 : 0,
+            dy_min = idx >= axis_cells ? -1 : 0,
+            at_right_edge = idx % axis_cells === axis_cells - 1
 
-        let y_grid = x_grid[x_idx]
+        for (let dy_idx = dy_min; dy_idx <= dy_max; dy_idx++) {
+            const _idx = idx + dy_idx * axis_cells
 
-        for (let dy_idx = -1; dy_idx <= 1; dy_idx++) {
-            //
-            const arr = y_grid![y_idx + dy_idx]
-            if (!arr) continue
+            /*
+                from the right cell edge to the node
+            */
+            let order = grid[_idx]!
 
-            for (let i = arr.length - 1; i >= 0; i--) {
-                //
-                const node_b = arr[i]!,
+            for (let i = order.length - 1; i >= 0; i--) {
+                const node_b = order[i]!,
                     dx = x - node_b.position.x
 
                 if (dx > 0) break
@@ -152,47 +169,24 @@ export function updatePositions(graph: Graph): void {
 
                 if (dx === 0 && dy >= 0) continue
 
-                const d = Math.sqrt(dx * dx + dy * dy)
-
-                if (d >= REPULSION_DISTANCE) continue
-
-                const force = REPULSION_STRENGTH * (1 - d / REPULSION_DISTANCE),
-                    mx = (dx / d) * force,
-                    my = (dy / d) * force
-
-                velocity.x += mx
-                velocity.y += my
-                node_b.velocity.x -= mx
-                node_b.velocity.y -= my
+                pushNodesAway(node, node_b, dx, dy)
             }
-        }
 
-        y_grid = x_grid[x_idx + 1]
-        if (!y_grid) continue
+            /*
+                from the left edge of neighboring right cell to the end of repulsion distance
+            */
+            if (at_right_edge) continue
 
-        for (let dy_idx = -1; dy_idx <= 1; dy_idx++) {
-            //
-            const arr = y_grid[y_idx + dy_idx]
-            if (!arr) continue
+            order = grid[_idx + 1]!
 
-            for (const node_b of arr) {
+            for (const node_b of order) {
                 const dx = x - node_b.position.x
 
                 if (dx <= -REPULSION_DISTANCE) break
 
-                const dy = y - node_b.position.y,
-                    d = Math.sqrt(dx * dx + dy * dy)
+                const dy = y - node_b.position.y
 
-                if (d >= REPULSION_DISTANCE) continue
-
-                const force = REPULSION_STRENGTH * (1 - d / REPULSION_DISTANCE),
-                    mx = (dx / d) * force,
-                    my = (dy / d) * force
-
-                velocity.x += mx
-                velocity.y += my
-                node_b.velocity.x -= mx
-                node_b.velocity.y -= my
+                pushNodesAway(node, node_b, dx, dy)
             }
         }
     }
@@ -224,21 +218,19 @@ export function updatePositions(graph: Graph): void {
         */
         if (locked || velocity.x * velocity.x + velocity.y * velocity.y <= MIN_MOVE) continue
 
-        const prev_x_idx = to_grid_idx(position.x)
-        const prev_y_idx = to_grid_idx(position.y)
+        const prev_idx = to_grid_idx(position)
 
         position.x = math.clamp(position.x + velocity.x, -GRID_RADIUS, GRID_RADIUS)
         position.y = math.clamp(position.y + velocity.y, -GRID_RADIUS, GRID_RADIUS)
 
-        const x_idx = to_grid_idx(position.x)
-        const y_idx = to_grid_idx(position.y)
-        const order = x_grid[prev_x_idx]![prev_y_idx]!
-        const order_idx = order.indexOf(node)!
+        const idx = to_grid_idx(position)
+        const order = grid[prev_idx]!
+        const order_idx = order.indexOf(node)
 
-        if (x_idx !== prev_x_idx || y_idx !== prev_y_idx) {
+        if (idx !== prev_idx) {
             order.splice(order_idx, 1)
 
-            addNodeToGrid(x_grid, node, x_idx, y_idx)
+            addNodeToGrid(grid, node, idx)
         } else {
             if (velocity.x < 0) {
                 for (let i = order_idx - 1; i >= 0 && order[i]!.position.x > position.x; i--) {
