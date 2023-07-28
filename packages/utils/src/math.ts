@@ -1,8 +1,8 @@
 export const random = (max: number) => Math.random() * max
-export const randomFrom = (min: number, max: number) => Math.random() * (max - min) + min
+export const random_from = (min: number, max: number) => Math.random() * (max - min) + min
 
-export const randomInt = (max: number) => Math.floor(Math.random() * max)
-export const randomIntFrom = (min: number, max: number) =>
+export const random_int = (max: number) => Math.floor(Math.random() * max)
+export const random_int_from = (min: number, max: number) =>
     Math.floor(Math.random() * (max - min)) + min
 
 export const clamp = (value: number, min: number, max: number) =>
@@ -20,7 +20,7 @@ export const bounce = (value: number, min: number, max: number) => {
     return max - distance
 }
 
-export const mapRange = (
+export const map_range = (
     value: number,
     in_min: number,
     in_max: number,
@@ -28,16 +28,16 @@ export const mapRange = (
     out_max: number,
 ) => ((value - in_min) * (out_max - out_min)) / (in_max - in_min) + out_min
 
-export const toPercent = (value: number, min: number, max: number) => (value - min) / (max - min)
+export const to_percent = (value: number, min: number, max: number) => (value - min) / (max - min)
 
-export const numberEquals = (a: number, b: number) => Math.abs(a - b) < Number.EPSILON
+export const number_equals = (a: number, b: number) => Math.abs(a - b) < Number.EPSILON
 
 export const between = (a: number, b: number, c: number): boolean => {
     if (a > c) [a, c] = [c, a]
     return a - Number.EPSILON <= b && b <= c + Number.EPSILON
 }
 
-export const rangesIntersecting = (a1: number, b1: number, a2: number, b2: number) => {
+export const ranges_intersecting = (a1: number, b1: number, a2: number, b2: number) => {
     if (a1 > b1) [a1, b1] = [b1, a1]
     if (a2 > b2) [a2, b2] = [b2, a2]
     return a1 <= b2 && a2 <= b1

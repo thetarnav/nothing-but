@@ -67,10 +67,10 @@ export function remove<T>(array: T[], item: T): void {
     array.splice(array.indexOf(item), 1)
 }
 
-export const pick_random = <T>(arr: readonly T[]): T | undefined => arr[math.randomInt(arr.length)]
+export const pick_random = <T>(arr: readonly T[]): T | undefined => arr[math.random_int(arr.length)]
 
 export function pick_random_excliding_one<T>(arr: readonly T[], excluding: T): T | undefined {
-    let pick_index = math.randomInt(arr.length),
+    let pick_index = math.random_int(arr.length),
         pick = arr[pick_index]
 
     if (pick === excluding) {
@@ -84,7 +84,7 @@ export function pick_random_excliding_one<T>(arr: readonly T[], excluding: T): T
 export function* random_iterate<T>(arr: readonly T[]) {
     const copy = arr.slice()
     while (copy.length) {
-        const index = math.randomInt(copy.length)
+        const index = math.random_int(copy.length)
         yield copy.splice(index, 1)[0]
     }
 }
@@ -114,9 +114,9 @@ export function binary_search<T>(arr: readonly T[], item: T): number | undefined
 export function binary_search_with<T>(
     arr: readonly T[],
     item: T,
-    getComparable: (item: T) => number,
+    get_comparable: (item: T) => number,
 ): number | undefined {
-    const search_for = getComparable(item)
+    const search_for = get_comparable(item)
 
     let low = 0,
         high = arr.length - 1,
@@ -127,19 +127,19 @@ export function binary_search_with<T>(
     while (low <= high) {
         mid = (low + high) >> 1
         guess_item = arr[mid]!
-        guess_for = getComparable(guess_item)
+        guess_for = get_comparable(guess_item)
 
         if (guess_item === item) {
             return mid
         } else if (guess_for === search_for) {
             //
             let i = mid - 1
-            for (; i >= 0 && getComparable(arr[i]!) === guess_for; i--) {
+            for (; i >= 0 && get_comparable(arr[i]!) === guess_for; i--) {
                 if (arr[i] === item) return i
             }
 
             i = mid + 1
-            for (; i < arr.length && getComparable(arr[i]!) === guess_for; i++) {
+            for (; i < arr.length && get_comparable(arr[i]!) === guess_for; i++) {
                 if (arr[i] === item) return i
             }
         } else if (guess_for > search_for) {

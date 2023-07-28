@@ -12,7 +12,7 @@ export function linear(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inSine(t: number): number {
+export function in_sine(t: number): number {
     return -1 * Math.cos(t * (Math.PI / 2)) + 1
 }
 
@@ -21,7 +21,7 @@ export function inSine(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outSine(t: number): number {
+export function out_sine(t: number): number {
     return Math.sin(t * (Math.PI / 2))
 }
 
@@ -30,7 +30,7 @@ export function outSine(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutSine(t: number): number {
+export function in_out_sine(t: number): number {
     return -0.5 * (Math.cos(Math.PI * t) - 1)
 }
 
@@ -39,7 +39,7 @@ export function inOutSine(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inQuad(t: number): number {
+export function in_quad(t: number): number {
     return t * t
 }
 
@@ -48,7 +48,7 @@ export function inQuad(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outQuad(t: number): number {
+export function out_quad(t: number): number {
     return t * (2 - t)
 }
 
@@ -57,7 +57,7 @@ export function outQuad(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutQuad(t: number): number {
+export function in_qut_quad(t: number): number {
     return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
 }
 
@@ -66,7 +66,7 @@ export function inOutQuad(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inCubic(t: number): number {
+export function in_cubic(t: number): number {
     return t * t * t
 }
 
@@ -75,7 +75,7 @@ export function inCubic(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outCubic(t: number): number {
+export function out_cubic(t: number): number {
     const t1 = t - 1
     return t1 * t1 * t1 + 1
 }
@@ -85,7 +85,7 @@ export function outCubic(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutCubic(t: number): number {
+export function in_out_cubic(t: number): number {
     return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
 }
 
@@ -94,7 +94,7 @@ export function inOutCubic(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inQuart(t: number): number {
+export function in_quart(t: number): number {
     return t * t * t * t
 }
 
@@ -103,7 +103,7 @@ export function inQuart(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outQuart(t: number): number {
+export function out_quart(t: number): number {
     const a = t - 1
     return 1 - a * a * a * a
 }
@@ -113,7 +113,7 @@ export function outQuart(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutQuart(t: number): number {
+export function in_out_quart(t: number): number {
     const a = t - 1
     return t < 0.5 ? 8 * t * t * t * t : 1 - 8 * a * a * a * a
 }
@@ -123,7 +123,7 @@ export function inOutQuart(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inQuint(t: number): number {
+export function in_quint(t: number): number {
     return t * t * t * t * t
 }
 
@@ -132,7 +132,7 @@ export function inQuint(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outQuint(t: number): number {
+export function out_quint(t: number): number {
     const a = t - 1
     return 1 + a * a * a * a * a
 }
@@ -142,7 +142,7 @@ export function outQuint(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutQuint(t: number): number {
+export function in_out_quint(t: number): number {
     const a = t - 1
     return t < 0.5 ? 16 * t * t * t * t * t : 1 + 16 * a * a * a * a * a
 }
@@ -152,7 +152,7 @@ export function inOutQuint(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inExpo(t: number): number {
+export function in_expo(t: number): number {
     if (t === 0) {
         return 0
     }
@@ -164,7 +164,7 @@ export function inExpo(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outExpo(t: number): number {
+export function out_expo(t: number): number {
     return t === 1 ? 1 : -Math.pow(2, -10 * t) + 1
 }
 
@@ -173,7 +173,7 @@ export function outExpo(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutExpo(t: number): number {
+export function in_out_expo(t: number): number {
     if (t === 0 || t === 1) return t
     const a = t * 2,
         b = a - 1
@@ -185,7 +185,7 @@ export function inOutExpo(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inCirc(t: number): number {
+export function in_circ(t: number): number {
     const a = t / 1
     return -1 * (Math.sqrt(1 - a * t) - 1)
 }
@@ -195,7 +195,7 @@ export function inCirc(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outCirc(t: number): number {
+export function out_circ(t: number): number {
     const a = t - 1
     return Math.sqrt(1 - a * a)
 }
@@ -205,7 +205,7 @@ export function outCirc(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutCirc(t: number): number {
+export function in_out_circ(t: number): number {
     const a = t * 2,
         b = a - 2
     return a < 1 ? -0.5 * (Math.sqrt(1 - a * a) - 1) : 0.5 * (Math.sqrt(1 - b * b) + 1)
@@ -217,7 +217,7 @@ export function inOutCirc(t: number): number {
  * @param magnitude - The magnitude of the easing (default: 1.70158)
  * @returns The eased value
  */
-export function inBack(t: number, magnitude = 1.70158): number {
+export function in_back(t: number, magnitude = 1.70158): number {
     return t * t * ((magnitude + 1) * t - magnitude)
 }
 
@@ -227,7 +227,7 @@ export function inBack(t: number, magnitude = 1.70158): number {
  * @param magnitude - The magnitude of the easing (default: 1.70158)
  * @returns The eased value
  */
-export function outBack(t: number, magnitude = 1.70158): number {
+export function out_back(t: number, magnitude = 1.70158): number {
     const a = t / 1 - 1
     return a * a * ((magnitude + 1) * a + magnitude) + 1
 }
@@ -238,7 +238,7 @@ export function outBack(t: number, magnitude = 1.70158): number {
  * @param magnitude - The magnitude of the easing (default: 1.70158)
  * @returns The eased value
  */
-export function inOutBack(t: number, magnitude = 1.70158): number {
+export function in_out_back(t: number, magnitude = 1.70158): number {
     const a = t * 2,
         b = a - 2,
         s = magnitude * 1.525
@@ -251,7 +251,7 @@ export function inOutBack(t: number, magnitude = 1.70158): number {
  * @param magnitude - The magnitude of the easing (default: 0.7)
  * @returns The eased value
  */
-export function inElastic(t: number, magnitude = 0.7): number {
+export function in_elastic(t: number, magnitude = 0.7): number {
     if (t === 0 || t === 1) return t
     const a = t / 1,
         b = a - 1,
@@ -266,7 +266,7 @@ export function inElastic(t: number, magnitude = 0.7): number {
  * @param magnitude - The magnitude of the easing (default: 0.7)
  * @returns The eased value
  */
-export function outElastic(t: number, magnitude = 0.7): number {
+export function out_elastic(t: number, magnitude = 0.7): number {
     const p = 1 - magnitude,
         a = t * 2
     if (t === 0 || t === 1) return t
@@ -280,7 +280,7 @@ export function outElastic(t: number, magnitude = 0.7): number {
  * @param magnitude - The magnitude of the easing (default: 0.7)
  * @returns The eased value
  */
-export function inOutElastic(t: number, magnitude = 0.7): number {
+export function in_out_elastic(t: number, magnitude = 0.7): number {
     const p = 1 - magnitude
     if (t === 0 || t === 1) return t
     const a = t * 2,
@@ -296,7 +296,7 @@ export function inOutElastic(t: number, magnitude = 0.7): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function outBounce(t: number): number {
+export function out_bounce(t: number): number {
     const a = t / 1
     if (a < 1 / 2.75) {
         return 7.5625 * a * a
@@ -318,8 +318,8 @@ export function outBounce(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inBounce(t: number): number {
-    return 1 - outBounce(1 - t)
+export function in_bounce(t: number): number {
+    return 1 - out_bounce(1 - t)
 }
 
 /**
@@ -327,6 +327,6 @@ export function inBounce(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function inOutBounce(t: number): number {
-    return t < 0.5 ? inBounce(t * 2) * 0.5 : outBounce(t * 2 - 1) * 0.5 + 0.5
+export function in_out_bounce(t: number): number {
+    return t < 0.5 ? in_bounce(t * 2) * 0.5 : out_bounce(t * 2 - 1) * 0.5 + 0.5
 }

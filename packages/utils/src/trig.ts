@@ -5,7 +5,7 @@ import type { Position } from './types'
  *
  * Useful for storing in a Set or Map to check if a point exists.
  */
-export type VectorString = `(${number}, ${number})`
+export type Vector_String = `(${number}, ${number})`
 
 /**
  * Represents a 2D vector with x and y components.
@@ -27,10 +27,10 @@ export class Vector {
      * @param x - The x-component of the vector.
      * @param y - The y-component of the vector.
      */
-    constructor(str: VectorString)
+    constructor(str: Vector_String)
     constructor(vec: Position)
     constructor(x: number, y?: number)
-    constructor(x: number | VectorString | Position, y?: number) {
+    constructor(x: number | Vector_String | Position, y?: number) {
         if (typeof x === 'string') {
             const [xStr, yStr] = x.slice(1, -1).split(', ')
             x = Number(xStr)
@@ -47,7 +47,7 @@ export class Vector {
         yield this.x
         yield this.y
     }
-    toString(): VectorString {
+    toString(): Vector_String {
         return `(${this.x}, ${this.y})`
     }
     toJSON(): Position {
@@ -59,7 +59,7 @@ export class Vector {
  * Creates a new vector instance.
  */
 export const vector: {
-    (str: VectorString): Vector
+    (str: Vector_String): Vector
     (vector: Position): Vector
     (x: number, y?: number): Vector
 } = (...args: [any]) => new Vector(...args)
@@ -78,14 +78,14 @@ export const zero = () => vector(0, 0)
 /**
  * Checks if two vectors are equal.
  */
-export function vectorEquals(a: Vector, b: Vector): boolean {
+export function vector_equals(a: Vector, b: Vector): boolean {
     return a.x === b.x && a.y === b.y
 }
 
 /**
  * Subtracts a vector from another vector in place. The first vector is **mutated**.
  */
-export function vectorSubtract(a: Vector, b: Vector): void {
+export function vector_subtract(a: Vector, b: Vector): void {
     a.x -= b.x
     a.y -= b.y
 }
@@ -94,23 +94,23 @@ export function vectorSubtract(a: Vector, b: Vector): void {
  * Calculates the difference between two vectors.
  * @returns The difference vector.
  */
-export function vectorDifference(a: Vector, b: Vector): Vector {
+export function vector_difference(a: Vector, b: Vector): Vector {
     return vector(a.x - b.x, a.y - b.y)
 }
 
 /**
  * Adds a vector or a force to another vector in place. The first vector is **mutated**.
  */
-export function vectorAdd(vec: Vector, velocity: Vector | Force | number): void
-export function vectorAdd(vec: Vector, x: number, y: number): void
-export function vectorAdd(vec: Vector, x: Vector | Force | number, y?: number): void {
+export function vector_add(vec: Vector, velocity: Vector | Force | number): void
+export function vector_add(vec: Vector, x: number, y: number): void
+export function vector_add(vec: Vector, x: Vector | Force | number, y?: number): void {
     if (typeof x === 'number') {
         vec.x += x
         vec.y += y ?? x
         return
     }
     if (x instanceof Force) {
-        x = forceTovector(x)
+        x = force_to_vector(x)
     }
     vec.x += x.x
     vec.y += x.y
@@ -120,14 +120,14 @@ export function vectorAdd(vec: Vector, x: Vector | Force | number, y?: number): 
  * Calculates the sum of two vectors.
  * @returns The sum vector.
  */
-export function vectorSum(a: Vector, b: Vector): Vector {
+export function vector_sum(a: Vector, b: Vector): Vector {
     return vector(a.x + b.x, a.y + b.y)
 }
 
 /**
  * Multiplies a vector by another vector or a scalar in place. The first vector is **mutated**.
  */
-export function vectorMultiply(a: Vector, b: Vector | number): void {
+export function vector_multiply(a: Vector, b: Vector | number): void {
     if (typeof b === 'number') {
         a.x *= b
         a.y *= b
@@ -141,14 +141,14 @@ export function vectorMultiply(a: Vector, b: Vector | number): void {
  * Calculates the product of two vectors.
  * @returns The product vector.
  */
-export function vectorProduct(a: Vector, b: Vector): Vector {
+export function vector_product(a: Vector, b: Vector): Vector {
     return vector(a.x * b.x, a.y * b.y)
 }
 
 /**
  * Divides a vector by another vector in place. The first vector is **mutated**.
  */
-export function vectorDivide(a: Vector, b: Vector): void {
+export function vector_divide(a: Vector, b: Vector): void {
     a.x /= b.x
     a.y /= b.y
 }
@@ -158,7 +158,7 @@ export function vectorDivide(a: Vector, b: Vector): void {
  * (The first vector is divided by the second vector.)
  * @returns The quotient vector.
  */
-export function vectorQuotient(a: Vector, b: Vector): Vector {
+export function vector_quotient(a: Vector, b: Vector): Vector {
     return vector(a.x / b.x, a.y / b.y)
 }
 
@@ -166,7 +166,7 @@ export function vectorQuotient(a: Vector, b: Vector): Vector {
  * Calculates the distance between two vectors.
  * @returns The distance between the vectors.
  */
-export function vectorDistance(a: Vector, b: Vector): number {
+export function vector_distance(a: Vector, b: Vector): number {
     const x = a.x - b.x
     const y = a.y - b.y
     return Math.sqrt(x * x + y * y)
@@ -176,7 +176,7 @@ export function vectorDistance(a: Vector, b: Vector): number {
  * Calculates the angle between two vectors.
  * @returns The angle between the vectors in radians.
  */
-export function vectorAngle(a: Vector, b: Vector): number {
+export function vector_angle(a: Vector, b: Vector): number {
     return Math.atan2(b.y - a.y, b.x - a.x)
 }
 
@@ -184,7 +184,7 @@ export function vectorAngle(a: Vector, b: Vector): number {
  * Rotates the {@link point} vector by {@link rad} angle (origin is 0,0).
  * The first vector is **mutated**.
  */
-export function vectorRotate(point: Vector, rad: number): void {
+export function vector_rotate(point: Vector, rad: number): void {
     const { x, y } = point,
         cos = Math.cos(rad),
         sin = Math.sin(rad)
@@ -199,7 +199,7 @@ export function vectorRotate(point: Vector, rad: number): void {
  * @param origin - The origin of the rotation.
  * @param rad - The angle of rotation in radians.
  */
-export function vectorRotateAround(point: Vector, origin: Vector, rad: number): void {
+export function vector_rotate_around(point: Vector, origin: Vector, rad: number): void {
     const { x, y } = point,
         { x: ox, y: oy } = origin,
         cos = Math.cos(rad),
@@ -236,8 +236,8 @@ export class Force {
     constructor(distance: number, angle: number)
     constructor(a: number | Vector, b: number | Vector) {
         if (typeof a === 'object') {
-            this.angle = vectorAngle(a, b as Vector)
-            this.distance = vectorDistance(a, b as Vector)
+            this.angle = vector_angle(a, b as Vector)
+            this.distance = vector_distance(a, b as Vector)
         } else {
             this.distance = a
             this.angle = b as number
@@ -261,9 +261,9 @@ export const force: {
 /**
  * Converts a Force object to a vector object with x and y components.
  */
-export function forceTovector(f: Force): Vector
-export function forceTovector(distance: number, angle: number): Vector
-export function forceTovector(distance: number | Force, angle?: number): Vector {
+export function force_to_vector(f: Force): Vector
+export function force_to_vector(distance: number, angle: number): Vector
+export function force_to_vector(distance: number | Force, angle?: number): Vector {
     if (typeof distance === 'object') {
         angle = distance.angle
         distance = distance.distance
