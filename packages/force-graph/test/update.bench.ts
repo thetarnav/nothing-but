@@ -1,10 +1,11 @@
-import { describe, bench } from 'vitest'
-import { array, graph, math, trig } from '../src'
+import { math, trig } from '@nothing-but/utils'
+import { bench, describe } from 'vitest'
+import * as graph from '../src'
 
 function generateExampleGraph(length: number): graph.Graph {
     const nodes: graph.Node[] = Array.from(
         { length },
-        () => new graph.Node(trig.vec(math.randomFrom(-50, 50), math.randomFrom(-50, 50))),
+        () => new graph.Node(trig.vector(math.random_from(-50, 50), math.random_from(-50, 50))),
     )
     const edges: graph.Edge[] = []
 
@@ -22,15 +23,15 @@ function generateExampleGraph(length: number): graph.Graph {
     new_graph.nodes = nodes
     new_graph.edges = edges
 
-    graph.resetOrder(new_graph)
+    graph.reset_order(new_graph)
 
     return new_graph
 }
 
 const fns = {
     // Accurate: graph.updatePositionsAccurate,
-    Optimized: graph.updatePositionsOptimized,
-    Grid: graph.updatePositionsGrid,
+    Optimized: graph.update_positions_optimized,
+    Grid: graph.update_positions_grid,
 }
 
 ;[

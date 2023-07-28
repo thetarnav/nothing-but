@@ -60,6 +60,12 @@ importers:
         specifier: ^0.33.0
         version: 0.33.0(jsdom@22.1.0)
 
+  packages/force-graph:
+    dependencies:
+      '@nothing-but/utils':
+        specifier: workspace:^
+        version: link:../utils
+
   packages/solid:
     devDependencies:
       solid-js:
