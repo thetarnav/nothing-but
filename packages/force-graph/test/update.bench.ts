@@ -30,8 +30,8 @@ function generateExampleGraph(length: number): graph.Graph {
 
 const fns = {
     // Accurate: graph.updatePositionsAccurate,
-    Optimized: graph.updatePositionsOptimized,
-    Grid: graph.updatePositionsGrid,
+    // Optimized: graph.updatePositionsOptimized,
+    Grid: graph.updatePositions,
 }
 
 ;[

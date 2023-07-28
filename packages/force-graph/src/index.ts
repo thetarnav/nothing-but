@@ -14,7 +14,6 @@ export type GraphGrid = Node[][][]
 export class Graph {
     nodes: Node[] = []
     edges: Edge[] = []
-    x_order: Node[] = []
     grid: GraphGrid = []
 }
 
@@ -78,8 +77,6 @@ export function randomizeNodePositions(nodes: readonly Node[]): void {
 }
 
 export function resetOrder(graph: Graph): void {
-    graph.x_order = graph.nodes.slice().sort((a, b) => a.position.x - b.position.x)
-
     const array_init = { length: n_cells }
     graph.grid = Array.from(array_init, () => Array.from(array_init, () => []))
 
@@ -105,188 +102,20 @@ export function addNodeToGrid(grid: GraphGrid, node: Node, idx_x: number, idx_y:
  * Corrects the order of a single node in the graph.
  */
 export function correctNodeOrder(graph: Graph, node: Node, prev_position: trig.Vector): void {
-    {
-        const { grid: x_grid } = graph,
-            prev_grid_x_idx = to_grid_idx(prev_position.x),
-            prev_grid_y_idx = to_grid_idx(prev_position.y),
-            arr = x_grid[prev_grid_x_idx]![prev_grid_y_idx]!
+    const { grid: x_grid } = graph,
+        prev_grid_x_idx = to_grid_idx(prev_position.x),
+        prev_grid_y_idx = to_grid_idx(prev_position.y),
+        arr = x_grid[prev_grid_x_idx]![prev_grid_y_idx]!
 
-        arr.splice(arr.indexOf(node), 1)
+    arr.splice(arr.indexOf(node), 1)
 
-        const grid_x_idx = to_grid_idx(node.position.x),
-            grid_y_idx = to_grid_idx(node.position.y)
+    const grid_x_idx = to_grid_idx(node.position.x),
+        grid_y_idx = to_grid_idx(node.position.y)
 
-        addNodeToGrid(x_grid, node, grid_x_idx, grid_y_idx)
-    }
-
-    const { x_order } = graph,
-        { x } = node.position,
-        index = x_order.indexOf(node)
-
-    if (index === -1) return
-
-    let i = index - 1
-    for (; i >= 0 && x_order[i]!.position.x > x; i--) {
-        ;[x_order[i + 1], x_order[i]] = [x_order[i]!, x_order[i + 1]!]
-    }
-
-    if (i !== index - 1) return
-
-    i = index + 1
-    for (; i < x_order.length && x_order[i]!.position.x < x; i++) {
-        ;[x_order[i - 1], x_order[i]] = [x_order[i]!, x_order[i - 1]!]
-    }
+    addNodeToGrid(x_grid, node, grid_x_idx, grid_y_idx)
 }
 
-export function checkOrder(arr: readonly Node[]): boolean {
-    for (let i = 0; i < arr.length - 1; i++) {
-        if (arr[i]!.position.x > arr[i + 1]!.position.x) {
-            return false
-        }
-    }
-
-    return true
-}
-
-export function updatePositionsAccurate(graph: Graph): void {
-    const { nodes, edges } = graph
-
-    for (let i = 0; i < nodes.length; i++) {
-        const { position, velocity } = nodes[i]!
-
-        /*
-            away from other nodes
-        */
-        for (let j = i + 1; j < nodes.length; j++) {
-            const node_b = nodes[j]!
-
-            let dx = position.x - node_b.position.x
-            let dy = position.y - node_b.position.y
-            const mod = REPULSION_STRENGTH / (dx * dx + dy * dy)
-            dx *= mod
-            dy *= mod
-
-            velocity.x += dx
-            velocity.y += dy
-            node_b.velocity.x -= dx
-            node_b.velocity.y -= dy
-        }
-
-        /*
-            towards the center
-        */
-        velocity.x += position.x * -ORIGIN_STRENGTH
-        velocity.y += position.y * -ORIGIN_STRENGTH
-    }
-
-    /*
-        towards the edges
-    */
-    for (const [node_a, node_b] of edges) {
-        const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
-        const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
-
-        node_a.velocity.x += dx
-        node_a.velocity.y += dy
-        node_b.velocity.x -= dx
-        node_b.velocity.y -= dy
-    }
-
-    /*
-        commit
-    */
-    for (const { velocity, position, locked } of nodes) {
-        /*
-            inertia
-        */
-        velocity.x *= INERTIA_STRENGTH
-        velocity.y *= INERTIA_STRENGTH
-
-        if (locked) continue
-
-        position.x += velocity.x
-        position.y += velocity.y
-    }
-}
-
-export function updatePositionsOptimized(graph: Graph): void {
-    const { x_order, edges } = graph
-
-    for (let i = 0; i < x_order.length; i++) {
-        const { velocity, position } = x_order[i]!
-
-        /*
-            towards the center
-        */
-        velocity.x += position.x * -ORIGIN_STRENGTH
-        velocity.y += position.y * -ORIGIN_STRENGTH
-
-        /*
-            away from other nodes
-        */
-        for (let j = i + 1; j < x_order.length; j++) {
-            const node_b = x_order[j]!
-
-            const dx = position.x - node_b.position.x
-
-            if (dx <= -REPULSION_DISTANCE) break
-
-            const dy = position.y - node_b.position.y,
-                d = Math.sqrt(dx * dx + dy * dy)
-
-            if (d >= REPULSION_DISTANCE) continue
-
-            const force = REPULSION_STRENGTH * (1 - d / REPULSION_DISTANCE),
-                mx = (dx / d) * force,
-                my = (dy / d) * force
-
-            velocity.x += mx
-            velocity.y += my
-            node_b.velocity.x -= mx
-            node_b.velocity.y -= my
-        }
-    }
-
-    /*
-        towards the edges
-    */
-    for (const [node_a, node_b] of edges) {
-        const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
-        const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
-
-        node_a.velocity.x += dx
-        node_a.velocity.y += dy
-        node_b.velocity.x -= dx
-        node_b.velocity.y -= dy
-    }
-
-    for (let i = 0; i < x_order.length; i++) {
-        const { velocity, position, locked } = x_order[i]!
-
-        /*
-            inertia
-        */
-        velocity.x *= INERTIA_STRENGTH
-        velocity.y *= INERTIA_STRENGTH
-
-        /*
-            commit
-        */
-        if (!locked && velocity.x * velocity.x + velocity.y * velocity.y > MIN_MOVE) {
-            position.x += velocity.x
-            position.y += velocity.y
-        }
-
-        /*
-            sort
-        */
-        for (let j = i - 1; j >= 0 && x_order[j]!.position.x > position.x; j--) {
-            ;[x_order[j + 1], x_order[j]] = [x_order[j]!, x_order[j + 1]!]
-        }
-    }
-}
-
-export function updatePositionsGrid(graph: Graph): void {
+export function updatePositions(graph: Graph): void {
     const { nodes, edges, grid: x_grid } = graph
 
     for (const node of nodes) {
