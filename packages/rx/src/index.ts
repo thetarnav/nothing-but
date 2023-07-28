@@ -4,7 +4,9 @@ TODO:
 
 -   [ ] disposing
 -   [ ] join
--   [ ] derived queue
+-   [ ] derived
+-   [ ] equals
+-   [ ] lazy
 -   [ ] computed
 -   [ ] context
 -   [ ] resource
@@ -70,6 +72,7 @@ export function set<T>(signal: Signal<T>, value: T): void {
 let current_scheduler: Scheduler<any> | undefined
 
 export class Scheduler<T> {
+    derived: Derived<any, any>[] = []
     effects: Effect<T>[] = []
 }
 

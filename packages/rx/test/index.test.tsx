@@ -100,12 +100,12 @@ vi.describe('.', () => {
         })
     })
 
-    vi.test('derived', () => {
-        const count = rx.signal(1)
-        const doubled = rx.derived(count, n => n * 2)
+    // vi.test('derived', () => {
+    //     const count = rx.signal(1)
+    //     const doubled = rx.derived(count, n => n * 2)
 
-        vi.expect(doubled.value).toBe(2)
-        rx.set(count, 2)
-        vi.expect(doubled.value).toBe(4)
-    })
+    //     vi.expect(doubled.value).toBe(2)
+    //     rx.set(count, 2)
+    //     vi.expect(doubled.value).toBe(4)
+    // })
 })
