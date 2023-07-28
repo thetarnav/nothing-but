@@ -1,12 +1,12 @@
 import { math, trig } from '@nothing-but/utils'
 
-export type Graph_Grid = Record<number, Record<number, Node[]>>
+export type GraphGrid = Record<number, Record<number, Node[]>>
 
 export class Graph {
     nodes: Node[] = []
     edges: Edge[] = []
     x_order: Node[] = []
-    x_grid: Graph_Grid = {}
+    x_grid: GraphGrid = {}
 }
 
 export class Node {
@@ -20,9 +20,18 @@ export class Node {
     }
 }
 
-export const get_node_x = (node: Node): number => node.position.x
-
 export type Edge = [Node, Node]
+
+export const INERTIA_STRENGTH = 0.8,
+    REPULSION_STRENGTH = 0.35,
+    REPULSION_DISTANCE = 18,
+    ATTRACTION_STRENGTH = 0.02,
+    ORIGIN_STRENGTH = 0.015,
+    MIN_VELOCITY = 0.015,
+    MIN_MOVE = 0.001
+
+const to_grid_idx = (x: number): number => Math.floor(x / REPULSION_DISTANCE)
+// const get_node_x = (node: Node): number => node.position.x
 
 export function connect(a: Node, b: Node): Edge {
     const edge: Edge = [a, b]
@@ -38,7 +47,7 @@ export function disconnect(a: Node, b: Node) {
     b.edges.splice(b_edge_index, 1)
 }
 
-export function add_node_edges(node: Node, seen: Set<Node>, edges: Edge[]): void {
+export function addNodeEdges(node: Node, seen: Set<Node>, edges: Edge[]): void {
     if (seen.has(node)) return
 
     for (const edge of node.edges) {
@@ -49,13 +58,13 @@ export function add_node_edges(node: Node, seen: Set<Node>, edges: Edge[]): void
     seen.add(node)
 }
 
-export function randomize_node_positions(nodes: readonly Node[]): void {
+export function randomizeNodePositions(nodes: readonly Node[]): void {
     for (const node of nodes) {
         node.position = trig.vector(math.random_from(-50, 50), math.random_from(-50, 50))
     }
 }
 
-export function reset_order(graph: Graph): void {
+export function resetOrder(graph: Graph): void {
     graph.x_order = graph.nodes.slice().sort((a, b) => a.position.x - b.position.x)
 
     graph.x_grid = {}
@@ -63,15 +72,11 @@ export function reset_order(graph: Graph): void {
     for (const node of graph.nodes) {
         const idx_x = to_grid_idx(node.position.x),
             idx_y = to_grid_idx(node.position.y)
-        add_node_to_grid(graph.x_grid, node, idx_x, idx_y)
+        addNodeToGrid(graph.x_grid, node, idx_x, idx_y)
     }
 }
 
-export function to_grid_idx(x: number): number {
-    return Math.floor(x / REPULSION_DISTANCE)
-}
-
-export function add_node_to_grid(grid: Graph_Grid, node: Node, idx_x: number, idx_y: number): void {
+export function addNodeToGrid(grid: GraphGrid, node: Node, idx_x: number, idx_y: number): void {
     const x_map = grid[idx_x]
 
     if (x_map === undefined) {
@@ -97,7 +102,7 @@ export function add_node_to_grid(grid: Graph_Grid, node: Node, idx_x: number, id
 /**
  * Corrects the order of a single node in the graph.
  */
-export function correct_node_order(graph: Graph, node: Node, prev_position: trig.Vector): void {
+export function correctNodeOrder(graph: Graph, node: Node, prev_position: trig.Vector): void {
     {
         const { x_grid } = graph,
             prev_grid_x_idx = to_grid_idx(prev_position.x),
@@ -109,7 +114,7 @@ export function correct_node_order(graph: Graph, node: Node, prev_position: trig
         const grid_x_idx = to_grid_idx(node.position.x),
             grid_y_idx = to_grid_idx(node.position.y)
 
-        add_node_to_grid(x_grid, node, grid_x_idx, grid_y_idx)
+        addNodeToGrid(x_grid, node, grid_x_idx, grid_y_idx)
     }
 
     const { x_order } = graph,
@@ -131,7 +136,7 @@ export function correct_node_order(graph: Graph, node: Node, prev_position: trig
     }
 }
 
-export function check_order(arr: readonly Node[]): boolean {
+export function checkOrder(arr: readonly Node[]): boolean {
     for (let i = 0; i < arr.length - 1; i++) {
         if (arr[i]!.position.x > arr[i + 1]!.position.x) {
             return false
@@ -141,15 +146,7 @@ export function check_order(arr: readonly Node[]): boolean {
     return true
 }
 
-export const INERTIA_STRENGTH = 0.8,
-    REPULSION_STRENGTH = 0.35,
-    REPULSION_DISTANCE = 18,
-    ATTRACTION_STRENGTH = 0.02,
-    ORIGIN_STRENGTH = 0.015,
-    MIN_VELOCITY = 0.015,
-    MIN_MOVE = 0.001
-
-export function update_positions_accurate(graph: Graph): void {
+export function updatePositionsAccurate(graph: Graph): void {
     const { nodes, edges } = graph
 
     for (let i = 0; i < nodes.length; i++) {
@@ -210,7 +207,7 @@ export function update_positions_accurate(graph: Graph): void {
     }
 }
 
-export function update_positions_optimized(graph: Graph): void {
+export function updatePositionsOptimized(graph: Graph): void {
     const { x_order, edges } = graph
 
     for (let i = 0; i < x_order.length; i++) {
@@ -287,12 +284,12 @@ export function update_positions_optimized(graph: Graph): void {
     }
 }
 
-export function update_positions_grid(graph: Graph): void {
+export function updatePositionsGrid(graph: Graph): void {
     const { nodes, edges, x_grid } = graph
 
     for (const node of nodes) {
-        const { velocity, position } = node
-        const { x, y } = position
+        const { velocity, position } = node,
+            { x, y } = position
 
         /*
             towards the center
@@ -410,7 +407,7 @@ export function update_positions_grid(graph: Graph): void {
         if (x_idx !== prev_x_idx || y_idx !== prev_y_idx) {
             order.splice(order_idx, 1)
 
-            add_node_to_grid(x_grid, node, x_idx, y_idx)
+            addNodeToGrid(x_grid, node, x_idx, y_idx)
         } else {
             if (velocity.x < 0) {
                 for (let i = order_idx - 1; i >= 0 && order[i]!.position.x > position.x; i--) {

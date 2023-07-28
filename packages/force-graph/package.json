@@ -13,10 +13,10 @@
         "url": "https://github.com/thetarnav/nothing-but/issues"
     },
     "scripts": {
-        "dev": "tsup --watch",
+        "dev": "vite serve dev",
         "build": "tsup",
         "prepublish": "pnpm build",
-        "test": "vitest",
+        "test": "vitest -c ../../configs/vitest.config.js",
         "typecheck": "tsc --noEmit"
     },
     "private": false,
@@ -38,5 +38,13 @@
     "typesVersions": {},
     "dependencies": {
         "@nothing-but/utils": "workspace:^"
+    },
+    "devDependencies": {
+        "@nothing-but/solid": "workspace:^",
+        "@solid-primitives/event-listener": "^2.2.13",
+        "@solid-primitives/keyed": "^1.2.0",
+        "@solid-primitives/refs": "^1.0.4",
+        "@solid-primitives/rootless": "^1.4.1",
+        "clsx": "^2.0.0"
     }
 }

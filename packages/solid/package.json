@@ -13,10 +13,9 @@
         "url": "https://github.com/thetarnav/nothing-but/issues"
     },
     "scripts": {
-        "dev": "tsup --watch",
         "build": "tsup",
         "prepublish": "pnpm build",
-        "test": "vitest",
+        "test": "vitest -c ../../configs/vitest.config.js",
         "typecheck": "tsc --noEmit"
     },
     "private": false,

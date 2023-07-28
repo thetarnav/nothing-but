@@ -1,10 +1,12 @@
-import { type Component, onCleanup, type JSX, createMemo } from 'solid-js'
-import { graph, s, trig } from '../../packages/core/src'
-import clsx from 'clsx'
-import { generateInitialGraph } from './init'
+import { signal as s } from '@nothing-but/solid'
+import { trig } from '@nothing-but/utils'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
-import { createRootPool, RootPoolFactory } from '@solid-primitives/rootless'
 import { resolveElements } from '@solid-primitives/refs'
+import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
+import clsx from 'clsx'
+import { createMemo, onCleanup, type Component, type JSX } from 'solid-js'
+import * as graph from '../src'
+import { generateInitialGraph } from './init'
 
 export function ForceGraph(props: {
     graph: graph.Graph
@@ -39,7 +41,7 @@ export function ForceGraph(props: {
 
         // console.log('FRAME', fps)
 
-        graph.updatePositionsGrid(props.graph)
+        graph.updatePositionsOptimized(props.graph)
 
         const els = nodeEls(),
             line_els = lines(),
@@ -151,7 +153,7 @@ export const App: Component = () => {
 
         if (pos_x === node.position.x && pos_y === node.position.y) return
 
-        const prev_pos = trig.vec(node.position)
+        const prev_pos = trig.vector(node.position)
 
         node.position.x = pos_x
         node.position.y = pos_y
@@ -160,8 +162,8 @@ export const App: Component = () => {
     }
 
     createEventListenerMap(document, {
-        mouseup: e => setDragging(undefined),
-        mouseleave: e => setDragging(undefined),
+        mouseup: _ => setDragging(undefined),
+        mouseleave: _ => setDragging(undefined),
         mousemove: handleDragEvent,
     })
 

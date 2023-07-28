@@ -1,9 +1,10 @@
-import { graph, math, trig } from '../../packages/core/src'
+import { math, trig } from '@nothing-but/utils'
+import * as graph from '../src'
 import la_raw from './la.json'
 
 export function getLAGraph() {
     const nodes: graph.Node[] = la_raw.map(
-        () => new graph.Node(trig.vec(math.randomIntFrom(-50, 50), math.randomIntFrom(-50, 50))),
+        () => new graph.Node(trig.vector(math.random_from(-50, 50), math.random_from(-50, 50))),
     )
 
     const edges: graph.Edge[] = []
@@ -30,28 +31,28 @@ export function getLAGraph() {
 
 export function getInitialGraph() {
     const nodes: graph.Node[] = [
-        new graph.Node(trig.vec(0, 0)), // 0
-        new graph.Node(trig.vec(0, 20)), // 1
-        new graph.Node(trig.vec(20, 0)), // 2
-        new graph.Node(trig.vec(-20, -15)), // 3
-        new graph.Node(trig.vec(35, -10)), // 4
-        new graph.Node(trig.vec(15, 40)), // 5
-        new graph.Node(trig.vec(-30, 30)), // 6
+        new graph.Node(trig.vector(0, 0)), // 0
+        new graph.Node(trig.vector(0, 20)), // 1
+        new graph.Node(trig.vector(20, 0)), // 2
+        new graph.Node(trig.vector(-20, -15)), // 3
+        new graph.Node(trig.vector(35, -10)), // 4
+        new graph.Node(trig.vector(15, 40)), // 5
+        new graph.Node(trig.vector(-30, 30)), // 6
 
-        new graph.Node(trig.vec(-20, 20)), // 7
-        new graph.Node(trig.vec(-25, -5)), // 8
-        new graph.Node(trig.vec(-30, 10)), // 9
+        new graph.Node(trig.vector(-20, 20)), // 7
+        new graph.Node(trig.vector(-25, -5)), // 8
+        new graph.Node(trig.vector(-30, 10)), // 9
 
-        new graph.Node(trig.vec(-15, -25)), // 10
+        new graph.Node(trig.vector(-15, -25)), // 10
 
-        new graph.Node(trig.vec(25, -25)), // 11
-        new graph.Node(trig.vec(20, -25)), // 12
-        new graph.Node(trig.vec(20, -20)), // 13
-        new graph.Node(trig.vec(25, -20)), // 14
-        new graph.Node(trig.vec(30, -20)), // 15
-        new graph.Node(trig.vec(30, -25)), // 16
-        new graph.Node(trig.vec(30, -30)), // 17
-        new graph.Node(trig.vec(25, -30)), // 18
+        new graph.Node(trig.vector(25, -25)), // 11
+        new graph.Node(trig.vector(20, -25)), // 12
+        new graph.Node(trig.vector(20, -20)), // 13
+        new graph.Node(trig.vector(25, -20)), // 14
+        new graph.Node(trig.vector(30, -20)), // 15
+        new graph.Node(trig.vector(30, -25)), // 16
+        new graph.Node(trig.vector(30, -30)), // 17
+        new graph.Node(trig.vector(25, -30)), // 18
     ]
 
     const edges: graph.Edge[] = [
@@ -83,7 +84,7 @@ export function getInitialGraph() {
 export function generateInitialGraph(length: number = 256): graph.Graph {
     const nodes: graph.Node[] = Array.from(
         { length },
-        () => new graph.Node(trig.vec(math.randomFrom(-50, 50), math.randomFrom(-50, 50))),
+        () => new graph.Node(trig.vector(math.random_from(-50, 50), math.random_from(-50, 50))),
     )
     const edges: graph.Edge[] = []
 
@@ -92,7 +93,7 @@ export function generateInitialGraph(length: number = 256): graph.Graph {
 
         if (node.edges.length > 0 && Math.random() < 0.8) continue
 
-        let b_index = math.randomInt(length)
+        const b_index = math.random_int(length)
         let node_b = nodes[b_index]!
 
         if (node_b === node) {

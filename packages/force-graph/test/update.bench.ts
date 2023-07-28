@@ -23,15 +23,15 @@ function generateExampleGraph(length: number): graph.Graph {
     new_graph.nodes = nodes
     new_graph.edges = edges
 
-    graph.reset_order(new_graph)
+    graph.resetOrder(new_graph)
 
     return new_graph
 }
 
 const fns = {
     // Accurate: graph.updatePositionsAccurate,
-    Optimized: graph.update_positions_optimized,
-    Grid: graph.update_positions_grid,
+    Optimized: graph.updatePositionsOptimized,
+    Grid: graph.updatePositionsGrid,
 }
 
 ;[
