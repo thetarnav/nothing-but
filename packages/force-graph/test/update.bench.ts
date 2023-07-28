@@ -52,7 +52,7 @@ const fns = {
                         fn(graph)
                     }
                 },
-                { iterations: 20 },
+                // { iterations: 20 },
             )
         }
     })

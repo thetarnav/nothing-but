@@ -41,7 +41,7 @@ export function ForceGraph(props: {
 
         // console.log('FRAME', fps)
 
-        graph.updatePositionsOptimized(props.graph)
+        graph.updatePositionsGrid(props.graph)
 
         const els = nodeEls(),
             line_els = lines(),

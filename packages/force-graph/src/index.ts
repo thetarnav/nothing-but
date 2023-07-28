@@ -1,12 +1,21 @@
 import { math, trig } from '@nothing-but/utils'
 
-export type GraphGrid = Record<number, Record<number, Node[]>>
+/**
+ * Spatial grid looking up surrounding nodes by their position.
+ *
+ * The first index is the x position of the node divided by the repulsion distance.
+ *
+ * The second index is the y position of the node divided by the repulsion distance.
+ *
+ * The third index is the index of the node in the array, sorted by x position.
+ */
+export type GraphGrid = Node[][][]
 
 export class Graph {
     nodes: Node[] = []
     edges: Edge[] = []
     x_order: Node[] = []
-    x_grid: GraphGrid = {}
+    grid: GraphGrid = []
 }
 
 export class Node {
@@ -28,9 +37,13 @@ export const INERTIA_STRENGTH = 0.8,
     ATTRACTION_STRENGTH = 0.02,
     ORIGIN_STRENGTH = 0.015,
     MIN_VELOCITY = 0.015,
-    MIN_MOVE = 0.001
+    MIN_MOVE = 0.001,
+    GRID_RADIUS = 100
 
-const to_grid_idx = (x: number): number => Math.floor(x / REPULSION_DISTANCE)
+const n_redius_cells = Math.ceil(GRID_RADIUS / REPULSION_DISTANCE),
+    n_cells = n_redius_cells * 2
+
+const to_grid_idx = (x: number): number => Math.floor(x / REPULSION_DISTANCE) + n_redius_cells
 // const get_node_x = (node: Node): number => node.position.x
 
 export function connect(a: Node, b: Node): Edge {
@@ -67,31 +80,20 @@ export function randomizeNodePositions(nodes: readonly Node[]): void {
 export function resetOrder(graph: Graph): void {
     graph.x_order = graph.nodes.slice().sort((a, b) => a.position.x - b.position.x)
 
-    graph.x_grid = {}
+    const array_init = { length: n_cells }
+    graph.grid = Array.from(array_init, () => Array.from(array_init, () => []))
 
     for (const node of graph.nodes) {
         const idx_x = to_grid_idx(node.position.x),
             idx_y = to_grid_idx(node.position.y)
-        addNodeToGrid(graph.x_grid, node, idx_x, idx_y)
+        addNodeToGrid(graph.grid, node, idx_x, idx_y)
     }
 }
 
 export function addNodeToGrid(grid: GraphGrid, node: Node, idx_x: number, idx_y: number): void {
-    const x_map = grid[idx_x]
-
-    if (x_map === undefined) {
-        grid[idx_x] = { [idx_y]: [node] }
-        return
-    }
-
-    const arr = x_map[idx_y]
-
-    if (arr === undefined) {
-        x_map[idx_y] = [node]
-        return
-    }
-
-    const { x } = node.position
+    const y_grid = grid[idx_x]!,
+        arr = y_grid[idx_y]!,
+        { x } = node.position
 
     let i = 0
     while (i < arr.length && arr[i]!.position.x < x) i++
@@ -104,7 +106,7 @@ export function addNodeToGrid(grid: GraphGrid, node: Node, idx_x: number, idx_y:
  */
 export function correctNodeOrder(graph: Graph, node: Node, prev_position: trig.Vector): void {
     {
-        const { x_grid } = graph,
+        const { grid: x_grid } = graph,
             prev_grid_x_idx = to_grid_idx(prev_position.x),
             prev_grid_y_idx = to_grid_idx(prev_position.y),
             arr = x_grid[prev_grid_x_idx]![prev_grid_y_idx]!
@@ -285,7 +287,7 @@ export function updatePositionsOptimized(graph: Graph): void {
 }
 
 export function updatePositionsGrid(graph: Graph): void {
-    const { nodes, edges, x_grid } = graph
+    const { nodes, edges, grid: x_grid } = graph
 
     for (const node of nodes) {
         const { velocity, position } = node,
@@ -396,8 +398,8 @@ export function updatePositionsGrid(graph: Graph): void {
         const prev_x_idx = to_grid_idx(position.x)
         const prev_y_idx = to_grid_idx(position.y)
 
-        position.x += velocity.x
-        position.y += velocity.y
+        position.x = math.clamp(position.x + velocity.x, -GRID_RADIUS, GRID_RADIUS)
+        position.y = math.clamp(position.y + velocity.y, -GRID_RADIUS, GRID_RADIUS)
 
         const x_idx = to_grid_idx(position.x)
         const y_idx = to_grid_idx(position.y)
