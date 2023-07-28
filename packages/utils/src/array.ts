@@ -16,7 +16,7 @@ export function wrap<T>(arr: readonly T[], index: number): T | undefined {
  * Order doesn't matter.
  * Arrays must not contain duplicates. (be the same lengths)
  */
-export function includesSameMembers(a: readonly unknown[], b: readonly unknown[]) {
+export function includes_same_members(a: readonly unknown[], b: readonly unknown[]) {
     if (a === b) return true
     if (a.length !== b.length) return false
 
@@ -46,15 +46,15 @@ export function deduped<T>(array: readonly T[]): T[] {
     return Array.from(new Set(array))
 }
 
-export function mutateFilter<T, S extends T>(
+export function mutate_filter<T, S extends T>(
     array: T[],
     predicate: (value: T, index: number, array: T[]) => value is S,
 ): void
-export function mutateFilter<T>(
+export function mutate_filter<T>(
     array: T[],
     predicate: (value: T, index: number, array: T[]) => unknown,
 ): void
-export function mutateFilter<T>(
+export function mutate_filter<T>(
     array: T[],
     predicate: (value: T, index: number, array: T[]) => unknown,
 ): void {
@@ -67,9 +67,9 @@ export function remove<T>(array: T[], item: T): void {
     array.splice(array.indexOf(item), 1)
 }
 
-export const pickRandom = <T>(arr: readonly T[]): T | undefined => arr[math.randomInt(arr.length)]
+export const pick_random = <T>(arr: readonly T[]): T | undefined => arr[math.randomInt(arr.length)]
 
-export function pickRandomExclidingOne<T>(arr: readonly T[], excluding: T): T | undefined {
+export function pick_random_excliding_one<T>(arr: readonly T[], excluding: T): T | undefined {
     let pick_index = math.randomInt(arr.length),
         pick = arr[pick_index]
 
@@ -81,7 +81,7 @@ export function pickRandomExclidingOne<T>(arr: readonly T[], excluding: T): T | 
     return pick
 }
 
-export function* randomIterate<T>(arr: readonly T[]) {
+export function* random_iterate<T>(arr: readonly T[]) {
     const copy = arr.slice()
     while (copy.length) {
         const index = math.randomInt(copy.length)
@@ -89,7 +89,7 @@ export function* randomIterate<T>(arr: readonly T[]) {
     }
 }
 
-export function binarySearch<T>(arr: readonly T[], item: T): number | undefined {
+export function binary_search<T>(arr: readonly T[], item: T): number | undefined {
     let low = 0,
         high = arr.length - 1,
         mid: number,
@@ -111,7 +111,7 @@ export function binarySearch<T>(arr: readonly T[], item: T): number | undefined 
     return
 }
 
-export function binarySearchWith<T>(
+export function binary_search_with<T>(
     arr: readonly T[],
     item: T,
     getComparable: (item: T) => number,
@@ -152,7 +152,7 @@ export function binarySearchWith<T>(
     return
 }
 
-export function binaryInsertUnique<T>(arr: T[], item: T): void {
+export function binary_insert_unique<T>(arr: T[], item: T): void {
     let low = 0,
         high = arr.length - 1,
         mid: number,
@@ -174,7 +174,7 @@ export function binaryInsertUnique<T>(arr: T[], item: T): void {
     arr.splice(low, 0, item)
 }
 
-export function binaryInsert<T>(arr: T[], item: T): void {
+export function binary_insert<T>(arr: T[], item: T): void {
     let low = 0,
         high = arr.length - 1,
         mid: number,
@@ -197,8 +197,12 @@ export function binaryInsert<T>(arr: T[], item: T): void {
     arr.splice(low, 0, item)
 }
 
-export function binaryInsertWith<T>(arr: T[], item: T, getComparable: (item: T) => number): void {
-    const search_for = getComparable(item)
+export function binary_insert_with<T>(
+    arr: T[],
+    item: T,
+    get_comparable: (item: T) => number,
+): void {
+    const search_for = get_comparable(item)
 
     let low = 0,
         high = arr.length - 1,
@@ -209,7 +213,7 @@ export function binaryInsertWith<T>(arr: T[], item: T, getComparable: (item: T) 
     while (low <= high) {
         mid = Math.floor((low + high) / 2)
         guess_item = arr[mid]!
-        guess_for = getComparable(guess_item)
+        guess_for = get_comparable(guess_item)
 
         if (guess_for === search_for) {
             arr.splice(mid, 0, item)
