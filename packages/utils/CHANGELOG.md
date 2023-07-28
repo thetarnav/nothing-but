@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.4.0
+
+### Minor Changes
+
+-   7115dce: snake_case
+
 ## 0.2.0
 
 ### Minor Changes
