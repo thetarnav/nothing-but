@@ -1,4 +1,4 @@
-name: Build, Test and Release
+name: Build and Test
 
 on:
   push:
@@ -9,15 +9,15 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  build_test_release:
-    name: Build, Test and Release
+  build_test:
+    name: Build and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
 
       - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: 8
 
       - name: Setup Node.js environment 18.x
         uses: actions/setup-node@v3
@@ -35,11 +35,3 @@ jobs:
         # Will run the step even if lint step failed
         if: success() || failure()
         run: pnpm lint
-
-      - name: Version and release to npm
-        # Don't run on PRs
-        if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: pnpm run release
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
