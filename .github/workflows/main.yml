@@ -28,22 +28,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile --ignore-scripts
 
-      - name: Lint
-        run: pnpm lint
-
       - name: Run Build and Tests
+        run: pnpm run build-test
+
+      - name: Lint
         # Will run the step even if lint step failed
         if: success() || failure()
-        run: pnpm run build-test
-        env:
-          CI: true
+        run: pnpm lint
 
       - name: Version and release to npm
         # Don't run on PRs
         if: success() && github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: changesets/action@v1
-        with:
-          publish: pnpm run release
+        run: pnpm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
