@@ -118,7 +118,7 @@ export function ForceGraph(props: {
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    const force_graph = generateInitialGraph(7000)
+    const force_graph = generateInitialGraph(1024)
     // const initialGraph = getLAGraph()
 
     const dragging = s.signal<graph.Node>()

@@ -1,5 +1,9 @@
 import { math } from '.'
 
+export function wrap<T>(arr: readonly T[], index: number): T | undefined {
+    return arr[math.remainder(index, arr.length)]
+}
+
 export const pickRandom = <T>(arr: readonly T[]): T | undefined => arr[math.randomInt(arr.length)]
 
 export function pickRandomExclidingOne<T>(arr: readonly T[], excluding: T): T | undefined {
