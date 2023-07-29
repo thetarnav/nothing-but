@@ -28,11 +28,11 @@ export class Node {
 
 export type Edge = [Node, Node]
 
-export const INERTIA_STRENGTH = 0.8,
+export const INERTIA_STRENGTH = 0.75,
     REPULSION_STRENGTH = 0.35,
     REPULSION_DISTANCE = 18,
     ATTRACTION_STRENGTH = 0.02,
-    ORIGIN_STRENGTH = 0.015,
+    ORIGIN_STRENGTH = 0.012,
     MIN_VELOCITY = 0.015,
     MIN_MOVE = 0.001,
     GRID_RADIUS = 100
@@ -48,6 +48,18 @@ const to_grid_idx = (pos: trig.Vector): number => {
 }
 // const get_node_x = (node: Node): number => node.position.x
 
+export function getEdge(a: Node, b: Node): Edge | undefined {
+    for (const edge of a.edges) {
+        if (edge[0] === b || edge[1] === b) return edge
+    }
+}
+
+/**
+ * Connects two nodes and returns the new edge.
+ *
+ * **It doesn't check if the nodes are already connected.**
+ * Use {@link getEdge} to check before connecting.
+ */
 export function connect(a: Node, b: Node): Edge {
     const edge: Edge = [a, b]
     a.edges.push(edge)
@@ -60,17 +72,6 @@ export function disconnect(a: Node, b: Node) {
     const b_edge_index = b.edges.findIndex(edge => edge[0] === a)
     a.edges.splice(a_edge_index, 1)
     b.edges.splice(b_edge_index, 1)
-}
-
-export function addNodeEdges(node: Node, seen: Set<Node>, edges: Edge[]): void {
-    if (seen.has(node)) return
-
-    for (const edge of node.edges) {
-        if (seen.has(edge[0]) || seen.has(edge[1])) continue
-        edges.push(edge)
-    }
-
-    seen.add(node)
 }
 
 export function randomizeNodePositions(nodes: readonly Node[]): void {
@@ -148,7 +149,7 @@ export function updatePositions(graph: Graph): void {
         */
         const idx = to_grid_idx(position),
             dy_min = idx >= axis_cells ? -1 : 0,
-            dy_max = idx <= n_cells - axis_cells ? 1 : 0,
+            dy_max = idx < n_cells - axis_cells ? 1 : 0,
             at_right_edge = idx % axis_cells === axis_cells - 1
 
         for (let dy_idx = dy_min; dy_idx <= dy_max; dy_idx++) {
@@ -193,15 +194,20 @@ export function updatePositions(graph: Graph): void {
 
     /*
         towards the edges
+        the more edges a node has, the more velocity it accumulates
+        so the velocity is divided by the number of edges
     */
     for (const [node_a, node_b] of edges) {
         const dx = (node_b.position.x - node_a.position.x) * ATTRACTION_STRENGTH
         const dy = (node_b.position.y - node_a.position.y) * ATTRACTION_STRENGTH
 
-        node_a.velocity.x += dx
-        node_a.velocity.y += dy
-        node_b.velocity.x -= dx
-        node_b.velocity.y -= dy
+        const a_mod = (node_a.edges.length + 2) / 3
+        const b_mod = (node_b.edges.length + 2) / 3
+
+        node_a.velocity.x += dx / a_mod
+        node_a.velocity.y += dy / a_mod
+        node_b.velocity.x -= dx / b_mod
+        node_b.velocity.y -= dy / b_mod
     }
 
     for (const node of nodes) {

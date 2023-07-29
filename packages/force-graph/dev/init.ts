@@ -9,24 +9,34 @@ export function getLAGraph() {
 
     const edges: graph.Edge[] = []
 
+    const node_map = new Map<string, graph.Node>()
     for (let i = 0; i < la_raw.length; i++) {
         const node = nodes[i]!
         const raw = la_raw[i]!
+        node_map.set(raw.file, node)
+    }
 
-        for (const raw_b of raw.links) {
-            const b_name = raw_b.file
+    for (const raw of la_raw) {
+        const node = node_map.get(raw.file)!
 
-            const b_index = la_raw.findIndex(raw => raw.file === b_name)
+        for (const link of raw.links) {
+            const link_node = node_map.get(link.file)
 
-            if (b_index === -1) continue
+            if (!link_node || graph.getEdge(node, link_node)) continue
 
-            const node_b = nodes[b_index]!
-
-            edges.push(graph.connect(node, node_b))
+            const edge = graph.connect(node, link_node)
+            edges.push(edge)
         }
     }
 
-    return { nodes, edges }
+    const new_graph = new graph.Graph()
+
+    new_graph.nodes = nodes
+    new_graph.edges = edges
+
+    graph.resetOrder(new_graph)
+
+    return new_graph
 }
 
 export function generateInitialGraph(length: number = 256): graph.Graph {

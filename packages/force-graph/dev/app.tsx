@@ -6,7 +6,7 @@ import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
 import clsx from 'clsx'
 import { createMemo, onCleanup, type Component, type JSX } from 'solid-js'
 import * as graph from '../src'
-import { generateInitialGraph } from './init'
+import { getLAGraph } from './init'
 
 export function ForceGraph(props: {
     graph: graph.Graph
@@ -113,8 +113,8 @@ export function ForceGraph(props: {
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    const force_graph = generateInitialGraph(512)
-    // const initialGraph = getLAGraph()
+    // const force_graph = generateInitialGraph(512)
+    const force_graph = getLAGraph()
 
     const dragging = s.signal<graph.Node>()
 
