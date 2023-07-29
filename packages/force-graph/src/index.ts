@@ -234,21 +234,18 @@ export function simulateGraph(graph: Graph): void {
         const { velocity, position, locked } = node
 
         /*
+            commit and sort
+        */
+        if (!locked) {
+            if (velocity.x * velocity.x + velocity.y * velocity.y > MIN_MOVE) {
+                changeNodePosition(grid, node, position.x + velocity.x, position.y + velocity.y)
+            }
+        }
+
+        /*
             inertia
         */
         velocity.x *= INERTIA_STRENGTH
         velocity.y *= INERTIA_STRENGTH
-
-        if (locked) continue
-
-        /*
-            commit and sort
-        */
-        if (velocity.x * velocity.x + velocity.y * velocity.y <= MIN_MOVE) {
-            node.moved = false
-            continue
-        }
-
-        changeNodePosition(grid, node, position.x + velocity.x, position.y + velocity.y)
     }
 }

@@ -5,7 +5,7 @@
 TODO:
 
 -   [x] node key
--   [ ] delta time
+-   [x] delta time (simulation iterations)
 -   [ ] grid config
 -   [ ] stop simulation when inactive
 -   [ ] movement gestures

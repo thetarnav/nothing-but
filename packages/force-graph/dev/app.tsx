@@ -19,38 +19,28 @@ export function ForceGraph(props: {
     )
     const lines = createMemo(() => props.graph.edges.map(useLine))
 
-    const start = performance.now()
+    const TARGET_FPS = 44
+    const TARGET_MS = 1000 / TARGET_FPS
+    let last_timestamp = performance.now()
 
-    /*
-        save previous positions to avoid unnecessary DOM updates
-    */
-
-    let last_timestamp = 0
     const loop = (timestamp: DOMHighResTimeStamp) => {
-        // console.log('FRAME', timestamp)
+        const delta_time = timestamp - last_timestamp
+        let times = Math.floor(delta_time / TARGET_MS)
+        last_timestamp += times * TARGET_MS
 
-        // const delta = timestamp - last_timestamp
-        // const fps = 1000 / delta
-        // last_timestamp = timestamp
+        if (times === 0) {
+            raf = requestAnimationFrame(loop)
+            return
+        }
 
-        // console.log('FRAME', fps)
-
-        graph.simulateGraph(props.graph)
+        times = Math.min(times, 2)
+        for (let i = 0; i < times; i++) {
+            graph.simulateGraph(props.graph)
+        }
 
         const els = nodeEls(),
             line_els = lines(),
             { nodes, edges } = props.graph
-
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i]!
-
-            if (!node.moved) continue
-
-            const { x, y } = node.position
-            const el = els[i]! as HTMLElement
-
-            el.style.translate = `calc(${x + 50} * 0.90vmin) calc(${y + 50} * 0.90vmin)`
-        }
 
         for (let i = 0; i < edges.length; i++) {
             const [node_a, node_b] = edges[i]!
@@ -67,17 +57,23 @@ export function ForceGraph(props: {
             }
         }
 
-        // if (performance.now() - start < 3000) {
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i]!
+
+            if (!node.moved) continue
+
+            const { x, y } = node.position
+            const el = els[i]! as HTMLElement
+
+            el.style.translate = `calc(${x + 50} * 0.90vmin) calc(${y + 50} * 0.90vmin)`
+
+            node.moved = false
+        }
+
         raf = requestAnimationFrame(loop)
-        // }
     }
     let raf = requestAnimationFrame(loop)
     onCleanup(() => cancelAnimationFrame(raf))
-
-    // setInterval(() => {
-    //     // console.log('INTERVAL')
-    //     graph.updatePositionsOptimized(props.graph)
-    // })
 
     return (
         <>
