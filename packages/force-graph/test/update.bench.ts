@@ -33,7 +33,7 @@ const fns = {
     // Accurate: graph.updatePositionsAccurate,
     // Optimized: graph.updatePositionsOptimized,
     1: {
-        fn: graph.updatePositions,
+        fn: graph.simulateGraph,
         mod: graph,
     },
     // 2: {

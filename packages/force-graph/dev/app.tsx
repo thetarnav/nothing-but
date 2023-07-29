@@ -1,5 +1,4 @@
 import { signal as s } from '@nothing-but/solid'
-import { trig } from '@nothing-but/utils'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
@@ -16,7 +15,7 @@ export function ForceGraph(props: {
     const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
 
     const useLine = createRootPool(
-        () => (<line class="stroke-gray stroke-0.2%" />) as SVGLineElement,
+        () => (<line class="stroke-gray/50 stroke-0.2%" />) as SVGLineElement,
     )
     const lines = createMemo(() => props.graph.edges.map(useLine))
 
@@ -36,7 +35,7 @@ export function ForceGraph(props: {
 
         // console.log('FRAME', fps)
 
-        graph.updatePositions(props.graph)
+        graph.simulateGraph(props.graph)
 
         const els = nodeEls(),
             line_els = lines(),
@@ -50,7 +49,7 @@ export function ForceGraph(props: {
             const { x, y } = node.position
             const el = els[i]! as HTMLElement
 
-            el.style.translate = `calc(${x + 50} * 0.8vw) calc(${y + 50} * 0.8vw)`
+            el.style.translate = `calc(${x + 50} * 0.8vmin) calc(${y + 50} * 0.8vmin)`
         }
 
         for (let i = 0; i < edges.length; i++) {
@@ -115,21 +114,13 @@ export const App: Component = () => {
 
         e.preventDefault()
 
-        const rect = container.getBoundingClientRect()
-        const x = (e.clientX - rect.left) / rect.width
-        const y = (e.clientY - rect.top) / rect.height
-        const pos_x = x * 100 - 50
-        const pos_y = y * 100 - 50
+        const rect = container.getBoundingClientRect(),
+            x = (e.clientX - rect.left) / rect.width,
+            y = (e.clientY - rect.top) / rect.height,
+            pos_x = x * 100 - 50,
+            pos_y = y * 100 - 50
 
-        if (pos_x === node.position.x && pos_y === node.position.y) return
-
-        const prev_pos = trig.vector(node.position)
-
-        node.position.x = pos_x
-        node.position.y = pos_y
-        node.moved = true
-
-        graph.correctNodeOrder(force_graph, node, prev_pos)
+        graph.changeNodePosition(force_graph.grid, node, pos_x, pos_y)
     }
 
     createEventListenerMap(document, {
@@ -140,26 +131,31 @@ export const App: Component = () => {
 
     let container!: HTMLDivElement
     return (
-        <div ref={container} class="w-80vw h-80vw m-10vw bg-dark-9 relative overflow-hidden">
-            <ForceGraph
-                graph={force_graph}
-                node={node => (
-                    <div
-                        class={clsx(
-                            'absolute top-0 left-0 w-2% h-2% rounded-full -mt-1% -ml-1%',
-                            isDragging(node()) ? 'bg-cyan' : 'bg-red',
-                        )}
-                        style="will-change: translate"
-                        onMouseDown={e => {
-                            if (dragging.value !== undefined) return
+        <div class="w-screen h-110vh center-child overflow-hidden">
+            <div
+                ref={container}
+                class="w-80vmin h-80vmin m-auto bg-dark-9 relative overflow-hidden"
+            >
+                <ForceGraph
+                    graph={force_graph}
+                    node={node => (
+                        <div
+                            class={clsx(
+                                'absolute top-0 left-0 w-2% h-2% rounded-full -mt-1% -ml-1%',
+                                isDragging(node()) ? 'bg-cyan' : 'bg-red',
+                            )}
+                            style="will-change: translate"
+                            onMouseDown={e => {
+                                if (dragging.value !== undefined) return
 
-                            setDragging(node())
+                                setDragging(node())
 
-                            handleDragEvent(e)
-                        }}
-                    ></div>
-                )}
-            />
+                                handleDragEvent(e)
+                            }}
+                        ></div>
+                    )}
+                />
+            </div>
         </div>
     )
 }

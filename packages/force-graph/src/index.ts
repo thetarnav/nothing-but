@@ -30,11 +30,10 @@ export class Node {
 export type Edge = [Node, Node]
 
 export const INERTIA_STRENGTH = 0.75,
-    REPULSION_STRENGTH = 0.35,
+    REPULSION_STRENGTH = 0.4,
     REPULSION_DISTANCE = 18,
     ATTRACTION_STRENGTH = 0.02,
     ORIGIN_STRENGTH = 0.012,
-    MIN_VELOCITY = 0.015,
     MIN_MOVE = 0.001,
     GRID_RADIUS = 100
 
@@ -100,19 +99,33 @@ export function addNodeToGrid(grid: GraphGrid, node: Node, idx: number): void {
     order.splice(i, 0, node)
 }
 
-/**
- * Corrects the order of a single node in the graph.
- */
-export function correctNodeOrder(graph: Graph, node: Node, prev_position: trig.Vector): void {
-    const { grid: x_grid } = graph,
-        prev_grid_idx = to_grid_idx(prev_position),
-        order = x_grid[prev_grid_idx]!
+export function changeNodePosition(grid: GraphGrid, node: Node, x: number, y: number): void {
+    const prev_idx = to_grid_idx(node.position)
+    const prev_x = node.position.x
 
-    order.splice(order.indexOf(node), 1)
+    node.position.x = math.clamp(x, -GRID_RADIUS, GRID_RADIUS)
+    node.position.y = math.clamp(y, -GRID_RADIUS, GRID_RADIUS)
+    node.moved = true
 
-    const grid_idx = to_grid_idx(node.position)
+    const idx = to_grid_idx(node.position)
+    const order = grid[prev_idx]!
+    const order_idx = order.indexOf(node)
 
-    addNodeToGrid(x_grid, node, grid_idx)
+    if (idx !== prev_idx) {
+        order.splice(order_idx, 1)
+
+        addNodeToGrid(grid, node, idx)
+    } else {
+        if (x - prev_x < 0) {
+            for (let i = order_idx - 1; i >= 0 && order[i]!.position.x > x; i--) {
+                ;[order[i + 1], order[i]] = [order[i]!, order[i + 1]!]
+            }
+        } else {
+            for (let i = order_idx + 1; i < order.length && order[i]!.position.x < x; i++) {
+                ;[order[i - 1], order[i]] = [order[i]!, order[i - 1]!]
+            }
+        }
+    }
 }
 
 export function pushNodesAway(a: Node, b: Node, dx: number, dy: number): void {
@@ -130,7 +143,7 @@ export function pushNodesAway(a: Node, b: Node, dx: number, dy: number): void {
     b.velocity.y -= my
 }
 
-export function updatePositions(graph: Graph): void {
+export function simulateGraph(graph: Graph): void {
     const { nodes, edges, grid } = graph
 
     for (const node of nodes) {
@@ -230,34 +243,6 @@ export function updatePositions(graph: Graph): void {
             continue
         }
 
-        const prev_idx = to_grid_idx(position)
-
-        position.x = math.clamp(position.x + velocity.x, -GRID_RADIUS, GRID_RADIUS)
-        position.y = math.clamp(position.y + velocity.y, -GRID_RADIUS, GRID_RADIUS)
-        node.moved = true
-
-        const idx = to_grid_idx(position)
-        const order = grid[prev_idx]!
-        const order_idx = order.indexOf(node)
-
-        if (idx !== prev_idx) {
-            order.splice(order_idx, 1)
-
-            addNodeToGrid(grid, node, idx)
-        } else {
-            if (velocity.x < 0) {
-                for (let i = order_idx - 1; i >= 0 && order[i]!.position.x > position.x; i--) {
-                    ;[order[i + 1], order[i]] = [order[i]!, order[i + 1]!]
-                }
-            } else {
-                for (
-                    let i = order_idx + 1;
-                    i < order.length && order[i]!.position.x < position.x;
-                    i++
-                ) {
-                    ;[order[i - 1], order[i]] = [order[i]!, order[i - 1]!]
-                }
-            }
-        }
+        changeNodePosition(grid, node, position.x + velocity.x, position.y + velocity.y)
     }
 }
