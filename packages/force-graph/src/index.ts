@@ -20,6 +20,7 @@ export class Node {
     velocity: trig.Vector = trig.zero()
     edges: Edge[] = []
     locked = false
+    moved = false
 
     constructor(position: trig.Vector) {
         this.position = position
@@ -219,15 +220,21 @@ export function updatePositions(graph: Graph): void {
         velocity.x *= INERTIA_STRENGTH
         velocity.y *= INERTIA_STRENGTH
 
+        if (locked) continue
+
         /*
             commit and sort
         */
-        if (locked || velocity.x * velocity.x + velocity.y * velocity.y <= MIN_MOVE) continue
+        if (velocity.x * velocity.x + velocity.y * velocity.y <= MIN_MOVE) {
+            node.moved = false
+            continue
+        }
 
         const prev_idx = to_grid_idx(position)
 
         position.x = math.clamp(position.x + velocity.x, -GRID_RADIUS, GRID_RADIUS)
         position.y = math.clamp(position.y + velocity.y, -GRID_RADIUS, GRID_RADIUS)
+        node.moved = true
 
         const idx = to_grid_idx(position)
         const order = grid[prev_idx]!

@@ -25,8 +25,6 @@ export function ForceGraph(props: {
     /*
         save previous positions to avoid unnecessary DOM updates
     */
-    const prev_nodes: number[] = []
-    const prev_edges: number[] = []
 
     let last_timestamp = 0
     const loop = (timestamp: DOMHighResTimeStamp) => {
@@ -45,51 +43,30 @@ export function ForceGraph(props: {
             { nodes, edges } = props.graph
 
         for (let i = 0; i < nodes.length; i++) {
-            const { position } = nodes[i]!,
-                { x, y } = position,
-                prev_x = prev_nodes[i * 2],
-                prev_y = prev_nodes[i * 2 + 1]
+            const node = nodes[i]!
 
-            if (prev_x === x && prev_y === y) continue
+            if (!node.moved) continue
 
-            prev_nodes[i * 2] = x
-            prev_nodes[i * 2 + 1] = y
-
+            const { x, y } = node.position
             const el = els[i]! as HTMLElement
 
             el.style.translate = `calc(${x + 50} * 0.8vw) calc(${y + 50} * 0.8vw)`
         }
 
         for (let i = 0; i < edges.length; i++) {
-            const [node_a, node_b] = edges[i]!,
-                prev_a_x = prev_edges[i * 4],
-                prev_a_y = prev_edges[i * 4 + 1],
-                prev_b_x = prev_edges[i * 4 + 2],
-                prev_b_y = prev_edges[i * 4 + 3]
-
-            if (
-                prev_a_x === node_a.position.x &&
-                prev_a_y === node_a.position.y &&
-                prev_b_x === node_b.position.x &&
-                prev_b_y === node_b.position.y
-            )
-                continue
-
-            prev_edges[i * 4] = node_a.position.y
-            prev_edges[i * 4 + 1] = node_a.position.x
-            prev_edges[i * 4 + 2] = node_b.position.x
-            prev_edges[i * 4 + 3] = node_b.position.y
-
+            const [node_a, node_b] = edges[i]!
             const line = line_els[i]!
 
-            line.x1.baseVal.valueAsString = node_a.position.x + 50 + '%'
-            line.y1.baseVal.valueAsString = node_a.position.y + 50 + '%'
-            line.x2.baseVal.valueAsString = node_b.position.x + 50 + '%'
-            line.y2.baseVal.valueAsString = node_b.position.y + 50 + '%'
-        }
+            if (node_a.moved) {
+                line.x1.baseVal.valueAsString = node_a.position.x + 50 + '%'
+                line.y1.baseVal.valueAsString = node_a.position.y + 50 + '%'
+            }
 
-        prev_nodes.length = nodes.length * 2
-        prev_edges.length = edges.length * 4
+            if (node_b.moved) {
+                line.x2.baseVal.valueAsString = node_b.position.x + 50 + '%'
+                line.y2.baseVal.valueAsString = node_b.position.y + 50 + '%'
+            }
+        }
 
         // if (performance.now() - start < 3000) {
         raf = requestAnimationFrame(loop)
@@ -113,7 +90,7 @@ export function ForceGraph(props: {
 
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
-    // const force_graph = generateInitialGraph(512)
+    // const force_graph = generateInitialGraph(1024)
     const force_graph = getLAGraph()
 
     const dragging = s.signal<graph.Node>()
@@ -150,6 +127,7 @@ export const App: Component = () => {
 
         node.position.x = pos_x
         node.position.y = pos_y
+        node.moved = true
 
         graph.correctNodeOrder(force_graph, node, prev_pos)
     }
