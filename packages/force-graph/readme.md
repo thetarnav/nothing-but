@@ -4,7 +4,7 @@
 
 TODO:
 
--   [ ] node ids
+-   [x] node key
 -   [ ] delta time
 -   [ ] grid config
 -   [ ] stop simulation when inactive
