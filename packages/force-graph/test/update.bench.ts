@@ -1,10 +1,9 @@
-import { trig } from '@nothing-but/utils'
 import { bench, describe } from 'vitest'
 import * as graph from '../src'
 // import * as graph2 from '../src/index2'
 
 function generateExampleGraph(mod: typeof graph, length: number): graph.Graph {
-    const nodes: graph.Node[] = Array.from({ length }, () => new graph.Node(trig.vector(0, 0)))
+    const nodes: graph.Node[] = Array.from({ length }, () => graph.node())
 
     graph.randomizeNodePositions(nodes)
 
