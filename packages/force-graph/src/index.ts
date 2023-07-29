@@ -16,22 +16,28 @@ export class Graph {
 }
 
 export class Node {
-    position: trig.Vector
+    /**
+     * User key
+     */
+    key: string | number | undefined
+    position: trig.Vector = trig.zero()
     velocity: trig.Vector = trig.zero()
     edges: Edge[] = []
     locked = false
     moved = false
+}
 
-    constructor(position: trig.Vector) {
-        this.position = position
-    }
+export function node(key?: string | number | undefined): Node {
+    const node = new Node()
+    node.key = key
+    return node
 }
 
 export type Edge = [Node, Node]
 
 export const INERTIA_STRENGTH = 0.75,
     REPULSION_STRENGTH = 0.4,
-    REPULSION_DISTANCE = 18,
+    REPULSION_DISTANCE = 20,
     ATTRACTION_STRENGTH = 0.02,
     ORIGIN_STRENGTH = 0.012,
     MIN_MOVE = 0.001,

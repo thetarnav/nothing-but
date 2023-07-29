@@ -1,18 +1,17 @@
-import { math, trig } from '@nothing-but/utils'
+import { math } from '@nothing-but/utils'
 import * as graph from '../src'
 import la_raw from './la.json'
 
 export function getLAGraph() {
-    const nodes: graph.Node[] = la_raw.map(() => new graph.Node(trig.vector(0, 0)))
-
-    graph.randomizeNodePositions(nodes)
+    const nodes: graph.Node[] = new Array(la_raw.length)
 
     const edges: graph.Edge[] = []
 
     const node_map = new Map<string, graph.Node>()
     for (let i = 0; i < la_raw.length; i++) {
-        const node = nodes[i]!
         const raw = la_raw[i]!
+        const node = graph.node(raw.file)
+        nodes[i] = node
         node_map.set(raw.file, node)
     }
 
@@ -29,6 +28,8 @@ export function getLAGraph() {
         }
     }
 
+    graph.randomizeNodePositions(nodes)
+
     const new_graph = new graph.Graph()
 
     new_graph.nodes = nodes
@@ -40,7 +41,7 @@ export function getLAGraph() {
 }
 
 export function generateInitialGraph(length: number = 256): graph.Graph {
-    const nodes: graph.Node[] = Array.from({ length }, () => new graph.Node(trig.vector(0, 0)))
+    const nodes: graph.Node[] = Array.from({ length }, graph.node)
 
     graph.randomizeNodePositions(nodes)
 

@@ -15,7 +15,7 @@ export function ForceGraph(props: {
     const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
 
     const useLine = createRootPool(
-        () => (<line class="stroke-gray/50 stroke-0.2%" />) as SVGLineElement,
+        () => (<line class="stroke-gray-6/40 stroke-0.2%" />) as SVGLineElement,
     )
     const lines = createMemo(() => props.graph.edges.map(useLine))
 
@@ -49,7 +49,7 @@ export function ForceGraph(props: {
             const { x, y } = node.position
             const el = els[i]! as HTMLElement
 
-            el.style.translate = `calc(${x + 50} * 0.8vmin) calc(${y + 50} * 0.8vmin)`
+            el.style.translate = `calc(${x + 50} * 0.90vmin) calc(${y + 50} * 0.90vmin)`
         }
 
         for (let i = 0; i < edges.length; i++) {
@@ -134,15 +134,16 @@ export const App: Component = () => {
         <div class="w-screen h-110vh center-child overflow-hidden">
             <div
                 ref={container}
-                class="w-80vmin h-80vmin m-auto bg-dark-9 relative overflow-hidden"
+                class="w-90vmin h-90vmin m-auto bg-dark-9 relative overflow-hidden"
             >
                 <ForceGraph
                     graph={force_graph}
                     node={node => (
                         <div
                             class={clsx(
-                                'absolute top-0 left-0 w-2% h-2% rounded-full -mt-1% -ml-1%',
-                                isDragging(node()) ? 'bg-cyan' : 'bg-red',
+                                'absolute top-0 left-0 w-0 h-0',
+                                'center-child text-2 leading-1.5 text-center select-none',
+                                isDragging(node()) ? 'text-cyan' : 'text-red',
                             )}
                             style="will-change: translate"
                             onMouseDown={e => {
@@ -152,7 +153,9 @@ export const App: Component = () => {
 
                                 handleDragEvent(e)
                             }}
-                        ></div>
+                        >
+                            {node().key}
+                        </div>
                     )}
                 />
             </div>
