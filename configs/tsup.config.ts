@@ -55,7 +55,13 @@ export function generate_single_entry_config() {
 
         update_package_json(options, config)
 
-        return preset.generateTsupOptions(options)
+        const tsup_options = preset.generateTsupOptions(options)
+
+        for (const item of tsup_options) {
+            item.bundle = false
+        }
+
+        return tsup_options
     })
 }
 
@@ -65,6 +71,12 @@ export function generate_multi_entry_config(from: string) {
 
         update_package_json(options, config)
 
-        return preset.generateTsupOptions(options)
+        const tsup_options = preset.generateTsupOptions(options)
+
+        for (const item of tsup_options) {
+            item.bundle = false
+        }
+
+        return tsup_options
     })
 }
