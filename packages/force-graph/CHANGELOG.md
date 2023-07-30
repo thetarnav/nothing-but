@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.0.4
+
+### Patch Changes
+
+-   fbb07d4: Add option to customize graph options
+
 ## 0.0.3
 
 ### Patch Changes
