@@ -1,20 +1,61 @@
 import { math, trig } from '@nothing-but/utils'
 
 export interface GraphOptions {
+    /**
+     * Percent of velocity to retain each frame.
+     *
+     * ```ts
+     * velocity *= inertia_strength
+     * ```
+     */
     inertia_strength: number
-    repulsion_strength: number
-    repulsion_distance: number
-    attraction_strength: number
+    /**
+     * Strength of nodes pushing each other away.
+     *
+     * ```ts
+     * force = repel_strength * (1 - distance / repel_distance)
+     * velocity += delta / distance * force
+     * ```
+     */
+    repel_strength: number
+    /**
+     * Distance at which nodes start to repel each other.
+     *
+     * @see {@link repel_strength}
+     */
+    repel_distance: number
+    /**
+     * Strength of the connection between nodes.
+     *
+     * ```ts
+     * velocity += delta * link_strength / n_edges
+     * ```
+     */
+    link_strength: number
+    /**
+     * Pull towards the origin.
+     *
+     * ```ts
+     * velocity -= node_position * options.origin_strength
+     * ```
+     */
     origin_strength: number
+    /**
+     * Minimum velocity to move a node.
+     */
     min_move: number
+    /**
+     * Size of the grid used for spatial lookup.
+     * Node positions will be clamped to this size.
+     */
     grid_size: number
 }
 
 export const default_options: GraphOptions = {
     inertia_strength: 0.7,
-    repulsion_strength: 0.4,
-    repulsion_distance: 20,
-    attraction_strength: 0.02,
+    repel_strength: 0.4,
+    repel_distance: 20,
+    link_strength: 0.02,
     origin_strength: 0.012,
     min_move: 0.001,
     grid_size: 200,
@@ -41,14 +82,14 @@ export interface GraphGrid {
 
 export function makeGraphGrid(options: GraphOptions): GraphGrid {
     const grid_radius = options.grid_size / 2,
-        axis_cells = Math.ceil(grid_radius / options.repulsion_distance) * 2,
+        axis_cells = Math.ceil(grid_radius / options.repel_distance) * 2,
         n_cells = axis_cells * axis_cells
 
     return {
         cells: Array.from({ length: n_cells }, () => []),
         axis_cells,
         n_cells,
-        cell_size: options.repulsion_distance,
+        cell_size: options.repel_distance,
         radius: grid_radius,
     }
 }
@@ -205,9 +246,9 @@ export function pushNodesAway(
 ): void {
     const d = Math.sqrt(dx * dx + dy * dy)
 
-    if (d >= options.repulsion_distance) return
+    if (d >= options.repel_distance) return
 
-    const force = options.repulsion_strength * (1 - d / options.repulsion_distance),
+    const force = options.repel_strength * (1 - d / options.repel_distance),
         mx = (dx / d) * force,
         my = (dy / d) * force
 
@@ -262,7 +303,7 @@ export function simulateGraph(graph: Graph): void {
             }
 
             /*
-                from the left edge of neighboring right cell to the end of repulsion distance
+                from the left edge of neighboring right cell to the end of repel distance
             */
             if (at_right_edge) continue
 
@@ -271,7 +312,7 @@ export function simulateGraph(graph: Graph): void {
             for (const node_b of order) {
                 const dx = x - node_b.position.x
 
-                if (dx <= -options.repulsion_distance) break
+                if (dx <= -options.repel_distance) break
 
                 const dy = y - node_b.position.y
 
@@ -286,8 +327,8 @@ export function simulateGraph(graph: Graph): void {
         so the velocity is divided by the number of edges
     */
     for (const [node_a, node_b] of edges) {
-        const dx = (node_b.position.x - node_a.position.x) * options.attraction_strength
-        const dy = (node_b.position.y - node_a.position.y) * options.attraction_strength
+        const dx = (node_b.position.x - node_a.position.x) * options.link_strength
+        const dy = (node_b.position.y - node_a.position.y) * options.link_strength
 
         const a_mod = (node_a.edges.length + 2) / 3
         const b_mod = (node_b.edges.length + 2) / 3
