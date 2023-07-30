@@ -13,7 +13,7 @@
         "url": "https://github.com/thetarnav/nothing-but/issues"
     },
     "scripts": {
-        "build": "tsup",
+        "build": "pnpm tsc -p .\\tsconfig.build.json",
         "prepublish": "pnpm build",
         "test": "vitest -c ../../configs/vitest.config.js",
         "typecheck": "tsc --noEmit"
@@ -24,82 +24,82 @@
         "access": "public"
     },
     "type": "module",
-    "main": "./dist/index/index.js",
-    "module": "./dist/index/index.js",
-    "types": "./dist/index/index.d.ts",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "browser": {},
     "exports": {
         ".": {
             "import": {
-                "types": "./dist/index/index.d.ts",
-                "default": "./dist/index/index.js"
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
             }
         },
         "./array": {
             "import": {
-                "types": "./dist/array/index.d.ts",
-                "default": "./dist/array/index.js"
+                "types": "./dist/array.d.ts",
+                "default": "./dist/array.js"
             }
         },
         "./color": {
             "import": {
-                "types": "./dist/color/index.d.ts",
-                "default": "./dist/color/index.js"
+                "types": "./dist/color.d.ts",
+                "default": "./dist/color.js"
             }
         },
         "./ease": {
             "import": {
-                "types": "./dist/ease/index.d.ts",
-                "default": "./dist/ease/index.js"
+                "types": "./dist/ease.d.ts",
+                "default": "./dist/ease.js"
             }
         },
         "./math": {
             "import": {
-                "types": "./dist/math/index.d.ts",
-                "default": "./dist/math/index.js"
+                "types": "./dist/math.d.ts",
+                "default": "./dist/math.js"
             }
         },
         "./misc": {
             "import": {
-                "types": "./dist/misc/index.d.ts",
-                "default": "./dist/misc/index.js"
+                "types": "./dist/misc.d.ts",
+                "default": "./dist/misc.js"
             }
         },
         "./trig": {
             "import": {
-                "types": "./dist/trig/index.d.ts",
-                "default": "./dist/trig/index.js"
+                "types": "./dist/trig.d.ts",
+                "default": "./dist/trig.js"
             }
         },
         "./types": {
             "import": {
-                "types": "./dist/types/index.d.ts",
-                "default": "./dist/types/index.js"
+                "types": "./dist/types.d.ts",
+                "default": "./dist/types.js"
             }
         }
     },
     "typesVersions": {
         "*": {
             "array": [
-                "./dist/array/index.d.ts"
+                "./dist/array.d.ts"
             ],
             "color": [
-                "./dist/color/index.d.ts"
+                "./dist/color.d.ts"
             ],
             "ease": [
-                "./dist/ease/index.d.ts"
+                "./dist/ease.d.ts"
             ],
             "math": [
-                "./dist/math/index.d.ts"
+                "./dist/math.d.ts"
             ],
             "misc": [
-                "./dist/misc/index.d.ts"
+                "./dist/misc.d.ts"
             ],
             "trig": [
-                "./dist/trig/index.d.ts"
+                "./dist/trig.d.ts"
             ],
             "types": [
-                "./dist/types/index.d.ts"
+                "./dist/types.d.ts"
             ]
         }
     }

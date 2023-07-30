@@ -4,6 +4,7 @@
     "author": "Damian Tarnawski <gthetarnav@gmail.com>",
     "license": "MIT",
     "private": true,
+    "type": "module",
     "scripts": {
         "format": "prettier --ignore-path .gitignore -w **/*.{ts,tsx,json,html,css}",
         "build": "turbo run build --filter=./packages/*",
