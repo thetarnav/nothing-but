@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.0.1
+
+### Patch Changes
+
+-   950e9fa: Fix tree-shaking
+
 ## 0.2.0
 
 ### Minor Changes

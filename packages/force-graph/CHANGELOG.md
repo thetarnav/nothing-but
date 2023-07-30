@@ -1,5 +1,13 @@
 # @nothing-but/force-graph
 
+## 0.0.2
+
+### Patch Changes
+
+-   f157f0e: Add `moved` property to nodes
+-   Updated dependencies [950e9fa]
+    -   @nothing-but/utils@0.4.1
+
 ## 0.0.1
 
 ### Patch Changes
