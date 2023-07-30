@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.4.2
+
+### Patch Changes
+
+-   4f6f6ef: Switch to tsc for building (fix builds)
+
 ## 0.4.1
 
 ### Patch Changes
