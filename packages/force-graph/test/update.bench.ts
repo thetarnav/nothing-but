@@ -1,13 +1,11 @@
 import { bench, describe } from 'vitest'
-import * as graph from '../src'
+import * as FG from '../src'
 // import * as graph2 from '../src/index2'
 
-function generateExampleGraph(mod: typeof graph, length: number): graph.Graph {
-    const nodes: graph.Node[] = Array.from({ length }, () => graph.node())
+function generateExampleGraph(mod: typeof FG, length: number): FG.Graph {
+    const nodes: FG.Node[] = Array.from({ length }, () => FG.node())
 
-    graph.randomizeNodePositions(nodes)
-
-    const edges: graph.Edge[] = []
+    const edges: FG.Edge[] = []
 
     for (let i = 0; i < length; i++) {
         if (i % 3 === 0) continue
@@ -18,22 +16,17 @@ function generateExampleGraph(mod: typeof graph, length: number): graph.Graph {
         edges.push(mod.connect(node, node_b))
     }
 
-    const new_graph = new mod.Graph()
+    FG.randomizeNodePositions(nodes, FG.default_options)
 
-    new_graph.nodes = nodes
-    new_graph.edges = edges
-
-    mod.resetOrder(new_graph)
-
-    return new_graph
+    return FG.makeGraph(FG.default_options, nodes, edges)
 }
 
 const fns = {
     // Accurate: graph.updatePositionsAccurate,
     // Optimized: graph.updatePositionsOptimized,
     1: {
-        fn: graph.simulateGraph,
-        mod: graph,
+        fn: FG.simulateGraph,
+        mod: FG,
     },
     // 2: {
     //     fn: graph2.updatePositions,

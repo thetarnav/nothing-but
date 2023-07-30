@@ -8,6 +8,7 @@ export default defineConfig({
     plugins: [solid(), unocss(uno_config)],
     build: {
         target: 'esnext',
+        minify: false,
     },
     test: {
         passWithNoTests: true,

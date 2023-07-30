@@ -1,16 +1,17 @@
 import { math } from '@nothing-but/utils'
-import * as graph from '../src'
+import * as FG from '../src'
+import { graph_options } from './app'
 import la_raw from './la.json'
 
 export function getLAGraph() {
-    const nodes: graph.Node[] = new Array(la_raw.length)
+    const nodes: FG.Node[] = new Array(la_raw.length)
 
-    const edges: graph.Edge[] = []
+    const edges: FG.Edge[] = []
 
-    const node_map = new Map<string, graph.Node>()
+    const node_map = new Map<string, FG.Node>()
     for (let i = 0; i < la_raw.length; i++) {
         const raw = la_raw[i]!
-        const node = graph.node(raw.file)
+        const node = FG.node(raw.file)
         nodes[i] = node
         node_map.set(raw.file, node)
     }
@@ -21,31 +22,22 @@ export function getLAGraph() {
         for (const link of raw.links) {
             const link_node = node_map.get(link.file)
 
-            if (!link_node || graph.getEdge(node, link_node)) continue
+            if (!link_node || FG.getEdge(node, link_node)) continue
 
-            const edge = graph.connect(node, link_node)
+            const edge = FG.connect(node, link_node)
             edges.push(edge)
         }
     }
 
-    graph.randomizeNodePositions(nodes)
+    FG.randomizeNodePositions(nodes, graph_options)
 
-    const new_graph = new graph.Graph()
-
-    new_graph.nodes = nodes
-    new_graph.edges = edges
-
-    graph.resetOrder(new_graph)
-
-    return new_graph
+    return FG.makeGraph(graph_options, nodes, edges)
 }
 
-export function generateInitialGraph(length: number = 256): graph.Graph {
-    const nodes: graph.Node[] = Array.from({ length }, graph.node)
+export function generateInitialGraph(length: number = 256): FG.Graph {
+    const nodes: FG.Node[] = Array.from({ length }, FG.node)
 
-    graph.randomizeNodePositions(nodes)
-
-    const edges: graph.Edge[] = []
+    const edges: FG.Edge[] = []
 
     for (let i = 0; i < length; i++) {
         const node = nodes[i]!
@@ -59,15 +51,10 @@ export function generateInitialGraph(length: number = 256): graph.Graph {
             node_b = nodes[(b_index + 1) % length]!
         }
 
-        edges.push(graph.connect(node, node_b))
+        edges.push(FG.connect(node, node_b))
     }
 
-    const new_graph = new graph.Graph()
+    FG.randomizeNodePositions(nodes, graph_options)
 
-    new_graph.nodes = nodes
-    new_graph.edges = edges
-
-    graph.resetOrder(new_graph)
-
-    return new_graph
+    return FG.makeGraph(graph_options, nodes, edges)
 }

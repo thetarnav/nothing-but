@@ -1,15 +1,19 @@
-import { signal as s } from '@nothing-but/solid'
+import * as S from '@nothing-but/solid/signal'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
 import clsx from 'clsx'
 import { createMemo, onCleanup, type Component, type JSX } from 'solid-js'
-import * as graph from '../src'
+import * as FG from '../src'
 import { getLAGraph } from './init'
 
+export const graph_options = FG.makeGraphOptions({
+    inertia_strength: 0,
+})
+
 export function ForceGraph(props: {
-    graph: graph.Graph
-    node: RootPoolFactory<graph.Node, JSX.Element>
+    graph: FG.Graph
+    node: RootPoolFactory<FG.Node, JSX.Element>
 }): JSX.Element {
     const useNodeEl = createRootPool(props.node)
     const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
@@ -35,7 +39,7 @@ export function ForceGraph(props: {
 
         times = Math.min(times, 2)
         for (let i = 0; i < times; i++) {
-            graph.simulateGraph(props.graph)
+            FG.simulateGraph(props.graph)
         }
 
         const els = nodeEls(),
@@ -88,20 +92,20 @@ export const App: Component = () => {
     // const force_graph = generateInitialGraph(1024)
     const force_graph = getLAGraph()
 
-    const dragging = s.signal<graph.Node>()
+    const dragging = S.signal<FG.Node>()
 
-    const isDragging = s.selector(dragging)
+    const isDragging = S.selector(dragging)
 
-    function setDragging(node: graph.Node | undefined) {
+    function setDragging(node: FG.Node | undefined) {
         if (node === undefined) {
             const node = dragging.value
             if (node === undefined) return
             node.locked = false
-            s.set(dragging, undefined)
+            S.set(dragging, undefined)
             return
         }
         node.locked = true
-        s.set(dragging, node)
+        S.set(dragging, node)
     }
 
     function handleDragEvent(e: MouseEvent) {
@@ -111,12 +115,12 @@ export const App: Component = () => {
         e.preventDefault()
 
         const rect = container.getBoundingClientRect(),
-            x = (e.clientX - rect.left) / rect.width,
-            y = (e.clientY - rect.top) / rect.height,
-            pos_x = x * 100 - 50,
-            pos_y = y * 100 - 50
+            p_x = (e.clientX - rect.left) / rect.width,
+            p_y = (e.clientY - rect.top) / rect.height,
+            pos_x = p_x * 100 - 50,
+            pos_y = p_y * 100 - 50
 
-        graph.changeNodePosition(force_graph.grid, node, pos_x, pos_y)
+        FG.changeNodePosition(force_graph.grid, node, pos_x, pos_y)
     }
 
     createEventListenerMap(document, {
