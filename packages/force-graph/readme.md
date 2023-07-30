@@ -7,7 +7,9 @@ TODO:
 -   [x] node key
 -   [x] delta time (simulation iterations)
 -   [ ] grid config
--   [ ] connection strength
+-   [ ] link strength
+-   [ ] link directions (arrows)
 -   [ ] stop simulation when inactive (alpha)
+-   [ ] canvas rendering
 -   [ ] movement gestures
 -   [ ] zoom gestures
