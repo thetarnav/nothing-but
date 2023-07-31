@@ -224,11 +224,12 @@ export function disconnect(a: Node, b: Node): void {
 
 export function randomizeNodePositions(nodes: readonly Node[], options: Options): void {
     const { grid_size } = options
-    const grid_radius = grid_size / 2
+    const radius = grid_size / 4
 
     for (const node of nodes) {
-        node.position.x = math.random_from(-grid_radius, grid_radius)
-        node.position.y = math.random_from(-grid_radius, grid_radius)
+        node.position.x = math.random_from(-radius, radius)
+        node.position.y = math.random_from(-radius, radius)
+        node.moved = true
     }
 }
 
@@ -390,4 +391,78 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
         velocity.x *= options.inertia_strength * alpha
         velocity.y *= options.inertia_strength * alpha
     }
+}
+
+export interface FrameAnimation {
+    last_timestamp: number
+    alpha: number
+    target_ms: number // TODO: move to options
+    active: boolean
+    frame_id: number
+    graph: Graph
+    callback: VoidFunction
+}
+
+export function makeFrameAnimation(
+    graph: Graph,
+    callback: VoidFunction,
+    target_fps: number = 44,
+): FrameAnimation {
+    return {
+        last_timestamp: performance.now(),
+        alpha: 1,
+        target_ms: 1000 / target_fps,
+        active: false,
+        frame_id: 0,
+        graph,
+        callback,
+    }
+}
+
+export function frame(animation: FrameAnimation, timestamp: DOMHighResTimeStamp) {
+    const { graph, active, target_ms } = animation
+
+    const delta_time = timestamp - animation.last_timestamp
+    let times = Math.floor(delta_time / target_ms)
+    animation.last_timestamp += times * target_ms
+
+    if (times === 0) {
+        animation.frame_id = requestAnimationFrame(timestamp => frame(animation, timestamp))
+        return
+    }
+
+    times = Math.min(times, 2) // TODO: configurable
+    for (let i = 0; i < times; i++) {
+        // TODO: configurable
+        animation.alpha = math.lerp(animation.alpha, active ? 1 : 0, active ? 0.03 : 0.005)
+
+        if (animation.alpha < 0.001) {
+            stopFrameAnimation(animation)
+            return
+        }
+
+        simulateGraph(graph, animation.alpha)
+    }
+
+    animation.callback()
+
+    animation.frame_id = requestAnimationFrame(timestamp => frame(animation, timestamp))
+}
+
+export function startFrameAnimation(animation: FrameAnimation): void {
+    if (animation.active) return
+
+    animation.active = true
+    animation.last_timestamp = performance.now()
+    animation.frame_id = requestAnimationFrame(timestamp => frame(animation, timestamp))
+}
+
+export function pauseFrameAnimation(animation: FrameAnimation): void {
+    animation.active = false
+}
+
+export function stopFrameAnimation(animation: FrameAnimation): void {
+    animation.alpha = 0
+    animation.active = false
+    cancelAnimationFrame(animation.frame_id)
 }

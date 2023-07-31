@@ -4,7 +4,7 @@ import { createEventListenerMap } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
 import clsx from 'clsx'
-import { createMemo, onCleanup, type Component, type JSX } from 'solid-js'
+import { createEffect, createMemo, onCleanup, type Component, type JSX } from 'solid-js'
 import * as FG from '../src'
 import { getLAGraph } from './init'
 
@@ -31,36 +31,7 @@ export function ForceGraph(props: {
     )
     const lines = createMemo(() => props.graph.edges.map(useLine))
 
-    const TARGET_FPS = 44
-    const TARGET_MS = 1000 / TARGET_FPS
-    let last_timestamp = performance.now()
-    let alpha = 1
-
-    const loop = (timestamp: DOMHighResTimeStamp) => {
-        const delta_time = timestamp - last_timestamp
-        let times = Math.floor(delta_time / TARGET_MS)
-        last_timestamp += times * TARGET_MS
-
-        if (times === 0) {
-            raf = requestAnimationFrame(loop)
-            return
-        }
-
-        const active = isActive()
-
-        times = Math.min(times, 2)
-        for (let i = 0; i < times; i++) {
-            //
-            alpha = math.lerp(alpha, active ? 1 : 0, active ? 0.03 : 0.005)
-
-            if (alpha < 0.001) {
-                raf = requestAnimationFrame(loop)
-                return
-            }
-
-            FG.simulateGraph(props.graph, alpha)
-        }
-
+    function updateElements() {
         const els = nodeEls(),
             line_els = lines(),
             { nodes, edges } = props.graph
@@ -92,11 +63,27 @@ export function ForceGraph(props: {
 
             node.moved = false
         }
-
-        raf = requestAnimationFrame(loop)
     }
-    let raf = requestAnimationFrame(loop)
-    onCleanup(() => cancelAnimationFrame(raf))
+
+    const TARGET_FPS = 44
+
+    createEffect(() => {
+        const { graph } = props
+        const animation = FG.makeFrameAnimation(graph, updateElements, TARGET_FPS)
+
+        updateElements()
+        FG.startFrameAnimation(animation)
+
+        createEffect(() => {
+            if (isActive()) {
+                FG.startFrameAnimation(animation)
+            } else {
+                FG.pauseFrameAnimation(animation)
+            }
+        })
+
+        onCleanup(() => FG.stopFrameAnimation(animation))
+    })
 
     return (
         <>
