@@ -20,6 +20,11 @@ export const bounce = (value: number, min: number, max: number) => {
     return max - distance
 }
 
+/**
+ * Linear interpolation
+ */
+export const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
 export const map_range = (
     value: number,
     in_min: number,
