@@ -1,4 +1,5 @@
 import * as S from '@nothing-but/solid/signal'
+import { math } from '@nothing-but/utils'
 import { createEventListenerMap } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
@@ -8,7 +9,10 @@ import * as FG from '../src'
 import { getLAGraph } from './init'
 
 export const graph_options = FG.makeGraphOptions({
-    inertia_strength: 0,
+    inertia_strength: 0.1,
+    link_strength: 0.01,
+    // repel_distance: 22,
+    // repel_strength: 0.5,
 })
 
 export function ForceGraph(props: {
@@ -19,7 +23,7 @@ export function ForceGraph(props: {
     const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
 
     const useLine = createRootPool(
-        () => (<line class="stroke-gray-6/40 stroke-0.2%" />) as SVGLineElement,
+        () => (<line class="stroke-cyan-7/25 stroke-0.2%" />) as SVGLineElement,
     )
     const lines = createMemo(() => props.graph.edges.map(useLine))
 
@@ -47,17 +51,17 @@ export function ForceGraph(props: {
             { nodes, edges } = props.graph
 
         for (let i = 0; i < edges.length; i++) {
-            const [node_a, node_b] = edges[i]!
+            const { a, b } = edges[i]!
             const line = line_els[i]!
 
-            if (node_a.moved) {
-                line.x1.baseVal.valueAsString = node_a.position.x + 50 + '%'
-                line.y1.baseVal.valueAsString = node_a.position.y + 50 + '%'
+            if (a.moved) {
+                line.x1.baseVal.valueAsString = a.position.x + 50 + '%'
+                line.y1.baseVal.valueAsString = a.position.y + 50 + '%'
             }
 
-            if (node_b.moved) {
-                line.x2.baseVal.valueAsString = node_b.position.x + 50 + '%'
-                line.y2.baseVal.valueAsString = node_b.position.y + 50 + '%'
+            if (b.moved) {
+                line.x2.baseVal.valueAsString = b.position.x + 50 + '%'
+                line.y2.baseVal.valueAsString = b.position.y + 50 + '%'
             }
         }
 
@@ -129,6 +133,10 @@ export const App: Component = () => {
         mousemove: handleDragEvent,
     })
 
+    function edgesMod(node: FG.Node) {
+        return math.clamp(node.edges.length, 1, 30) / 30
+    }
+
     let container!: HTMLDivElement
     return (
         <div class="w-screen h-110vh center-child overflow-hidden">
@@ -142,10 +150,14 @@ export const App: Component = () => {
                         <div
                             class={clsx(
                                 'absolute top-0 left-0 w-0 h-0',
-                                'center-child text-2 leading-1.5 text-center select-none',
-                                isDragging(node()) ? 'text-cyan' : 'text-red',
+                                'center-child leading-100% text-center select-none',
+                                isDragging(node()) ? 'text-cyan' : 'text-white',
                             )}
-                            style="will-change: translate"
+                            style={{
+                                'will-change': 'translate',
+                                'font-size': `calc(0.9vmin + 1vmin * ${edgesMod(node())})`,
+                                '--un-text-opacity': 0.6 + (edgesMod(node()) / 10) * 4,
+                            }}
                             onMouseDown={e => {
                                 if (dragging.value !== undefined) return
 

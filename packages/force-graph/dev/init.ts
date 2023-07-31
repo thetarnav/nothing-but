@@ -24,7 +24,7 @@ export function getLAGraph() {
 
             if (!link_node || FG.getEdge(node, link_node)) continue
 
-            const edge = FG.connect(node, link_node)
+            const edge = FG.connect(node, link_node, 1 + link.count / 10)
             edges.push(edge)
         }
     }

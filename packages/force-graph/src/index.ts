@@ -168,11 +168,15 @@ export function node(key?: string | number | undefined): Node {
     return node
 }
 
-export type Edge = [Node, Node]
+export interface Edge {
+    a: Node
+    b: Node
+    strength: number
+}
 
 export function getEdge(a: Node, b: Node): Edge | undefined {
     for (const edge of a.edges) {
-        if (edge[0] === b || edge[1] === b) return edge
+        if (edge.a === b || edge.b === b) return edge
     }
 }
 
@@ -182,18 +186,26 @@ export function getEdge(a: Node, b: Node): Edge | undefined {
  * **It doesn't check if the nodes are already connected.**
  * Use {@link getEdge} to check before connecting.
  */
-export function connect(a: Node, b: Node): Edge {
-    const edge: Edge = [a, b]
+export function connect(a: Node, b: Node, strength = 1): Edge {
+    const edge: Edge = { a, b, strength }
     a.edges.push(edge)
     b.edges.push(edge)
     return edge
 }
 
-export function disconnect(a: Node, b: Node) {
-    const a_edge_index = a.edges.findIndex(edge => edge[1] === b)
-    const b_edge_index = b.edges.findIndex(edge => edge[0] === a)
-    a.edges.splice(a_edge_index, 1)
-    b.edges.splice(b_edge_index, 1)
+export function disconnect(a: Node, b: Node): void {
+    for (let i = 0; i < a.edges.length; i++) {
+        const edge = a.edges[i]!
+        if (edge.a === b || edge.b === b) {
+            a.edges.splice(i, 1)
+            for (let j = 0; j < b.edges.length; j++) {
+                if (edge === b.edges[j]) {
+                    b.edges.splice(j, 1)
+                    return
+                }
+            }
+        }
+    }
 }
 
 export function randomizeNodePositions(nodes: readonly Node[], options: GraphOptions): void {
@@ -326,17 +338,17 @@ export function simulateGraph(graph: Graph): void {
         the more edges a node has, the more velocity it accumulates
         so the velocity is divided by the number of edges
     */
-    for (const [node_a, node_b] of edges) {
-        const dx = (node_b.position.x - node_a.position.x) * options.link_strength
-        const dy = (node_b.position.y - node_a.position.y) * options.link_strength
+    for (const { a, b, strength } of edges) {
+        const dx = (b.position.x - a.position.x) * options.link_strength * strength
+        const dy = (b.position.y - a.position.y) * options.link_strength * strength
 
-        const a_mod = (node_a.edges.length + 2) / 3
-        const b_mod = (node_b.edges.length + 2) / 3
+        const a_edges_mod = (a.edges.length + 2) / 3
+        const b_edges_mod = (b.edges.length + 2) / 3
 
-        node_a.velocity.x += dx / a_mod
-        node_a.velocity.y += dy / a_mod
-        node_b.velocity.x -= dx / b_mod
-        node_b.velocity.y -= dy / b_mod
+        a.velocity.x += dx / a_edges_mod
+        a.velocity.y += dy / a_edges_mod
+        b.velocity.x -= dx / b_edges_mod
+        b.velocity.y -= dy / b_edges_mod
     }
 
     for (const node of nodes) {
