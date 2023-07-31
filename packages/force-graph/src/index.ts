@@ -255,12 +255,13 @@ export function pushNodesAway(
     dx: number,
     dy: number,
     options: GraphOptions,
+    alpha: number,
 ): void {
     const d = Math.sqrt(dx * dx + dy * dy)
 
     if (d >= options.repel_distance) return
 
-    const force = options.repel_strength * (1 - d / options.repel_distance),
+    const force = options.repel_strength * (1 - d / options.repel_distance) * alpha,
         mx = (dx / d) * force,
         my = (dy / d) * force
 
@@ -270,7 +271,15 @@ export function pushNodesAway(
     b.velocity.y -= my
 }
 
-export function simulateGraph(graph: Graph): void {
+/**
+ * Simulates the graph for one frame.
+ *
+ * Updates the velocity, position and moved flag of each node.
+ *
+ * @param graph The graph to simulate {@link Graph}
+ * @param alpha The simulation speed multiplier. Default is 1. Use this to slow down or speed up the simulation with time.
+ */
+export function simulateGraph(graph: Graph, alpha: number = 1): void {
     const { nodes, edges, grid, options } = graph
 
     for (const node of nodes) {
@@ -280,8 +289,8 @@ export function simulateGraph(graph: Graph): void {
         /*
             towards the origin
         */
-        velocity.x -= x * options.origin_strength
-        velocity.y -= y * options.origin_strength
+        velocity.x -= x * options.origin_strength * alpha
+        velocity.y -= y * options.origin_strength * alpha
 
         /*
             away from other nodes
@@ -311,7 +320,7 @@ export function simulateGraph(graph: Graph): void {
 
                 if (dx === 0 && dy >= 0) continue
 
-                pushNodesAway(node, node_b, dx, dy, options)
+                pushNodesAway(node, node_b, dx, dy, options, alpha)
             }
 
             /*
@@ -328,7 +337,7 @@ export function simulateGraph(graph: Graph): void {
 
                 const dy = y - node_b.position.y
 
-                pushNodesAway(node, node_b, dx, dy, options)
+                pushNodesAway(node, node_b, dx, dy, options, alpha)
             }
         }
     }
@@ -339,8 +348,8 @@ export function simulateGraph(graph: Graph): void {
         so the velocity is divided by the number of edges
     */
     for (const { a, b, strength } of edges) {
-        const dx = (b.position.x - a.position.x) * options.link_strength * strength
-        const dy = (b.position.y - a.position.y) * options.link_strength * strength
+        const dx = (b.position.x - a.position.x) * options.link_strength * strength * alpha
+        const dy = (b.position.y - a.position.y) * options.link_strength * strength * alpha
 
         const a_edges_mod = (a.edges.length + 2) / 3
         const b_edges_mod = (b.edges.length + 2) / 3
@@ -366,7 +375,7 @@ export function simulateGraph(graph: Graph): void {
         /*
             inertia
         */
-        velocity.x *= options.inertia_strength
-        velocity.y *= options.inertia_strength
+        velocity.x *= options.inertia_strength * alpha
+        velocity.y *= options.inertia_strength * alpha
     }
 }

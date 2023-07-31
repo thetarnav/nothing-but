@@ -9,7 +9,7 @@ TODO:
 -   [x] grid config
 -   [x] link strength
 -   [ ] link directions (arrows)
--   [ ] stop simulation when inactive (alpha)
+-   [x] stop simulation when inactive (alpha)
 -   [ ] canvas rendering
 -   [ ] movement gestures
 -   [ ] zoom gestures

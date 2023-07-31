@@ -9,16 +9,20 @@ import * as FG from '../src'
 import { getLAGraph } from './init'
 
 export const graph_options = FG.makeGraphOptions({
-    inertia_strength: 0.1,
-    link_strength: 0.01,
-    // repel_distance: 22,
-    // repel_strength: 0.5,
+    inertia_strength: 0.3,
+    link_strength: 0.012,
+    origin_strength: 0.01,
+    repel_distance: 22,
+    repel_strength: 0.5,
 })
 
 export function ForceGraph(props: {
     graph: FG.Graph
     node: RootPoolFactory<FG.Node, JSX.Element>
+    active?: boolean
 }): JSX.Element {
+    const isActive = 'active' in props ? () => props.active : () => false
+
     const useNodeEl = createRootPool(props.node)
     const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
 
@@ -30,6 +34,7 @@ export function ForceGraph(props: {
     const TARGET_FPS = 44
     const TARGET_MS = 1000 / TARGET_FPS
     let last_timestamp = performance.now()
+    let alpha = 1
 
     const loop = (timestamp: DOMHighResTimeStamp) => {
         const delta_time = timestamp - last_timestamp
@@ -41,9 +46,19 @@ export function ForceGraph(props: {
             return
         }
 
+        const active = isActive()
+
         times = Math.min(times, 2)
         for (let i = 0; i < times; i++) {
-            FG.simulateGraph(props.graph)
+            //
+            alpha = math.lerp(alpha, active ? 1 : 0, active ? 0.03 : 0.005)
+
+            if (alpha < 0.001) {
+                raf = requestAnimationFrame(loop)
+                return
+            }
+
+            FG.simulateGraph(props.graph, alpha)
         }
 
         const els = nodeEls(),
@@ -146,11 +161,12 @@ export const App: Component = () => {
             >
                 <ForceGraph
                     graph={force_graph}
+                    active={dragging.value !== undefined}
                     node={node => (
                         <div
                             class={clsx(
                                 'absolute top-0 left-0 w-0 h-0',
-                                'center-child leading-100% text-center select-none',
+                                'center-child leading-100% text-center select-none cursor-move',
                                 isDragging(node()) ? 'text-cyan' : 'text-white',
                             )}
                             style={{
