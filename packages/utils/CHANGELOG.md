@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.5.0
+
+### Minor Changes
+
+-   346fe6b: Add `lerp`
+
 ## 0.4.2
 
 ### Patch Changes
