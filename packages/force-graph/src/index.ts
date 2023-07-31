@@ -1,6 +1,7 @@
-import { math, trig } from '@nothing-but/utils'
+import { math } from '@nothing-but/utils'
+import { Position } from '@nothing-but/utils/types'
 
-export interface GraphOptions {
+export interface Options {
     /**
      * Percent of velocity to retain each frame.
      *
@@ -51,7 +52,7 @@ export interface GraphOptions {
     grid_size: number
 }
 
-export const default_options: GraphOptions = {
+export const default_options: Options = {
     inertia_strength: 0.7,
     repel_strength: 0.4,
     repel_distance: 20,
@@ -61,7 +62,7 @@ export const default_options: GraphOptions = {
     grid_size: 200,
 }
 
-export function makeGraphOptions(options?: Partial<GraphOptions>): GraphOptions {
+export function makeGraphOptions(options?: Partial<Options>): Options {
     return { ...default_options, ...options }
 }
 
@@ -72,7 +73,7 @@ export function makeGraphOptions(options?: Partial<GraphOptions>): GraphOptions 
  *
  * The second index is the index of the node in the call array, sorted by x position.
  */
-export interface GraphGrid {
+export interface Grid {
     cells: Node[][]
     radius: number
     cell_size: number
@@ -80,7 +81,7 @@ export interface GraphGrid {
     n_cells: number
 }
 
-export function makeGraphGrid(options: GraphOptions): GraphGrid {
+export function makeGraphGrid(options: Options): Grid {
     const grid_radius = options.grid_size / 2,
         axis_cells = Math.ceil(grid_radius / options.repel_distance) * 2,
         n_cells = axis_cells * axis_cells
@@ -94,7 +95,7 @@ export function makeGraphGrid(options: GraphOptions): GraphGrid {
     }
 }
 
-export function toGridIdx(grid: GraphGrid, pos: trig.Vector): number {
+export function toGridIdx(grid: Grid, pos: Position): number {
     const { radius, axis_cells, cell_size } = grid,
         xi = Math.floor((pos.x + radius) / cell_size),
         yi = Math.floor((pos.y + radius) / cell_size)
@@ -103,7 +104,7 @@ export function toGridIdx(grid: GraphGrid, pos: trig.Vector): number {
 // const get_node_x = (node: Node): number => node.position.x
 
 export function addNodeToGrid(
-    grid: GraphGrid,
+    grid: Grid,
     node: Node,
     idx: number = toGridIdx(grid, node.position),
 ): void {
@@ -116,13 +117,13 @@ export function addNodeToGrid(
     order.splice(i, 0, node)
 }
 
-export function addNodesToGrid(grid: GraphGrid, nodes: readonly Node[]): void {
+export function addNodesToGrid(grid: Grid, nodes: readonly Node[]): void {
     for (const node of nodes) {
         addNodeToGrid(grid, node)
     }
 }
 
-export function resetGraphGrid(grid: GraphGrid, nodes: readonly []): void {
+export function resetGraphGrid(grid: Grid, nodes: readonly []): void {
     for (const order of grid.cells) {
         order.length = 0
     }
@@ -133,18 +134,18 @@ export function resetGraphGrid(grid: GraphGrid, nodes: readonly []): void {
 export interface Graph {
     nodes: Node[]
     edges: Edge[]
-    grid: GraphGrid
-    options: GraphOptions
+    grid: Grid
+    options: Options
 }
 
-export function makeGraph(options: GraphOptions, nodes: Node[] = [], edges: Edge[] = []): Graph {
+export function makeGraph(options: Options, nodes: Node[] = [], edges: Edge[] = []): Graph {
     const grid = makeGraphGrid(options)
     addNodesToGrid(grid, nodes)
 
     return { nodes, edges, grid, options }
 }
 
-export class Node {
+export interface Node {
     /**
      * User data key
      *
@@ -155,17 +156,30 @@ export class Node {
      * Otherwise, you can use object references to match nodes.
      */
     key: string | number | undefined
-    position: trig.Vector = trig.zero()
-    velocity: trig.Vector = trig.zero()
-    edges: Edge[] = []
-    locked = false
-    moved = false
+    position: Position
+    velocity: Position
+    edges: Edge[]
+    /**
+     * Do not change the position of this node.
+     */
+    locked: boolean
+    /**
+     * Has the node moved since the last frame?
+     *
+     * This value is not changed back to `false` automatically. Change it manually if you handled the movement.
+     */
+    moved: boolean
 }
 
-export function node(key?: string | number | undefined): Node {
-    const node = new Node()
-    node.key = key
-    return node
+export function makeNode(key?: string | number | undefined): Node {
+    return {
+        key,
+        position: { x: 0, y: 0 },
+        velocity: { x: 0, y: 0 },
+        edges: [],
+        locked: false,
+        moved: false,
+    }
 }
 
 export interface Edge {
@@ -208,19 +222,17 @@ export function disconnect(a: Node, b: Node): void {
     }
 }
 
-export function randomizeNodePositions(nodes: readonly Node[], options: GraphOptions): void {
+export function randomizeNodePositions(nodes: readonly Node[], options: Options): void {
     const { grid_size } = options
     const grid_radius = grid_size / 2
 
     for (const node of nodes) {
-        node.position = trig.vector(
-            math.random_from(-grid_radius, grid_radius),
-            math.random_from(-grid_radius, grid_radius),
-        )
+        node.position.x = math.random_from(-grid_radius, grid_radius)
+        node.position.y = math.random_from(-grid_radius, grid_radius)
     }
 }
 
-export function changeNodePosition(grid: GraphGrid, node: Node, x: number, y: number): void {
+export function changeNodePosition(grid: Grid, node: Node, x: number, y: number): void {
     const prev_idx = toGridIdx(grid, node.position)
     const prev_x = node.position.x
 
@@ -254,7 +266,7 @@ export function pushNodesAway(
     b: Node,
     dx: number,
     dy: number,
-    options: GraphOptions,
+    options: Options,
     alpha: number,
 ): void {
     const d = Math.sqrt(dx * dx + dy * dy)

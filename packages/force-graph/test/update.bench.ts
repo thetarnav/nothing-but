@@ -3,7 +3,7 @@ import * as FG from '../src'
 // import * as graph2 from '../src/index2'
 
 function generateExampleGraph(mod: typeof FG, length: number): FG.Graph {
-    const nodes: FG.Node[] = Array.from({ length }, () => FG.node())
+    const nodes: FG.Node[] = Array.from({ length }, FG.makeNode)
 
     const edges: FG.Edge[] = []
 

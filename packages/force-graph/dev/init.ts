@@ -11,7 +11,7 @@ export function getLAGraph() {
     const node_map = new Map<string, FG.Node>()
     for (let i = 0; i < la_raw.length; i++) {
         const raw = la_raw[i]!
-        const node = FG.node(raw.file)
+        const node = FG.makeNode(raw.file)
         nodes[i] = node
         node_map.set(raw.file, node)
     }
@@ -35,7 +35,7 @@ export function getLAGraph() {
 }
 
 export function generateInitialGraph(length: number = 256): FG.Graph {
-    const nodes: FG.Node[] = Array.from({ length }, FG.node)
+    const nodes: FG.Node[] = Array.from({ length }, FG.makeNode)
 
     const edges: FG.Edge[] = []
 
