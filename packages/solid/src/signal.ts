@@ -113,8 +113,8 @@ export function signal<T>(initialValue: T, options?: SignalOptions<T>): Signal<T
     return new Signal(initialValue, options)
 }
 
-export function set<T>(obj: Signal<T>, value: T): void {
-    obj.setter(() => value)
+export function set<T>(obj: Signal<T>, value: T): T {
+    return obj.setter(() => value)
 }
 
 export function set_nested<T, K extends keyof T>(signal: Signal<T>, key: K, value: T[K]): void {
