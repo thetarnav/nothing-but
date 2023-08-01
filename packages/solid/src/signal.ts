@@ -117,6 +117,10 @@ export function set<T>(obj: Signal<T>, value: T): T {
     return obj.setter(() => value)
 }
 
+export function reset<T>(obj: Signal<T | undefined>): void {
+    return obj.setter(undefined)
+}
+
 export function set_nested<T, K extends keyof T>(signal: Signal<T>, key: K, value: T[K]): void {
     const obj = peek(signal)
     if (!obj || typeof obj !== 'object') return
