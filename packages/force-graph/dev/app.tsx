@@ -1,10 +1,19 @@
 import * as S from '@nothing-but/solid/signal'
 import { math } from '@nothing-but/utils'
-import { createEventListenerMap } from '@solid-primitives/event-listener'
+import { Position } from '@nothing-but/utils/types'
+import { makeEventListener } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
 import clsx from 'clsx'
-import { createEffect, createMemo, onCleanup, type Component, type JSX } from 'solid-js'
+import {
+    createEffect,
+    createMemo,
+    createSignal,
+    onCleanup,
+    onMount,
+    type Component,
+    type JSX,
+} from 'solid-js'
 import * as FG from '../src'
 import { getLAGraph } from './init'
 
@@ -65,24 +74,33 @@ export function ForceGraph(props: {
         }
     }
 
-    const TARGET_FPS = 44
+    onMount(() => {
+        const TARGET_FPS = 44
+        const animation = FG.makeFrameAnimation(props.graph, updateElements, TARGET_FPS)
 
-    createEffect(() => {
-        const { graph } = props
-        const animation = FG.makeFrameAnimation(graph, updateElements, TARGET_FPS)
+        const init = createMemo(() => {
+            props.graph // track graph prop
+
+            const [init, setInit] = createSignal(true)
+            const timeout = setTimeout(() => setInit(false), 2000)
+            onCleanup(() => clearTimeout(timeout))
+
+            return init
+        })
 
         updateElements()
-        FG.startFrameAnimation(animation)
 
         createEffect(() => {
-            if (isActive()) {
+            if (isActive() || init()()) {
                 FG.startFrameAnimation(animation)
             } else {
                 FG.pauseFrameAnimation(animation)
             }
         })
 
-        onCleanup(() => FG.stopFrameAnimation(animation))
+        onCleanup(() => {
+            FG.stopFrameAnimation(animation)
+        })
     })
 
     return (
@@ -93,32 +111,46 @@ export function ForceGraph(props: {
     )
 }
 
+function preventIfPossible(e: Event) {
+    if (e.cancelable) e.preventDefault()
+}
+const PASSIVE = { passive: true } as const
+const NOT_PASSIVE = { passive: false } as const
+
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
     // const force_graph = generateInitialGraph(1024)
     const force_graph = getLAGraph()
 
-    const dragging = S.signal<FG.Node>()
+    const change_signal = S.signal()
 
-    const isDragging = S.selector(dragging)
-
-    function setDragging(node: FG.Node | undefined) {
-        if (node === undefined) {
-            const node = dragging.value
-            if (node === undefined) return
-            node.locked = false
-            S.set(dragging, undefined)
-            return
-        }
-        node.locked = true
-        S.set(dragging, node)
+    interface Dragging {
+        node: FG.Node
+        start: Position
+        pointer_id: number
     }
 
-    function handleDragEvent(e: MouseEvent) {
-        const node = dragging.value
-        if (node === undefined) return
+    const dragging_state = S.signal<Dragging>()
+
+    const isDraggingNode = S.selector(dragging_state, (node: FG.Node, v) => !!v && v.node === node)
+
+    function setDragging(value: Dragging | undefined) {
+        if (value === undefined) {
+            const prev = dragging_state.value
+            if (prev === undefined) return
+            prev.node.locked = false
+            S.set(dragging_state, undefined)
+            return
+        }
+        value.node.locked = true
+        S.set(dragging_state, value)
+    }
+
+    function handlePointerMove(dragging_state: Dragging, e: PointerEvent) {
+        if (e.pointerId !== dragging_state.pointer_id) return
 
         e.preventDefault()
+        e.stopPropagation()
 
         const rect = container.getBoundingClientRect(),
             p_x = (e.clientX - rect.left) / rect.width,
@@ -126,14 +158,46 @@ export const App: Component = () => {
             pos_x = p_x * 100 - 50,
             pos_y = p_y * 100 - 50
 
-        FG.changeNodePosition(force_graph.grid, node, pos_x, pos_y)
+        FG.changeNodePosition(force_graph.grid, dragging_state.node, pos_x, pos_y)
     }
 
-    createEventListenerMap(document, {
-        mouseup: _ => setDragging(undefined),
-        mouseleave: _ => setDragging(undefined),
-        mousemove: handleDragEvent,
+    function handleNodePointerDown(e: PointerEvent, node: FG.Node) {
+        if (e.button !== 0 || dragging_state.value !== undefined) return
+
+        const dragging: Dragging = {
+            node,
+            start: { x: e.clientX, y: e.clientY },
+            pointer_id: e.pointerId,
+        }
+
+        setDragging(dragging)
+
+        handlePointerMove(dragging, e)
+    }
+
+    function handlePointerCancel(dragging_state: Dragging, e: PointerEvent) {
+        if (e.pointerId !== dragging_state.pointer_id) return
+        setDragging(undefined)
+    }
+
+    createEffect(() => {
+        const dragging = dragging_state.value
+        if (dragging === undefined) return
+
+        makeEventListener(document, 'pointermove', e => handlePointerMove(dragging, e))
+
+        makeEventListener(document, 'pointerup', e => handlePointerCancel(dragging, e))
+        makeEventListener(document, 'pointercancel', e => handlePointerCancel(dragging, e))
+        makeEventListener(document, 'pointerleave', e => handlePointerCancel(dragging, e))
     })
+
+    // const interval = setInterval(() => {
+    //     for (const node of force_graph.nodes) {
+    //         node.key = node.key + '!'
+    //     }
+    //     S.trigger(change_signal)
+    // }, 2000)
+    // onCleanup(() => clearInterval(interval))
 
     function edgesMod(node: FG.Node) {
         return math.clamp(node.edges.length, 1, 30) / 30
@@ -141,35 +205,33 @@ export const App: Component = () => {
 
     let container!: HTMLDivElement
     return (
-        <div class="w-screen h-110vh center-child overflow-hidden">
+        <div class="w-screen min-h-110vh center-child flex-col overflow-hidden">
             <div
-                ref={container}
-                class="w-90vmin h-90vmin m-auto bg-dark-9 relative overflow-hidden"
+                ref={el => {
+                    container = el
+                    makeEventListener(container, 'touchstart', preventIfPossible, NOT_PASSIVE)
+                    makeEventListener(container, 'touchmove', preventIfPossible, NOT_PASSIVE)
+                }}
+                class="w-90vmin h-90vmin m-auto bg-dark-9 relative overflow-hidden overscroll-none touch-none"
             >
                 <ForceGraph
                     graph={force_graph}
-                    active={dragging.value !== undefined}
+                    active={dragging_state.value !== undefined}
                     node={node => (
                         <div
                             class={clsx(
                                 'absolute top-0 left-0 w-0 h-0',
                                 'center-child leading-100% text-center select-none cursor-move',
-                                isDragging(node()) ? 'text-cyan' : 'text-white',
+                                isDraggingNode(node()) ? 'text-cyan' : 'text-white',
                             )}
                             style={{
                                 'will-change': 'translate',
                                 'font-size': `calc(0.9vmin + 1vmin * ${edgesMod(node())})`,
                                 '--un-text-opacity': 0.6 + (edgesMod(node()) / 10) * 4,
                             }}
-                            onMouseDown={e => {
-                                if (dragging.value !== undefined) return
-
-                                setDragging(node())
-
-                                handleDragEvent(e)
-                            }}
+                            on:pointerdown={e => handleNodePointerDown(e, node())}
                         >
-                            {node().key}
+                            {(change_signal.value, node().key)}
                         </div>
                     )}
                 />

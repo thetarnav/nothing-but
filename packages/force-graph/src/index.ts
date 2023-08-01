@@ -37,7 +37,7 @@ export interface Options {
      * Pull towards the origin.
      *
      * ```ts
-     * velocity -= node_position * options.origin_strength
+     * velocity -= node_position * origin_strength
      * ```
      */
     origin_strength: number
@@ -410,7 +410,7 @@ export function makeFrameAnimation(
 ): FrameAnimation {
     return {
         last_timestamp: performance.now(),
-        alpha: 1,
+        alpha: 0,
         target_ms: 1000 / target_fps,
         active: false,
         frame_id: 0,
