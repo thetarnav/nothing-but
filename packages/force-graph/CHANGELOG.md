@@ -1,5 +1,12 @@
 # @nothing-but/force-graph
 
+## 0.0.6
+
+### Patch Changes
+
+-   Updated dependencies [bb65f58]
+    -   @nothing-but/utils@0.6.0
+
 ## 0.0.5
 
 ### Patch Changes

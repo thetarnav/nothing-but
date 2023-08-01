@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.6.0
+
+### Minor Changes
+
+-   bb65f58: Add event module
+
 ## 0.5.0
 
 ### Minor Changes

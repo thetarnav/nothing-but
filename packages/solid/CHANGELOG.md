@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.0.3
+
+### Patch Changes
+
+-   b4bf3d9: Correct type
+
 ## 0.0.2
 
 ### Patch Changes
