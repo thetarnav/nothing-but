@@ -1,6 +1,7 @@
 export * as array from './array'
 export * as color from './color'
 export * as ease from './ease'
+export * as event from './event'
 export * as math from './math'
 export * as misc from './misc'
 export * as trig from './trig'

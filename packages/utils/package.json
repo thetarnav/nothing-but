@@ -76,6 +76,12 @@
                 "types": "./dist/types.d.ts",
                 "default": "./dist/types.js"
             }
+        },
+        "./event": {
+            "import": {
+                "types": "./dist/event.d.ts",
+                "default": "./dist/event.js"
+            }
         }
     },
     "typesVersions": {
@@ -100,6 +106,9 @@
             ],
             "types": [
                 "./dist/types.d.ts"
+            ],
+            "event": [
+                "./dist/event.d.ts"
             ]
         }
     }

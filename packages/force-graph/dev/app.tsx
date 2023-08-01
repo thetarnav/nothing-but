@@ -1,5 +1,5 @@
 import * as S from '@nothing-but/solid/signal'
-import { math } from '@nothing-but/utils'
+import { event, math } from '@nothing-but/utils'
 import { Position } from '@nothing-but/utils/types'
 import { makeEventListener } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
@@ -111,12 +111,6 @@ export function ForceGraph(props: {
     )
 }
 
-function preventIfPossible(e: Event) {
-    if (e.cancelable) e.preventDefault()
-}
-const PASSIVE = { passive: true } as const
-const NOT_PASSIVE = { passive: false } as const
-
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
     // const force_graph = generateInitialGraph(1024)
@@ -209,8 +203,7 @@ export const App: Component = () => {
             <div
                 ref={el => {
                     container = el
-                    makeEventListener(container, 'touchstart', preventIfPossible, NOT_PASSIVE)
-                    makeEventListener(container, 'touchmove', preventIfPossible, NOT_PASSIVE)
+                    event.preventMobileScrolling(container)
                 }}
                 class="w-90vmin h-90vmin m-auto bg-dark-9 relative overflow-hidden overscroll-none touch-none"
             >
