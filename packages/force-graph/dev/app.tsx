@@ -1,4 +1,5 @@
 import * as S from '@nothing-but/solid/signal'
+import { createStateMachine } from '@nothing-but/solid/state-machine'
 import { event, math } from '@nothing-but/utils'
 import { Position } from '@nothing-but/utils/types'
 import { createEventListener, makeEventListener } from '@solid-primitives/event-listener'
@@ -114,92 +115,6 @@ export function ForceGraph(props: {
             {nodeEls()}
         </>
     )
-}
-
-type MachineStatesBase<TStateNames extends PropertyKey> = {
-    [K in TStateNames]: { input: any; value: any; to?: TStateNames[] }
-}
-
-type MachineStates<TStates extends MachineStatesBase<keyof TStates>> = {
-    [K in keyof TStates]: (
-        input: TStates[K]['input'],
-        next: MachineNext<TStates, K>,
-    ) => TStates[K]['value']
-}
-
-type MachineInitial<TStates extends MachineStatesBase<keyof TStates>> = {
-    [K in keyof TStates]:
-        | { type: K; input: TStates[K]['input'] }
-        | (TStates[K]['input'] extends void ? K : never)
-}[keyof TStates]
-
-type MachineState<TStates extends MachineStatesBase<keyof TStates>, TKey extends keyof TStates> = {
-    [K in keyof TStates]: {
-        readonly type: K
-        readonly value: TStates[K]['value']
-        readonly next: MachineNext<TStates, K>
-    }
-}[TKey]
-
-type MachineNext<TStates extends MachineStatesBase<keyof TStates>, TKey extends keyof TStates> = <
-    K extends Exclude<
-        Extract<keyof TStates, TStates[TKey] extends { to: infer To } ? To[number] : any>,
-        TKey
-    >,
->(
-    ...args: TStates[K]['input'] extends void
-        ? [to: K, input?: void | undefined]
-        : [to: K, input: TStates[K]['input']]
-) => void
-
-// type MachinePrev<TStates extends MachineStatesBase, TKey extends keyof TStates> = MachineState<
-//     TStates,
-//     Exclude<
-//         {
-//             [K in keyof TStates]: TStates[K] extends { to: infer To }
-//                 ? TKey extends To[number]
-//                     ? K
-//                     : never
-//                 : K
-//         }[keyof TStates],
-//         TKey
-//     >
-// >
-
-function createStateMachine<T extends MachineStatesBase<keyof T>>(options: {
-    states: MachineStates<T>
-    initial: MachineInitial<T>
-}): MachineState<T, keyof T> {
-    const { states, initial } = options
-
-    const [payload, setPayload] = createSignal(
-        (typeof initial === 'object'
-            ? { type: initial.type, input: initial.input }
-            : { type: initial, input: undefined }) as {
-            type: keyof T
-            input: any
-        },
-        { equals: (a, b) => a.type === b.type },
-    )
-
-    function next(type: keyof T, input: any) {
-        setPayload({ type, input })
-    }
-
-    const memo = createMemo(() => {
-        const { type, input } = payload()
-        return { type, value: states[type](input, next as any) }
-    })
-
-    return {
-        get type() {
-            return memo().type
-        },
-        get value() {
-            return memo().value
-        },
-        next: next as any,
-    }
 }
 
 function eventPositionInElement(e: PointerEvent, el: HTMLElement): Position {
@@ -339,7 +254,7 @@ export const App: Component = () => {
     })
 
     const isDraggingNode = createSelector(
-        () => ({ ...state }),
+        state,
         (node: FG.Node, v) => v.type === StateType.Dragging && v.value === node,
     )
 
@@ -357,23 +272,20 @@ export const App: Component = () => {
 
         switch (e.key) {
             case 'Escape': {
-                state.next(StateType.Default)
+                if (state.type !== StateType.Default) {
+                    e.preventDefault()
+                    state.to[StateType.Default]()
+                }
                 break
             }
             case ' ': {
                 e.preventDefault()
                 if (state.type !== StateType.Default) return
-                state.next(StateType.MovingSpace)
+                state.to(StateType.MovingSpace)
                 break
             }
         }
     })
-
-    function handleNodePointerDown(e: PointerEvent, node: FG.Node) {
-        if (e.button !== 0 || state.type !== StateType.Default) return
-
-        state.next(StateType.Dragging, { node, e })
-    }
 
     // const interval = setInterval(() => {
     //     for (const node of force_graph.nodes) {
@@ -418,7 +330,15 @@ export const App: Component = () => {
                                     'font-size': `calc(0.45vmin + 0.5vmin * ${edgesMod(node())})`,
                                     '--un-text-opacity': 0.6 + (edgesMod(node()) / 10) * 4,
                                 }}
-                                on:pointerdown={e => handleNodePointerDown(e, node())}
+                                on:pointerdown={e => {
+                                    const state_val = state()
+
+                                    if (e.button !== 0 || state_val.type !== StateType.Default) {
+                                        return
+                                    }
+
+                                    state_val.to(StateType.Dragging, { node: node(), e })
+                                }}
                             >
                                 {(change_signal.value, node().key)}
                             </div>

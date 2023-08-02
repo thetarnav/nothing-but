@@ -40,12 +40,21 @@
                 "types": "./dist/signal.d.ts",
                 "default": "./dist/signal.js"
             }
+        },
+        "./state-machine": {
+            "import": {
+                "types": "./dist/state-machine.d.ts",
+                "default": "./dist/state-machine.js"
+            }
         }
     },
     "typesVersions": {
         "*": {
             "signal": [
                 "./dist/signal.d.ts"
+            ],
+            "state-machine": [
+                "./dist/state-machine.d.ts"
             ]
         }
     },
