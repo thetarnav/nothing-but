@@ -8,6 +8,7 @@ import clsx from 'clsx'
 import {
     createEffect,
     createMemo,
+    createSelector,
     createSignal,
     onCleanup,
     onMount,
@@ -115,6 +116,92 @@ export function ForceGraph(props: {
     )
 }
 
+type MachineStatesBase<TStateNames extends PropertyKey> = {
+    [K in TStateNames]: { input: any; value: any; to?: TStateNames[] }
+}
+
+type MachineStates<TStates extends MachineStatesBase<keyof TStates>> = {
+    [K in keyof TStates]: (
+        input: TStates[K]['input'],
+        next: MachineNext<TStates, K>,
+    ) => TStates[K]['value']
+}
+
+type MachineInitial<TStates extends MachineStatesBase<keyof TStates>> = {
+    [K in keyof TStates]:
+        | { type: K; input: TStates[K]['input'] }
+        | (TStates[K]['input'] extends void ? K : never)
+}[keyof TStates]
+
+type MachineState<TStates extends MachineStatesBase<keyof TStates>, TKey extends keyof TStates> = {
+    [K in keyof TStates]: {
+        readonly type: K
+        readonly value: TStates[K]['value']
+        readonly next: MachineNext<TStates, K>
+    }
+}[TKey]
+
+type MachineNext<TStates extends MachineStatesBase<keyof TStates>, TKey extends keyof TStates> = <
+    K extends Exclude<
+        Extract<keyof TStates, TStates[TKey] extends { to: infer To } ? To[number] : any>,
+        TKey
+    >,
+>(
+    ...args: TStates[K]['input'] extends void
+        ? [to: K, input?: void | undefined]
+        : [to: K, input: TStates[K]['input']]
+) => void
+
+// type MachinePrev<TStates extends MachineStatesBase, TKey extends keyof TStates> = MachineState<
+//     TStates,
+//     Exclude<
+//         {
+//             [K in keyof TStates]: TStates[K] extends { to: infer To }
+//                 ? TKey extends To[number]
+//                     ? K
+//                     : never
+//                 : K
+//         }[keyof TStates],
+//         TKey
+//     >
+// >
+
+function createStateMachine<T extends MachineStatesBase<keyof T>>(options: {
+    states: MachineStates<T>
+    initial: MachineInitial<T>
+}): MachineState<T, keyof T> {
+    const { states, initial } = options
+
+    const [payload, setPayload] = createSignal(
+        (typeof initial === 'object'
+            ? { type: initial.type, input: initial.input }
+            : { type: initial, input: undefined }) as {
+            type: keyof T
+            input: any
+        },
+        { equals: (a, b) => a.type === b.type },
+    )
+
+    function next(type: keyof T, input: any) {
+        setPayload({ type, input })
+    }
+
+    const memo = createMemo(() => {
+        const { type, input } = payload()
+        return { type, value: states[type](input, next as any) }
+    })
+
+    return {
+        get type() {
+            return memo().type
+        },
+        get value() {
+            return memo().value
+        },
+        next: next as any,
+    }
+}
+
 function eventPositionInElement(e: PointerEvent, el: HTMLElement): Position {
     const rect = el.getBoundingClientRect()
     return {
@@ -130,44 +217,8 @@ export const App: Component = () => {
 
     const change_signal = S.signal()
 
-    interface DraggingNode {
-        type: 'dragging'
-        node: FG.Node
-        pointer_id: number
-    }
-
-    interface MovingSpace {
-        type: 'moving-space'
-    }
-
-    interface Moving {
-        type: 'moving'
-        point: Position
-        pointer_id: number
-    }
-
-    type DraggingState = DraggingNode | MovingSpace | Moving
-
     const position = S.signal<Position>({ x: 0, y: 0 })
     const scale = S.signal(2)
-
-    const dragging_state = S.signal<DraggingState>()
-
-    const isDraggingNode = S.selector(
-        dragging_state,
-        (node: FG.Node, v) => !!v && v.type === 'dragging' && v.node === node,
-    )
-
-    createEffect((prev: DraggingNode | undefined) => {
-        const { value } = dragging_state
-        if (value && value.type === 'dragging') {
-            value.node.locked = true
-            return value
-        }
-        if (prev) {
-            prev.node.locked = false
-        }
-    })
 
     function getEventPosition(e: PointerEvent): Position {
         const p = eventPositionInElement(e, container)
@@ -180,89 +231,120 @@ export const App: Component = () => {
         }
     }
 
-    function handlePointerMove(state: DraggingNode | Moving, e: PointerEvent) {
-        if (e.pointerId !== state.pointer_id) return
-
-        e.preventDefault()
-        e.stopPropagation()
-
-        const pos = getEventPosition(e)
-
-        switch (state.type) {
-            case 'dragging': {
-                FG.changeNodePosition(force_graph.grid, state.node, pos.x, pos.y)
-                break
-            }
-            case 'moving': {
-                S.mutate(position, p => {
-                    p.x += pos.x - state.point.x
-                    p.y += pos.y - state.point.y
-                })
-                break
-            }
-        }
+    const enum StateType {
+        Default,
+        Dragging,
+        MovingSpace,
+        Moving,
     }
 
-    createEffect(() => {
-        const dragging = dragging_state.get()
-        if (dragging === undefined) return
+    const state = createStateMachine<{
+        [StateType.Default]: {
+            input: void
+            value: void
+            to: [StateType.Dragging, StateType.MovingSpace]
+        }
+        [StateType.Dragging]: {
+            input: { node: FG.Node; e: PointerEvent }
+            value: FG.Node
+            to: [StateType.Default]
+        }
+        [StateType.MovingSpace]: {
+            input: void
+            value: void
+            to: [StateType.Default, StateType.Moving]
+        }
+        [StateType.Moving]: {
+            input: PointerEvent
+            value: void
+            to: [StateType.Default, StateType.MovingSpace]
+        }
+    }>({
+        initial: StateType.Default,
+        states: {
+            [StateType.Default]() {},
+            [StateType.Dragging](data, next) {
+                data.node.locked = true
+                onCleanup(() => (data.node.locked = false))
 
-        switch (dragging.type) {
-            case 'dragging': {
-                makeEventListener(document, 'pointermove', e => handlePointerMove(dragging, e))
+                const pointer_id = data.e.pointerId
+
+                function handleDrag(e: PointerEvent) {
+                    if (e.pointerId !== pointer_id) return
+
+                    e.preventDefault()
+                    e.stopPropagation()
+
+                    const pos = getEventPosition(e)
+
+                    FG.changeNodePosition(force_graph.grid, data.node, pos.x, pos.y)
+                }
+
+                handleDrag(data.e)
+                makeEventListener(document, 'pointermove', handleDrag)
 
                 createEventListener(document, ['pointerup', 'pointercancel', 'pointerleave'], e => {
-                    if (e.pointerId !== dragging.pointer_id) return
-                    S.reset(dragging_state)
+                    if (e.pointerId !== pointer_id) return
+                    next(StateType.Default)
                 })
 
-                break
-            }
-            case 'moving': {
-                makeEventListener(document, 'pointermove', e => handlePointerMove(dragging, e))
-
-                createEventListener(document, ['pointerup', 'pointercancel', 'pointerleave'], e => {
-                    if (e.pointerId !== dragging.pointer_id) return
-                    S.set(dragging_state, { type: 'moving-space' })
-                })
-
-                makeEventListener(document, 'keyup', e => {
-                    if (e.key === ' ') {
-                        S.reset(dragging_state)
-                    }
-                })
-                break
-            }
-            case 'moving-space': {
+                return data.node
+            },
+            [StateType.MovingSpace](data, next) {
                 makeEventListener(document, 'pointerdown', e => {
                     if (e.button !== 0) return
 
                     e.preventDefault()
 
-                    const pos = getEventPosition(e)
-
-                    S.set(dragging_state, {
-                        type: 'moving',
-                        point: { x: pos.x, y: pos.y },
-                        pointer_id: e.pointerId,
-                    })
+                    next(StateType.Moving, e)
                 })
 
                 makeEventListener(document, 'keyup', e => {
                     if (e.key === ' ') {
                         e.preventDefault()
-                        S.reset(dragging_state)
+                        next(StateType.Default)
                     }
                 })
+            },
+            [StateType.Moving](e, next) {
+                const start = getEventPosition(e)
+                const pointer_id = e.pointerId
 
-                break
-            }
-        }
+                makeEventListener(document, 'pointermove', e => {
+                    if (e.pointerId !== pointer_id) return
+
+                    e.preventDefault()
+                    e.stopPropagation()
+
+                    const pos = getEventPosition(e)
+
+                    S.mutate(position, p => {
+                        p.x += pos.x - start.x
+                        p.y += pos.y - start.y
+                    })
+                })
+
+                createEventListener(document, ['pointerup', 'pointercancel', 'pointerleave'], e => {
+                    if (e.pointerId !== pointer_id) return
+                    next(StateType.MovingSpace)
+                })
+
+                makeEventListener(document, 'keyup', e => {
+                    if (e.key === ' ') {
+                        next(StateType.Default)
+                    }
+                })
+            },
+        },
     })
+
+    const isDraggingNode = createSelector(
+        () => ({ ...state }),
+        (node: FG.Node, v) => v.type === StateType.Dragging && v.value === node,
+    )
 
     makeEventListener(document, 'keydown', e => {
         if (
-            e.repeat ||
             e.ctrlKey ||
             e.altKey ||
             e.metaKey ||
@@ -275,32 +357,22 @@ export const App: Component = () => {
 
         switch (e.key) {
             case 'Escape': {
-                S.reset(dragging_state)
+                state.next(StateType.Default)
                 break
             }
             case ' ': {
-                const dragging = dragging_state.get()
-                if (dragging) return
-
                 e.preventDefault()
-
-                S.set(dragging_state, { type: 'moving-space' })
+                if (state.type !== StateType.Default) return
+                state.next(StateType.MovingSpace)
+                break
             }
         }
     })
 
     function handleNodePointerDown(e: PointerEvent, node: FG.Node) {
-        if (e.button !== 0 || dragging_state.value !== undefined) return
+        if (e.button !== 0 || state.type !== StateType.Default) return
 
-        const dragging: DraggingNode = {
-            type: 'dragging',
-            node,
-            pointer_id: e.pointerId,
-        }
-
-        S.set(dragging_state, dragging)
-
-        handlePointerMove(dragging, e)
+        state.next(StateType.Dragging, { node, e })
     }
 
     // const interval = setInterval(() => {
@@ -333,7 +405,7 @@ export const App: Component = () => {
                 >
                     <ForceGraph
                         graph={force_graph}
-                        active={dragging_state.value !== undefined}
+                        active={state.type === StateType.Dragging}
                         node={node => (
                             <div
                                 class={clsx(
