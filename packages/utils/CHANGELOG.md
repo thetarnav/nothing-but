@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.7.0
+
+### Minor Changes
+
+-   ae3a776: Add more utility types
+
 ## 0.6.0
 
 ### Minor Changes

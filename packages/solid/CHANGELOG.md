@@ -1,5 +1,15 @@
 # @nothing-but/utils
 
+## 0.1.0
+
+### Minor Changes
+
+-   6d320a8: Add state-machine module for WIP createStateMachine
+
+### Patch Changes
+
+-   bf4d10d: Add `reset`
+
 ## 0.0.3
 
 ### Patch Changes
