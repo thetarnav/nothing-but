@@ -1,35 +1,40 @@
 import { createMemo, createSignal, type Accessor } from 'solid-js'
 
-export type MachineStatesBase<TStateNames extends PropertyKey> = {
-    [K in TStateNames]: { input: any; value: any; to?: TStateNames[] }
+export type StatesBase<TStateNames extends PropertyKey> = {
+    [K in TStateNames]: { input?: any; value?: any; to?: TStateNames[] }
 }
 
-export type MachineStates<TStates extends MachineStatesBase<keyof TStates>> = {
+export type StateInput<TState extends { input?: any }> = TState extends { input: infer Input }
+    ? Input
+    : void
+
+export type StateValue<TState extends { value?: any }> = TState extends { value: infer Value }
+    ? Value
+    : undefined
+
+export type MachineStates<TStates extends StatesBase<keyof TStates>> = {
     [K in keyof TStates]: (
-        input: TStates[K]['input'],
+        input: StateInput<TStates[K]>,
         next: MachineNext<TStates, K>,
-    ) => TStates[K]['value']
+    ) => StateValue<TStates[K]>
 }
 
-export type MachineInitial<TStates extends MachineStatesBase<keyof TStates>> = {
+export type MachineInitial<TStates extends StatesBase<keyof TStates>> = {
     [K in keyof TStates]:
-        | { type: K; input: TStates[K]['input'] }
-        | (TStates[K]['input'] extends void ? K : never)
+        | { type: K; input: StateInput<TStates[K]> }
+        | (TStates[K] extends { input: any } ? never : K)
 }[keyof TStates]
 
-export type MachineState<
-    TStates extends MachineStatesBase<keyof TStates>,
-    TKey extends keyof TStates,
-> = {
+export type MachineState<TStates extends StatesBase<keyof TStates>, TKey extends keyof TStates> = {
     [K in keyof TStates]: {
         readonly type: K
-        readonly value: TStates[K]['value']
+        readonly value: StateValue<TStates[K]>
         readonly to: MachineNext<TStates, K>
     }
 }[TKey]
 
-export type PossibleNextStates<
-    TStates extends MachineStatesBase<keyof TStates>,
+export type PossibleNextKeys<
+    TStates extends StatesBase<keyof TStates>,
     TKey extends keyof TStates,
 > = Exclude<
     // @ts-expect-error
@@ -37,34 +42,17 @@ export type PossibleNextStates<
     TKey | symbol
 >
 
-export type MachineNext<
-    TStates extends MachineStatesBase<keyof TStates>,
-    TKey extends keyof TStates,
-> = {
-    readonly [K in PossibleNextStates<TStates, TKey>]: (input: TStates[K]['input']) => void
-} & (<K extends PossibleNextStates<TStates, TKey>>(
-    ...args: TStates[K]['input'] extends void
-        ? [to: K, input?: void | undefined]
-        : [to: K, input: TStates[K]['input']]
+export type MachineNext<TStates extends StatesBase<keyof TStates>, TKey extends keyof TStates> = {
+    readonly [K in PossibleNextKeys<TStates, TKey>]: (input: StateInput<TStates[K]>) => void
+} & (<K extends PossibleNextKeys<TStates, TKey>>(
+    ...args: TStates[K] extends { input: infer Input }
+        ? [to: K, input: Input]
+        : [to: K, input?: undefined]
 ) => void)
-
-// type MachinePrev<TStates extends MachineStatesBase, TKey extends keyof TStates> = MachineState<
-//     TStates,
-//     Exclude<
-//         {
-//             [K in keyof TStates]: TStates[K] extends { to: infer To }
-//                 ? TKey extends To[number]
-//                     ? K
-//                     : never
-//                 : K
-//         }[keyof TStates],
-//         TKey
-//     >
-// >
 
 /**
  */
-export function createStateMachine<T extends MachineStatesBase<keyof T>>(options: {
+export function createStateMachine<T extends StatesBase<keyof T>>(options: {
     states: MachineStates<T>
     initial: MachineInitial<T>
 }): Accessor<MachineState<T, keyof T>> & MachineState<T, keyof T> {

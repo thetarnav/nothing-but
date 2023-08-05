@@ -155,8 +155,6 @@ export const App: Component = () => {
 
     const state = createStateMachine<{
         [StateType.Default]: {
-            input: void
-            value: void
             to: [StateType.Dragging, StateType.MovingSpace]
         }
         [StateType.Dragging]: {
@@ -165,13 +163,10 @@ export const App: Component = () => {
             to: [StateType.Default]
         }
         [StateType.MovingSpace]: {
-            input: void
-            value: void
             to: [StateType.Default, StateType.Moving]
         }
         [StateType.Moving]: {
             input: PointerEvent
-            value: void
             to: [StateType.Default, StateType.MovingSpace]
         }
     }>({
