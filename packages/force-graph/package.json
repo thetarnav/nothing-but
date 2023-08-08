@@ -41,10 +41,10 @@
     },
     "devDependencies": {
         "@nothing-but/solid": "workspace:^",
-        "@solid-primitives/event-listener": "^2.2.13",
+        "@solid-primitives/event-listener": "^2.2.14",
         "@solid-primitives/keyed": "^1.2.0",
-        "@solid-primitives/refs": "^1.0.4",
-        "@solid-primitives/rootless": "^1.4.1",
+        "@solid-primitives/refs": "^1.0.5",
+        "@solid-primitives/rootless": "^1.4.2",
         "@solid-primitives/state-machine": "^0.0.1",
         "clsx": "^2.0.0"
     }
