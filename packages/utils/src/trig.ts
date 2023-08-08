@@ -1,4 +1,4 @@
-import type { Position } from './types'
+import type { Position } from './types.js'
 
 /**
  * Represents a template string type in the format `(${number}, ${number})`.

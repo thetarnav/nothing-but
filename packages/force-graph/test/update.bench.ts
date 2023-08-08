@@ -1,5 +1,5 @@
 import { bench, describe } from 'vitest'
-import * as FG from '../src'
+import * as FG from '../src/index.js'
 // import * as graph2 from '../src/index2'
 
 function generateExampleGraph(mod: typeof FG, length: number): FG.Graph {

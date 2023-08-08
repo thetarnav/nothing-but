@@ -1,4 +1,4 @@
-import { AnyClass, Noop } from './types'
+import { AnyClass, Noop } from './types.js'
 
 /** no operation */
 export const noop = (() => void 0) as Noop

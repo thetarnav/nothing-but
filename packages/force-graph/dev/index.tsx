@@ -5,6 +5,6 @@ import 'virtual:uno.css'
 import './styles.css'
 
 import { render } from 'solid-js/web'
-import { App } from './app'
+import { App } from './app.jsx'
 
 render(() => <App />, document.getElementById('root')!)

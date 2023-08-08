@@ -16,8 +16,8 @@ import {
     type Component,
     type JSX,
 } from 'solid-js'
-import * as FG from '../src'
-import { getLAGraph } from './init'
+import * as FG from '../src/index.js'
+import { getLAGraph } from './init.js'
 
 export const graph_options = FG.makeGraphOptions({
     inertia_strength: 0.3,

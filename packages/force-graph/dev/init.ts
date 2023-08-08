@@ -1,6 +1,6 @@
 import { math } from '@nothing-but/utils'
-import * as FG from '../src'
-import { graph_options } from './app'
+import * as FG from '../src/index.js'
+import { graph_options } from './app.jsx'
 import la_raw from './la.json'
 
 export function getLAGraph() {
