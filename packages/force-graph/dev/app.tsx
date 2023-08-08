@@ -1,10 +1,10 @@
 import * as S from '@nothing-but/solid/signal'
-import { createStateMachine } from '@nothing-but/solid/state-machine'
 import { event, math } from '@nothing-but/utils'
 import { Position } from '@nothing-but/utils/types'
 import { createEventListener, makeEventListener } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
+import { createMachine } from '@solid-primitives/state-machine'
 import clsx from 'clsx'
 import {
     createEffect,
@@ -153,26 +153,45 @@ export const App: Component = () => {
         Moving,
     }
 
-    const state = createStateMachine<{
+    type KeyboardEventNames = 'ESCAPE' | 'SPACE'
+
+    type KeyboardEvents = {
+        [K in KeyboardEventNames]?: (e: KeyboardEvent) => void
+    }
+
+    const state = createMachine<{
         [StateType.Default]: {
-            to: [StateType.Dragging, StateType.MovingSpace]
+            to: StateType.Dragging | StateType.MovingSpace
+            value: KeyboardEvents
         }
         [StateType.Dragging]: {
-            input: { node: FG.Node; e: PointerEvent }
-            value: FG.Node
-            to: [StateType.Default]
+            input: {
+                node: FG.Node
+                e: PointerEvent
+            }
+            value: KeyboardEvents & { node: FG.Node }
+            to: StateType.Default
         }
         [StateType.MovingSpace]: {
-            to: [StateType.Default, StateType.Moving]
+            value: KeyboardEvents
+            to: StateType.Default | StateType.Moving
         }
         [StateType.Moving]: {
             input: PointerEvent
-            to: [StateType.Default, StateType.MovingSpace]
+            value: KeyboardEvents
+            to: StateType.Default | StateType.MovingSpace
         }
     }>({
         initial: StateType.Default,
         states: {
-            [StateType.Default]() {},
+            [StateType.Default](input, next) {
+                return {
+                    SPACE(e) {
+                        e.preventDefault()
+                        next(StateType.MovingSpace)
+                    },
+                }
+            },
             [StateType.Dragging](data, next) {
                 data.node.locked = true
                 onCleanup(() => (data.node.locked = false))
@@ -198,7 +217,13 @@ export const App: Component = () => {
                     next(StateType.Default)
                 })
 
-                return data.node
+                return {
+                    node: data.node,
+                    ESCAPE(e) {
+                        e.preventDefault()
+                        next(StateType.Default)
+                    },
+                }
             },
             [StateType.MovingSpace](data, next) {
                 makeEventListener(document, 'pointerdown', e => {
@@ -215,6 +240,13 @@ export const App: Component = () => {
                         next(StateType.Default)
                     }
                 })
+
+                return {
+                    ESCAPE(e) {
+                        e.preventDefault()
+                        next(StateType.Default)
+                    },
+                }
             },
             [StateType.Moving](e, next) {
                 const start = getEventPosition(e)
@@ -244,14 +276,16 @@ export const App: Component = () => {
                         next(StateType.Default)
                     }
                 })
+
+                return {
+                    ESCAPE(e) {
+                        e.preventDefault()
+                        next(StateType.Default)
+                    },
+                }
             },
         },
     })
-
-    const isDraggingNode = createSelector(
-        state,
-        (node: FG.Node, v) => v.type === StateType.Dragging && v.value === node,
-    )
 
     makeEventListener(document, 'keydown', e => {
         if (
@@ -267,20 +301,20 @@ export const App: Component = () => {
 
         switch (e.key) {
             case 'Escape': {
-                if (state.type !== StateType.Default) {
-                    e.preventDefault()
-                    state.to[StateType.Default]()
-                }
+                state.value.ESCAPE?.(e)
                 break
             }
             case ' ': {
-                e.preventDefault()
-                if (state.type !== StateType.Default) return
-                state.to(StateType.MovingSpace)
+                state.value.SPACE?.(e)
                 break
             }
         }
     })
+
+    const isDraggingNode = createSelector(
+        state,
+        (node: FG.Node, v) => v.type === StateType.Dragging && v.value.node === node,
+    )
 
     // const interval = setInterval(() => {
     //     for (const node of force_graph.nodes) {

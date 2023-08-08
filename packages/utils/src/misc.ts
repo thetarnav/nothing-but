@@ -1,4 +1,4 @@
-import { Any_Class, Noop } from './types'
+import { AnyClass, Noop } from './types'
 
 /** no operation */
 export const noop = (() => void 0) as Noop
@@ -29,7 +29,7 @@ export const is_plain_object = (value: unknown): value is Record<string, unknown
 /**
  * Check if the value is an instance of ___
  */
-export const is_of_class = (v: any, c: Any_Class): boolean =>
+export const is_of_class = (v: any, c: AnyClass): boolean =>
     v instanceof c || (v && v.constructor === c)
 
 /**

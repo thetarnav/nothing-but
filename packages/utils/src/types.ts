@@ -9,11 +9,11 @@ export type EmptyObject = Record<PropertyKey, never>
 export type AnyFunction = (...args: any[]) => any
 export type Noop = (...a: any[]) => void
 
-export type Any_Class = abstract new (...args: any) => any
+export type AnyClass = abstract new (...args: any) => any
 
 export type Primitive = PropertyKey | boolean | bigint | null | undefined
-
-export type FalsyValue = false | null | undefined
+export type Nullish = null | undefined | void
+export type FalsyValue = false | Nullish
 export type Truthy<T> = Exclude<T, FalsyValue>
 export type Falsy<T> = Extract<T, FalsyValue>
 

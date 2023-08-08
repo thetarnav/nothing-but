@@ -1,92 +1,49 @@
-import { createMemo, createSignal, type Accessor } from 'solid-js'
+import { UnionToIntersection } from '@nothing-but/utils/types'
+import { Accessor, createMemo, untrack } from 'solid-js'
 
-export type StatesBase<TStateNames extends PropertyKey> = {
-    [K in TStateNames]: { input?: any; value?: any; to?: TStateNames[] }
+type EventsUnion<T> = T extends { [key: string]: any }
+    ? {
+          [K in keyof T]-?: T[K] extends (...args: any) => infer R
+              ? [event: K, args: Parameters<T[K]>, result: R]
+              : T[K] extends infer U
+              ? U extends (...args: infer A) => infer R
+                  ? [event: K, args: A, result: R | void]
+                  : never
+              : never
+      }[keyof T]
+    : never
+
+type RequiredEventsUnion<T> = T extends { [key: string]: any }
+    ? {
+          [K in keyof T]-?: true
+      }
+    : never
+
+type EventsTable<T> = {
+    [E in EventsUnion<T> as E[0]]: [args: UnionToIntersection<E[1]>, result: E[2]]
 }
 
-export type StateInput<TState extends { input?: any }> = TState extends { input: infer Input }
-    ? Input
-    : void
-
-export type StateValue<TState extends { value?: any }> = TState extends { value: infer Value }
-    ? Value
-    : undefined
-
-export type MachineStates<TStates extends StatesBase<keyof TStates>> = {
-    [K in keyof TStates]: (
-        input: StateInput<TStates[K]>,
-        next: MachineNext<TStates, K>,
-    ) => StateValue<TStates[K]>
-}
-
-export type MachineInitial<TStates extends StatesBase<keyof TStates>> = {
-    [K in keyof TStates]:
-        | { type: K; input: StateInput<TStates[K]> }
-        | (TStates[K] extends { input: any } ? never : K)
-}[keyof TStates]
-
-export type MachineState<TStates extends StatesBase<keyof TStates>, TKey extends keyof TStates> = {
-    [K in keyof TStates]: {
-        readonly type: K
-        readonly value: StateValue<TStates[K]>
-        readonly to: MachineNext<TStates, K>
-    }
-}[TKey]
-
-export type PossibleNextKeys<
-    TStates extends StatesBase<keyof TStates>,
-    TKey extends keyof TStates,
-> = Exclude<
+type Emit<T> = <E extends keyof EventsTable<T>>(
+    e: E,
     // @ts-expect-error
-    Extract<keyof TStates, TStates[TKey] extends { to: infer To } ? To[number] : any>,
-    TKey | symbol
->
+    ...args: EventsTable<T>[E][0]
+) => EventsTable<T>[E][1] | (RequiredEventsUnion<T>[E] extends true ? never : void)
 
-export type MachineNext<TStates extends StatesBase<keyof TStates>, TKey extends keyof TStates> = {
-    readonly [K in PossibleNextKeys<TStates, TKey>]: (input: StateInput<TStates[K]>) => void
-} & (<K extends PossibleNextKeys<TStates, TKey>>(
-    ...args: TStates[K] extends { input: infer Input }
-        ? [to: K, input: Input]
-        : [to: K, input?: undefined]
-) => void)
+export function createEmit<T>(source: Accessor<T>): Emit<T> {
+    const callbacks = createMemo(() => {
+        const v = source(),
+            cbs = {} as any
 
-/**
- */
-export function createStateMachine<T extends StatesBase<keyof T>>(options: {
-    states: MachineStates<T>
-    initial: MachineInitial<T>
-}): Accessor<MachineState<T, keyof T>> & MachineState<T, keyof T> {
-    const { states, initial } = options
+        if (v && typeof v === 'object') {
+            for (const [key, value] of Object.entries(v)) {
+                if (typeof value === 'function') {
+                    cbs[key] = value
+                }
+            }
+        }
 
-    const [payload, setPayload] = createSignal(
-        (typeof initial === 'object'
-            ? { type: initial.type, input: initial.input }
-            : { type: initial, input: undefined }) as {
-            type: keyof T
-            input: any
-        },
-        { equals: (a, b) => a.type === b.type },
-    )
-
-    function to(type: keyof T, input: any) {
-        setPayload({ type, input })
-    }
-
-    for (const key of Object.keys(states)) {
-        // @ts-expect-error
-        to[key as any] = (input: any) => to(key, input)
-    }
-
-    const memo = createMemo(() => {
-        const { type, input } = payload()
-        return { type, value: states[type](input, to as any), to }
-    }) as any
-
-    Object.defineProperties(memo, {
-        type: { get: () => memo().type },
-        value: { get: () => memo().value },
-        to: { value: to },
+        return cbs
     })
 
-    return memo
+    return ((e: any, ...args: any[]) => untrack(() => callbacks()[e]?.(...args))) as any
 }

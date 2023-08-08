@@ -96,11 +96,18 @@ importers:
       '@solid-primitives/rootless':
         specifier: ^1.4.1
         version: 1.4.1(solid-js@1.7.8)
+      '@solid-primitives/state-machine':
+        specifier: ^0.0.1
+        version: 0.0.1(solid-js@1.7.8)
       clsx:
         specifier: ^2.0.0
         version: 2.0.0
 
   packages/solid:
+    dependencies:
+      '@nothing-but/utils':
+        specifier: workspace:^
+        version: link:../utils
     devDependencies:
       solid-js:
         specifier: ^1.7.8
@@ -1055,6 +1062,14 @@ packages:
       solid-js: ^1.6.12
     dependencies:
       '@solid-primitives/utils': 6.2.0(solid-js@1.7.8)
+      solid-js: 1.7.8
+    dev: true
+
+  /@solid-primitives/state-machine@0.0.1(solid-js@1.7.8):
+    resolution: {integrity: sha512-sO+BEzLsKprl/ZAvtjaomrtnjKCg+Lv0QjdQG+gx/b0Rkf0IKSLUHciBrivrODk58/mzhm49hHwpeu4SFTb+lQ==}
+    peerDependencies:
+      solid-js: ^1.7.0
+    dependencies:
       solid-js: 1.7.8
     dev: true
 
