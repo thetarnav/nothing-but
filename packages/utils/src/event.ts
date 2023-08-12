@@ -1,3 +1,5 @@
+import type { Position } from './types.js'
+
 export const PASSIVE = { passive: true } as const
 export const NOT_PASSIVE = { passive: false } as const
 
@@ -24,4 +26,12 @@ export function stopImmediatePropagation(e: Event): Event {
 export function preventMobileScrolling(container: HTMLElement): void {
     container.addEventListener('touchstart', preventCancelable, NOT_PASSIVE)
     container.addEventListener('touchmove', preventCancelable, NOT_PASSIVE)
+}
+
+export function positionInElement(e: PointerEvent, el: HTMLElement): Position {
+    const rect = el.getBoundingClientRect()
+    return {
+        x: (e.clientX - rect.left) / rect.width,
+        y: (e.clientY - rect.top) / rect.height,
+    }
 }

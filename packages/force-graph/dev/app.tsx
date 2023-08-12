@@ -17,14 +17,6 @@ export const graph_options = FG.makeGraphOptions({
     repel_strength: 0.5,
 })
 
-function eventPositionInElement(e: PointerEvent, el: HTMLElement): Position {
-    const rect = el.getBoundingClientRect()
-    return {
-        x: (e.clientX - rect.left) / rect.width,
-        y: (e.clientY - rect.top) / rect.height,
-    }
-}
-
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
     // const force_graph = generateInitialGraph(1024)
@@ -36,7 +28,7 @@ export const App: Component = () => {
     const scale = S.signal(2)
 
     function getEventPosition(e: PointerEvent): Position {
-        const p = eventPositionInElement(e, container)
+        const p = event.positionInElement(e, container)
         const { grid_size } = force_graph.options
         const scale_value = scale.value
         const scaled_size = grid_size / scale_value

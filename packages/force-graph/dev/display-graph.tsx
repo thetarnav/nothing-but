@@ -1,5 +1,5 @@
 import * as S from '@nothing-but/solid/signal'
-import { math, trig } from '@nothing-but/utils'
+import { event, math, trig } from '@nothing-but/utils'
 import { Vector } from '@nothing-but/utils/trig'
 import { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
@@ -100,6 +100,7 @@ export function SvgForceGraph(props: {
 }
 
 interface CanvasState {
+    canvas: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
     graph: FG.Graph
     size: number
@@ -109,6 +110,36 @@ interface CanvasState {
         edge_width: number
         node_radius: number
     }
+    signal: S.Signal<undefined>
+}
+
+function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasState | Error {
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return new Error('Could not get canvas context')
+
+    const init_size = Math.min(canvas.width, canvas.height)
+
+    const state: CanvasState = {
+        canvas,
+        graph,
+        ctx,
+        size: init_size,
+        position: { x: 0, y: 0 },
+        scale: 2,
+        derived: {
+            edge_width: 0,
+            node_radius: 0,
+        },
+        signal: S.signal(),
+    }
+    updateDerived(state)
+
+    return state
+}
+
+function updateDerived(state: CanvasState): void {
+    state.derived.edge_width = (state.size / 2000) * state.scale
+    state.derived.node_radius = (state.size / 240) * state.scale
 }
 
 interface Events {
@@ -139,8 +170,11 @@ const mode_states: MachineStates<{
     default({ state }, to) {
         return {
             POINTER_DOWN(e) {
-                const canvas_click_pos = { x: e.offsetX, y: e.offsetY }
-                const graph_click_pos = canvasPosToGraphPos(state, canvas_click_pos)
+                e.preventDefault()
+                e.stopPropagation()
+
+                const canvas_e_pos = event.positionInElement(e, state.canvas)
+                const graph_e_pos = canvasPosToGraphPos(state, canvas_e_pos)
 
                 const canvas_missclick_tolerance = state.derived.node_radius + 3
                 const graph_missclick_tolerance = canvasDistToGraphDist(
@@ -150,7 +184,7 @@ const mode_states: MachineStates<{
 
                 const closest = FG.findClosestNodeLinear(
                     state.graph.nodes,
-                    graph_click_pos,
+                    graph_e_pos,
                     graph_missclick_tolerance,
                 )
                 if (!closest) return
@@ -171,10 +205,10 @@ const mode_states: MachineStates<{
             e.preventDefault()
             e.stopPropagation()
 
-            const canvas_pos = { x: e.offsetX, y: e.offsetY }
-            const graph_pos = canvasPosToGraphPos(state, canvas_pos)
+            const canvas_e_pos = event.positionInElement(e, state.canvas)
+            const graph_e_pos = canvasPosToGraphPos(state, canvas_e_pos)
 
-            FG.changeNodePosition(state.graph.grid, node, graph_pos.x, graph_pos.y)
+            FG.changeNodePosition(state.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
         })
 
         return {
@@ -186,11 +220,6 @@ const mode_states: MachineStates<{
             },
         }
     },
-}
-
-function updateDerived(state: CanvasState): void {
-    state.derived.edge_width = (state.size / 2000) * state.scale
-    state.derived.node_radius = (state.size / 240) * state.scale
 }
 
 function pointToCanvas(state: CanvasState, grid_size: number, xy: number): number {
@@ -251,7 +280,7 @@ function canvasDistToGraphDist(state: CanvasState, dist: number): number {
 function canvasPosToGraphPos(state: CanvasState, pos: Position): Vector {
     const graph_click_pos = trig.vec_map(
         pos,
-        n => (n / state.size - 0.5) * (state.graph.options.grid_size / state.scale),
+        n => (n - 0.5) * (state.graph.options.grid_size / state.scale),
     )
     trig.vec_add(graph_click_pos, state.position)
     return graph_click_pos
@@ -270,25 +299,8 @@ export function CanvasForceGraph(props: {
         <canvas class="absolute w-full h-full" width={init_size} height={init_size} />
     ) as HTMLCanvasElement
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) {
-        throw new Error('canvas is not supported')
-    }
-
-    const state: CanvasState = {
-        graph,
-        ctx,
-        size: init_size,
-        position: { x: 0, y: 0 },
-        scale: 2,
-        derived: {
-            edge_width: 0,
-            node_radius: 0,
-        },
-    }
-    updateDerived(state)
-
-    const state_signal = S.signal()
+    const state = makeCanvasState(canvas, graph)
+    if (state instanceof Error) throw state
 
     {
         const ro = new ResizeObserver(() => {
@@ -301,7 +313,7 @@ export function CanvasForceGraph(props: {
 
             updateDerived(state)
 
-            S.trigger(state_signal)
+            S.trigger(state.signal)
         })
         ro.observe(canvas)
         onCleanup(() => ro.disconnect())
@@ -367,7 +379,7 @@ export function CanvasForceGraph(props: {
         })
 
         const active = createMemo(() => {
-            state_signal.read()
+            state.signal.read()
             return mode.type === 'dragging' || init()()
         })
 
