@@ -240,7 +240,6 @@ export const App: Component = () => {
             >
                 <CanvasForceGraph
                     graph={force_graph}
-                    active={() => state.type === StateType.Dragging}
                     targetFPS={TARGET_FPS}
                     trackNodes={change_signal.read}
                 />

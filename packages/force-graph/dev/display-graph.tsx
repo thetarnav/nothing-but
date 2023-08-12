@@ -1,8 +1,11 @@
+import * as S from '@nothing-but/solid/signal'
 import { math, trig } from '@nothing-but/utils'
 import { Vector } from '@nothing-but/utils/trig'
 import { Position } from '@nothing-but/utils/types'
+import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
+import { MachineStates, createMachine } from '@solid-primitives/state-machine'
 import { createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
 import * as FG from '../src/index.js'
 
@@ -98,15 +101,91 @@ export function SvgForceGraph(props: {
 
 interface CanvasState {
     ctx: CanvasRenderingContext2D
+    graph: FG.Graph
     size: number
     position: Position
     scale: number
-    derived: CanvasDerived
+    derived: {
+        edge_width: number
+        node_radius: number
+    }
 }
 
-interface CanvasDerived {
-    edge_width: number
-    node_radius: number
+interface Events {
+    ESCAPE?(event: KeyboardEvent): void
+    SPACE?(event: KeyboardEvent): void
+
+    POINTER_DOWN?(event: PointerEvent): void
+    POINTER_UP?(event: PointerEvent): void
+}
+
+const mode_states: MachineStates<{
+    default: {
+        input: {
+            state: CanvasState
+        }
+        value: Events
+    }
+    dragging: {
+        input: {
+            state: CanvasState
+            node: FG.Node
+            e: PointerEvent
+            init_graph_pos: Position
+        }
+        value: Events
+    }
+}> = {
+    default({ state }, to) {
+        return {
+            POINTER_DOWN(e) {
+                const canvas_click_pos = { x: e.offsetX, y: e.offsetY }
+                const graph_click_pos = canvasPosToGraphPos(state, canvas_click_pos)
+
+                const canvas_missclick_tolerance = state.derived.node_radius + 3
+                const graph_missclick_tolerance = canvasDistToGraphDist(
+                    state,
+                    canvas_missclick_tolerance,
+                )
+
+                const closest = FG.findClosestNodeLinear(
+                    state.graph.nodes,
+                    graph_click_pos,
+                    graph_missclick_tolerance,
+                )
+                if (!closest) return
+
+                to.dragging({ state, node: closest, e, init_graph_pos: closest.position })
+            },
+        }
+    },
+    dragging({ state, node, e, init_graph_pos }, to) {
+        const pointer_id = e.pointerId
+
+        node.locked = true
+        onCleanup(() => (node.locked = false))
+
+        createEventListener(document, 'pointermove', e => {
+            if (e.pointerId !== pointer_id) return
+
+            e.preventDefault()
+            e.stopPropagation()
+
+            const canvas_pos = { x: e.offsetX, y: e.offsetY }
+            const graph_pos = canvasPosToGraphPos(state, canvas_pos)
+
+            FG.changeNodePosition(state.graph.grid, node, graph_pos.x, graph_pos.y)
+        })
+
+        return {
+            type: 'dragging',
+            POINTER_UP(e) {
+                if (e.pointerId !== pointer_id) return
+
+                to.default({ state })
+            },
+        }
+    },
 }
 
 function updateDerived(state: CanvasState): void {
@@ -120,7 +199,7 @@ function pointToCanvas(state: CanvasState, grid_size: number, xy: number): numbe
 }
 
 function updateCanvas(state: CanvasState, graph: FG.Graph): void {
-    const { ctx, size, scale } = state,
+    const { ctx, size } = state,
         { edge_width, node_radius: node_size } = state.derived,
         { nodes, edges, options } = graph,
         { grid_size } = options
@@ -165,14 +244,14 @@ function updateCanvas(state: CanvasState, graph: FG.Graph): void {
     }
 }
 
-function canvasDistToGraphDist(state: CanvasState, grid_size: number, dist: number): number {
-    return (dist / state.size) * (grid_size / state.scale)
+function canvasDistToGraphDist(state: CanvasState, dist: number): number {
+    return (dist / state.size) * (state.graph.options.grid_size / state.scale)
 }
 
-function canvasPosToGraphPos(state: CanvasState, grid_size: number, pos: Position): Vector {
+function canvasPosToGraphPos(state: CanvasState, pos: Position): Vector {
     const graph_click_pos = trig.vec_map(
         pos,
-        n => (n / state.size - 0.5) * (grid_size / state.scale),
+        n => (n / state.size - 0.5) * (state.graph.options.grid_size / state.scale),
     )
     trig.vec_add(graph_click_pos, state.position)
     return graph_click_pos
@@ -181,10 +260,9 @@ function canvasPosToGraphPos(state: CanvasState, grid_size: number, pos: Positio
 export function CanvasForceGraph(props: {
     graph: FG.Graph
     trackNodes: () => void
-    active: () => boolean
     targetFPS?: number
 }): JSX.Element {
-    const { graph, targetFPS = 44, active, trackNodes } = props
+    const { graph, targetFPS = 44, trackNodes } = props
 
     const init_size = graph.options.grid_size
 
@@ -197,7 +275,8 @@ export function CanvasForceGraph(props: {
         throw new Error('canvas is not supported')
     }
 
-    const canvas_state: CanvasState = {
+    const state: CanvasState = {
+        graph,
         ctx,
         size: init_size,
         position: { x: 0, y: 0 },
@@ -207,7 +286,9 @@ export function CanvasForceGraph(props: {
             node_radius: 0,
         },
     }
-    updateDerived(canvas_state)
+    updateDerived(state)
+
+    const state_signal = S.signal()
 
     {
         const ro = new ResizeObserver(() => {
@@ -216,47 +297,64 @@ export function CanvasForceGraph(props: {
 
             canvas.width = size
             canvas.height = size
-            canvas_state.size = size
+            state.size = size
 
-            updateDerived(canvas_state)
+            updateDerived(state)
+
+            S.trigger(state_signal)
         })
         ro.observe(canvas)
         onCleanup(() => ro.disconnect())
     }
 
-    {
-        canvas.addEventListener('pointerdown', e => {
-            const canvas_click_pos = { x: e.offsetX, y: e.offsetY }
-            const graph_click_pos = canvasPosToGraphPos(
-                canvas_state,
-                graph.options.grid_size,
-                canvas_click_pos,
-            )
+    const mode = createMachine({
+        states: mode_states,
+        initial: {
+            type: 'default',
+            input: { state },
+        },
+    })
 
-            const canvas_missclick_tolerance = canvas_state.derived.node_radius + 3
-            const graph_missclick_tolerance = canvasDistToGraphDist(
-                canvas_state,
-                graph.options.grid_size,
-                canvas_missclick_tolerance,
-            )
+    createEventListener(canvas, 'pointerdown', e => {
+        mode.value.POINTER_DOWN?.(e)
+    })
 
-            const closest = FG.findClosestNodeLinear(
-                graph.nodes,
-                graph_click_pos,
-                graph_missclick_tolerance,
-            )
+    createEventListenerMap(document, {
+        pointerup(e) {
+            mode.value.POINTER_UP?.(e)
+        },
+        pointercancel(e) {
+            mode.value.POINTER_UP?.(e)
+        },
+    })
 
-            console.log(closest)
-        })
-    }
-
-    {
-        const animation = FG.makeFrameAnimation(
-            graph,
-            () => updateCanvas(canvas_state, graph),
-            targetFPS,
+    createEventListener(document, 'keydown', e => {
+        if (
+            e.ctrlKey ||
+            e.altKey ||
+            e.metaKey ||
+            e.shiftKey ||
+            e.isComposing ||
+            e.defaultPrevented ||
+            e.target !== document.body
         )
-        updateCanvas(canvas_state, graph)
+            return
+
+        switch (e.key) {
+            case 'Escape': {
+                mode.value.ESCAPE?.(e)
+                break
+            }
+            case ' ': {
+                mode.value.SPACE?.(e)
+                break
+            }
+        }
+    })
+
+    {
+        const animation = FG.makeFrameAnimation(graph, () => updateCanvas(state, graph), targetFPS)
+        updateCanvas(state, graph)
 
         const init = createMemo(() => {
             trackNodes() // track changes to nodes
@@ -268,8 +366,13 @@ export function CanvasForceGraph(props: {
             return init
         })
 
+        const active = createMemo(() => {
+            state_signal.read()
+            return mode.type === 'dragging' || init()()
+        })
+
         createEffect(() => {
-            if (active() || init()()) {
+            if (active()) {
                 FG.startFrameAnimation(animation)
             } else {
                 FG.pauseFrameAnimation(animation)
