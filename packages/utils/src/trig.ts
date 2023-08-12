@@ -166,6 +166,11 @@ export function vec_map(vec: Position, fn: (xy: number) => number): Vector {
     return vector(fn(vec.x), fn(vec.y))
 }
 
+export function vec_mut(vec: Position, fn: (xy: number) => number): void {
+    vec.x = fn(vec.x)
+    vec.y = fn(vec.y)
+}
+
 /**
  * Calculates the distance between two vectors.
  * @returns The distance between the vectors.

@@ -189,7 +189,7 @@ const mode_states: MachineStates<{
                 )
                 if (!closest) return
 
-                to.dragging({ state, node: closest, e, init_graph_pos: closest.position })
+                to.dragging({ state, node: closest, e, init_graph_pos: graph_e_pos })
             },
         }
     },
@@ -199,6 +199,29 @@ const mode_states: MachineStates<{
         node.locked = true
         onCleanup(() => (node.locked = false))
 
+        /*
+            Smoothly move the node to the pointer position
+        */
+        const init_pos_delta = trig.vec_difference(init_graph_pos, node.position)
+        let last_pos = init_graph_pos
+        const interval = setInterval(() => {
+            trig.vec_mut(init_pos_delta, v => v * 0.95)
+            FG.changeNodePosition(
+                state.graph.grid,
+                node,
+                last_pos.x - init_pos_delta.x,
+                last_pos.y - init_pos_delta.y,
+            )
+
+            const d = trig.distance(trig.ZERO, init_pos_delta)
+            if (d < 0.1) {
+                clearInterval(interval)
+                init_pos_delta.x = 0
+                init_pos_delta.y = 0
+            }
+        })
+        onCleanup(() => clearInterval(interval))
+
         createEventListener(document, 'pointermove', e => {
             if (e.pointerId !== pointer_id) return
 
@@ -206,7 +229,9 @@ const mode_states: MachineStates<{
             e.stopPropagation()
 
             const canvas_e_pos = event.positionInElement(e, state.canvas)
-            const graph_e_pos = canvasPosToGraphPos(state, canvas_e_pos)
+            const goal_graph_e_pos = canvasPosToGraphPos(state, canvas_e_pos)
+            last_pos = goal_graph_e_pos
+            const graph_e_pos = trig.vec_difference(goal_graph_e_pos, init_pos_delta)
 
             FG.changeNodePosition(state.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
         })
