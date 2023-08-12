@@ -1,4 +1,5 @@
-import { math } from '@nothing-but/utils'
+import { math, trig } from '@nothing-but/utils'
+import { Vector } from '@nothing-but/utils/trig'
 import { Position } from '@nothing-but/utils/types'
 import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
@@ -100,6 +101,17 @@ interface CanvasState {
     size: number
     position: Position
     scale: number
+    derived: CanvasDerived
+}
+
+interface CanvasDerived {
+    edge_width: number
+    node_radius: number
+}
+
+function updateDerived(state: CanvasState): void {
+    state.derived.edge_width = (state.size / 2000) * state.scale
+    state.derived.node_radius = (state.size / 240) * state.scale
 }
 
 function pointToCanvas(state: CanvasState, grid_size: number, xy: number): number {
@@ -109,18 +121,18 @@ function pointToCanvas(state: CanvasState, grid_size: number, xy: number): numbe
 
 function updateCanvas(state: CanvasState, graph: FG.Graph): void {
     const { ctx, size, scale } = state,
+        { edge_width, node_radius: node_size } = state.derived,
         { nodes, edges, options } = graph,
         { grid_size } = options
 
     ctx.clearRect(0, 0, size, size)
 
-    for (const edge of edges) {
-        const { a, b } = edge
+    for (const { a, b } of edges) {
         const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
         const opacity = 0.2 + (edges_mod / 10) * 2
 
         ctx.strokeStyle = `rgba(129, 140, 248, ${opacity})`
-        ctx.lineWidth = (size / 2000) * scale
+        ctx.lineWidth = edge_width
         ctx.beginPath()
         ctx.moveTo(
             pointToCanvas(state, grid_size, a.position.x),
@@ -143,14 +155,27 @@ function updateCanvas(state: CanvasState, graph: FG.Graph): void {
         ctx.ellipse(
             pointToCanvas(state, grid_size, x),
             pointToCanvas(state, grid_size, y),
-            (size / 240) * scale,
-            (size / 240) * scale,
+            node_size,
+            node_size,
             0,
             0,
             Math.PI * 2,
         )
         ctx.fill()
     }
+}
+
+function canvasDistToGraphDist(state: CanvasState, grid_size: number, dist: number): number {
+    return (dist / state.size) * (grid_size / state.scale)
+}
+
+function canvasPosToGraphPos(state: CanvasState, grid_size: number, pos: Position): Vector {
+    const graph_click_pos = trig.vec_map(
+        pos,
+        n => (n / state.size - 0.5) * (grid_size / state.scale),
+    )
+    trig.vec_add(graph_click_pos, state.position)
+    return graph_click_pos
 }
 
 export function CanvasForceGraph(props: {
@@ -172,12 +197,17 @@ export function CanvasForceGraph(props: {
         throw new Error('canvas is not supported')
     }
 
-    const canvas_state = {
+    const canvas_state: CanvasState = {
         ctx,
         size: init_size,
         position: { x: 0, y: 0 },
         scale: 2,
+        derived: {
+            edge_width: 0,
+            node_radius: 0,
+        },
     }
+    updateDerived(canvas_state)
 
     {
         const ro = new ResizeObserver(() => {
@@ -187,6 +217,8 @@ export function CanvasForceGraph(props: {
             canvas.width = size
             canvas.height = size
             canvas_state.size = size
+
+            updateDerived(canvas_state)
         })
         ro.observe(canvas)
         onCleanup(() => ro.disconnect())
@@ -194,12 +226,27 @@ export function CanvasForceGraph(props: {
 
     {
         canvas.addEventListener('pointerdown', e => {
-            const x = e.offsetX / canvas_state.size,
-                y = e.offsetY / canvas_state.size
+            const canvas_click_pos = { x: e.offsetX, y: e.offsetY }
+            const graph_click_pos = canvasPosToGraphPos(
+                canvas_state,
+                graph.options.grid_size,
+                canvas_click_pos,
+            )
 
-            const closest = FG.findClosestNode(graph, { x, y })
+            const canvas_missclick_tolerance = canvas_state.derived.node_radius + 3
+            const graph_missclick_tolerance = canvasDistToGraphDist(
+                canvas_state,
+                graph.options.grid_size,
+                canvas_missclick_tolerance,
+            )
 
-            console.log(x, y, closest)
+            const closest = FG.findClosestNodeLinear(
+                graph.nodes,
+                graph_click_pos,
+                graph_missclick_tolerance,
+            )
+
+            console.log(closest)
         })
     }
 

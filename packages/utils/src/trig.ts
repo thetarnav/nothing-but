@@ -78,14 +78,14 @@ export const zero = () => vector(0, 0)
 /**
  * Checks if two vectors are equal.
  */
-export function vec_equals(a: Vector, b: Vector): boolean {
+export function vec_equals(a: Position, b: Position): boolean {
     return a.x === b.x && a.y === b.y
 }
 
 /**
  * Subtracts a vector from another vector in place. The first vector is **mutated**.
  */
-export function vec_subtract(a: Vector, b: Vector): void {
+export function vec_subtract(a: Position, b: Position): void {
     a.x -= b.x
     a.y -= b.y
 }
@@ -94,16 +94,16 @@ export function vec_subtract(a: Vector, b: Vector): void {
  * Calculates the difference between two vectors.
  * @returns The difference vector.
  */
-export function vec_difference(a: Vector, b: Vector): Vector {
+export function vec_difference(a: Position, b: Position): Vector {
     return vector(a.x - b.x, a.y - b.y)
 }
 
 /**
  * Adds a vector or a force to another vector in place. The first vector is **mutated**.
  */
-export function vec_add(vec: Vector, velocity: Vector | Force | number): void
+export function vec_add(vec: Vector, velocity: Position | Force | number): void
 export function vec_add(vec: Vector, x: number, y: number): void
-export function vec_add(vec: Vector, x: Vector | Force | number, y?: number): void {
+export function vec_add(vec: Vector, x: Position | Force | number, y?: number): void {
     if (typeof x === 'number') {
         vec.x += x
         vec.y += y ?? x
@@ -120,14 +120,14 @@ export function vec_add(vec: Vector, x: Vector | Force | number, y?: number): vo
  * Calculates the sum of two vectors.
  * @returns The sum vector.
  */
-export function vec_sum(a: Vector, b: Vector): Vector {
+export function vec_sum(a: Position, b: Position): Vector {
     return vector(a.x + b.x, a.y + b.y)
 }
 
 /**
  * Multiplies a vector by another vector or a scalar in place. The first vector is **mutated**.
  */
-export function vec_multiply(a: Vector, b: Vector | number): void {
+export function vec_multiply(a: Position, b: Position | number): void {
     if (typeof b === 'number') {
         a.x *= b
         a.y *= b
@@ -148,7 +148,7 @@ export function product(a: Position, b: Position): Vector {
 /**
  * Divides a vector by another vector in place. The first vector is **mutated**.
  */
-export function vec_divide(a: Vector, b: Vector): void {
+export function vec_divide(a: Position, b: Position): void {
     a.x /= b.x
     a.y /= b.y
 }
