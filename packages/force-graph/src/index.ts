@@ -226,6 +226,34 @@ export function disconnect(a: Node, b: Node): void {
 /**
  * Returns the closest node to the given position.
  *
+ * The search is done linearly, so it scales O(n) with the number of nodes.
+ *
+ * It does a simple search, witout assuming anything about the gird.
+ */
+export function findClosestNodeLinear(
+    nodes: readonly Node[],
+    pos: Position,
+    max_dist: number = Infinity,
+): Node | undefined {
+    let closest: Node | undefined
+    let closest_dist = max_dist
+
+    for (const node of nodes) {
+        const dist = trig.distance(node.position, pos)
+        if (dist < closest_dist) {
+            closest = node
+            closest_dist = dist
+        }
+    }
+
+    return closest
+}
+
+/**
+ * Returns the closest node to the given position.
+ *
+ * The search is done using a grid, so it scales O(log n) with the number of nodes.
+ *
  * The implementation assumes that the max_dist is smaller than the cell size.
  * So it will only return nodes very close to the position.
  *
