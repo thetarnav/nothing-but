@@ -1,13 +1,13 @@
 import * as solid from 'solid-js'
 
 export class Reactive<T> {
-    get: solid.Accessor<T>
+    read: solid.Accessor<T>
     get value() {
-        return this.get()
+        return this.read()
     }
 
-    constructor(get: solid.Accessor<T>) {
-        this.get = get
+    constructor(read: solid.Accessor<T>) {
+        this.read = read
     }
 
     toString() {
@@ -31,8 +31,10 @@ export function peek<T>(obj: Reactive<T>): T {
     return solid.untrack(() => obj.value)
 }
 
-export function memo<T>(source: Reactive<T>): Reactive<T> {
-    return new Reactive(solid.createMemo(() => source.value))
+export function memo<T>(source: solid.Accessor<T>): Reactive<T>
+export function memo<T>(source: Reactive<T>): Reactive<T>
+export function memo<T>(source: solid.Accessor<T> | Reactive<T>): Reactive<T> {
+    return new Reactive(solid.createMemo(source instanceof Reactive ? () => source.value : source))
 }
 
 export function map<T, U>(source: Reactive<T>, fn: (value: T) => U): Reactive<U> {
@@ -95,11 +97,11 @@ export class Signal<T> extends Reactive<T> {
 
     constructor(initialValue: T, options?: SignalOptions<T>) {
         const equals = options?.equals ?? solid.equalFn
-        const [get, setter] = solid.createSignal(initialValue, {
+        const [read, setter] = solid.createSignal(initialValue, {
             ...options,
             equals: (a, b) => (this.mutating ? (this.mutating = false) : equals(a, b)),
         })
-        super(get)
+        super(read)
         this.setter = setter
     }
 }

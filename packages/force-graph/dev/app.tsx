@@ -2,23 +2,13 @@ import * as S from '@nothing-but/solid/signal'
 import { event, math } from '@nothing-but/utils'
 import { Position } from '@nothing-but/utils/types'
 import { createEventListener, makeEventListener } from '@solid-primitives/event-listener'
-import { resolveElements } from '@solid-primitives/refs'
-import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
 import { createMachine } from '@solid-primitives/state-machine'
-import clsx from 'clsx'
-import {
-    createEffect,
-    createMemo,
-    createSelector,
-    createSignal,
-    onCleanup,
-    onMount,
-    type Component,
-    type JSX,
-} from 'solid-js'
+import { createSelector, onCleanup, type Component } from 'solid-js'
 import * as FG from '../src/index.js'
+import { CanvasForceGraph } from './display-graph.jsx'
 import { getLAGraph } from './init.js'
 
+const TARGET_FPS = 44
 export const graph_options = FG.makeGraphOptions({
     inertia_strength: 0.3,
     link_strength: 0.012,
@@ -26,96 +16,6 @@ export const graph_options = FG.makeGraphOptions({
     repel_distance: 22,
     repel_strength: 0.5,
 })
-
-export function ForceGraph(props: {
-    graph: FG.Graph
-    node: RootPoolFactory<FG.Node, JSX.Element>
-    active?: boolean
-}): JSX.Element {
-    const isActive = 'active' in props ? () => props.active : () => false
-
-    const useNodeEl = createRootPool(props.node)
-    const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
-
-    const useLine = createRootPool(
-        () => (<line class="stroke-cyan-7/25 stroke-0.1%" />) as SVGLineElement,
-    )
-    const lines = createMemo(() => props.graph.edges.map(useLine))
-
-    const posToP = (xy: number, grid_size: number) => ((xy + grid_size / 2) / grid_size) * 100 + '%'
-
-    function updateElements() {
-        const els = nodeEls(),
-            line_els = lines(),
-            { nodes, edges, options } = props.graph,
-            { grid_size } = options
-
-        for (let i = 0; i < edges.length; i++) {
-            const { a, b } = edges[i]!
-            const line = line_els[i]!
-
-            if (a.moved) {
-                line.x1.baseVal.valueAsString = posToP(a.position.x, grid_size)
-                line.y1.baseVal.valueAsString = posToP(a.position.y, grid_size)
-            }
-
-            if (b.moved) {
-                line.x2.baseVal.valueAsString = posToP(b.position.x, grid_size)
-                line.y2.baseVal.valueAsString = posToP(b.position.y, grid_size)
-            }
-        }
-
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i]!
-
-            if (!node.moved) continue
-
-            const { x, y } = node.position
-            const el = els[i]! as HTMLElement
-
-            el.style.left = posToP(x, grid_size)
-            el.style.top = posToP(y, grid_size)
-
-            node.moved = false
-        }
-    }
-
-    onMount(() => {
-        const TARGET_FPS = 44
-        const animation = FG.makeFrameAnimation(props.graph, updateElements, TARGET_FPS)
-
-        const init = createMemo(() => {
-            props.graph // track graph prop
-
-            const [init, setInit] = createSignal(true)
-            const timeout = setTimeout(() => setInit(false), 2000)
-            onCleanup(() => clearTimeout(timeout))
-
-            return init
-        })
-
-        updateElements()
-
-        createEffect(() => {
-            if (isActive() || init()()) {
-                FG.startFrameAnimation(animation)
-            } else {
-                FG.pauseFrameAnimation(animation)
-            }
-        })
-
-        onCleanup(() => {
-            FG.stopFrameAnimation(animation)
-        })
-    })
-
-    return (
-        <>
-            <svg class="absolute w-full h-full">{lines()}</svg>
-            {nodeEls()}
-        </>
-    )
-}
 
 function eventPositionInElement(e: PointerEvent, el: HTMLElement): Position {
     const rect = el.getBoundingClientRect()
@@ -161,8 +61,8 @@ export const App: Component = () => {
 
     const state = createMachine<{
         [StateType.Default]: {
-            to: StateType.Dragging | StateType.MovingSpace
             value: KeyboardEvents
+            to: StateType.Dragging | StateType.MovingSpace
         }
         [StateType.Dragging]: {
             input: {
@@ -338,15 +238,23 @@ export const App: Component = () => {
                 }}
                 class="relative w-90vmin h-90vmin m-auto bg-dark-9 relative overflow-hidden overscroll-none touch-none"
             >
-                <div
+                <CanvasForceGraph
+                    graph={force_graph}
+                    active={() => state.type === StateType.Dragging}
+                    targetFPS={TARGET_FPS}
+                    trackNodes={change_signal.read}
+                />
+
+                {/* <div
                     class="absolute inset-0"
                     style={{
                         transform: `translate(${position.value.x}px, ${position.value.y}px) scale(${scale.value})`,
                     }}
                 >
-                    <ForceGraph
+                    <SvgForceGraph
                         graph={force_graph}
                         active={state.type === StateType.Dragging}
+                        targetFPS={TARGET_FPS}
                         node={node => (
                             <div
                                 class={clsx(
@@ -373,7 +281,7 @@ export const App: Component = () => {
                             </div>
                         )}
                     />
-                </div>
+                </div> */}
             </div>
         </div>
     )

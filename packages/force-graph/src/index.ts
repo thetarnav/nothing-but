@@ -1,4 +1,4 @@
-import { math } from '@nothing-but/utils'
+import { math, trig } from '@nothing-but/utils'
 import { Position } from '@nothing-but/utils/types'
 
 export interface Options {
@@ -78,7 +78,6 @@ export interface Grid {
     radius: number
     cell_size: number
     axis_cells: number
-    n_cells: number
 }
 
 export function makeGraphGrid(options: Options): Grid {
@@ -89,12 +88,14 @@ export function makeGraphGrid(options: Options): Grid {
     return {
         cells: Array.from({ length: n_cells }, () => []),
         axis_cells,
-        n_cells,
         cell_size: options.repel_distance,
         radius: grid_radius,
     }
 }
 
+/**
+ * **Note:** This function does not clamp the position to the grid.
+ */
 export function toGridIdx(grid: Grid, pos: Position): number {
     const { radius, axis_cells, cell_size } = grid,
         xi = Math.floor((pos.x + radius) / cell_size),
@@ -222,6 +223,91 @@ export function disconnect(a: Node, b: Node): void {
     }
 }
 
+/**
+ * Returns the closest node to the given position.
+ *
+ * The implementation assumes that the max_dist is smaller than the cell size.
+ * So it will only return nodes very close to the position.
+ *
+ * Position outside of the graph will return `undefined`.
+ */
+export function findClosestNode(
+    graph: Graph,
+    pos: Position,
+    max_dist: number = Infinity,
+): Node | undefined {
+    const { x, y } = pos,
+        { grid } = graph
+
+    if (x < -grid.radius || x > grid.radius || y < -grid.radius || y > grid.radius) return
+
+    const idx = toGridIdx(grid, pos),
+        x_axis_idx = idx % grid.axis_cells,
+        y_axis_idx = Math.floor(idx / grid.axis_cells)
+
+    /*
+        1 | -1, depending on which side of the cell the position is on
+    */
+    const idx_delta = trig.vec_map(
+        pos,
+        n => Math.floor(math.remainder(n / grid.cell_size, 1) + 0.5) * 2 - 1,
+    )
+
+    /*
+        clamp the index to the grid -> 1 | 0 | -1
+    */
+    idx_delta.x = math.clamp(idx_delta.x, -x_axis_idx, grid.axis_cells - 1 - x_axis_idx)
+    idx_delta.y = math.clamp(idx_delta.y, -y_axis_idx, grid.axis_cells - 1 - y_axis_idx)
+
+    let closest_dist = max_dist
+    let closest: Node | undefined
+
+    /*
+        check the 4 cells around the position
+        including the cell the position is in
+    */
+    for (let xi = 0; xi <= 1; xi++) {
+        const dxi = idx_delta.x * xi
+
+        for (let yi = 0; yi <= 1; yi++) {
+            const idx2 = idx + dxi + grid.axis_cells * (idx_delta.y * yi),
+                order = grid.cells[idx2]!
+
+            if (dxi == -1) {
+                /*
+                    right to left
+                */
+                for (let i = order.length - 1; i >= 0; i--) {
+                    const node = order[i]!
+                    if (x - node.position.x > closest_dist) break
+
+                    const dist = trig.distance(pos, node.position)
+                    if (dist < closest_dist) {
+                        closest_dist = dist
+                        closest = node
+                    }
+                }
+            } else {
+                /*
+                    left to right
+                */
+                for (const node of order) {
+                    if (x - node.position.x > closest_dist) continue
+                    if (node.position.x - x > closest_dist) break
+
+                    const dist = trig.distance(pos, node.position)
+                    if (dist < closest_dist) {
+                        closest_dist = dist
+                        closest = node
+                    }
+                }
+            }
+        }
+    }
+
+    return closest
+}
+
 export function randomizeNodePositions(nodes: readonly Node[], options: Options): void {
     const { grid_size } = options
     const radius = grid_size / 4
@@ -312,7 +398,7 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
         */
         const idx = toGridIdx(grid, position),
             dy_min = idx >= grid.axis_cells ? -1 : 0,
-            dy_max = idx < grid.n_cells - grid.axis_cells ? 1 : 0,
+            dy_max = idx < grid.cells.length - grid.axis_cells ? 1 : 0,
             at_right_edge = idx % grid.axis_cells === grid.axis_cells - 1
 
         for (let dy_idx = dy_min; dy_idx <= dy_max; dy_idx++) {
