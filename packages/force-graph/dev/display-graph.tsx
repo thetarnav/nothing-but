@@ -112,17 +112,19 @@ interface CanvasState {
      *     max
      */
     zoom: number
-    derived: {
-        /**
-         * min
-         * 1 - 5
-         *     max
-         */
-        scale: number
-        edge_width: number
-        node_radius: number
-    }
+    derived: S.Reactive<CanvasDerived>
     signal: S.Signal<undefined>
+}
+
+interface CanvasDerived {
+    /**
+     * min
+     * 1 - 5
+     *     max
+     */
+    scale: number
+    edge_width: number
+    node_radius: number
 }
 
 function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasState | Error {
@@ -131,6 +133,8 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
 
     const init_size = Math.min(canvas.width, canvas.height)
 
+    const signal = S.signal()
+
     const state: CanvasState = {
         canvas,
         graph,
@@ -138,22 +142,24 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
         size: init_size,
         position: { x: 0, y: 0 },
         zoom: 0,
-        derived: {
-            scale: 0,
-            edge_width: 0,
-            node_radius: 0,
-        },
-        signal: S.signal(),
+        derived: null!,
+        signal,
     }
-    updateDerived(state)
+
+    const derived_state: CanvasDerived = {
+        scale: 0,
+        edge_width: 0,
+        node_radius: 0,
+    }
+    state.derived = S.memo(() => {
+        signal.read()
+        derived_state.edge_width = state.size / 2000
+        derived_state.node_radius = state.size / 240
+        derived_state.scale = 1 + ease.in_out_cubic(state.zoom) * 4
+        return derived_state
+    })
 
     return state
-}
-
-function updateDerived(state: CanvasState): void {
-    state.derived.edge_width = state.size / 2000
-    state.derived.node_radius = state.size / 240
-    state.derived.scale = 1 + ease.in_out_cubic(state.zoom) * 4
 }
 
 interface BaseInput {
@@ -213,7 +219,8 @@ const mode_states: MachineStates<{
                 const graph_e_pos = eventToGraphPos(state, e)
 
                 const click_max_dist =
-                    ((state.derived.node_radius + 5) / state.size) * state.graph.options.grid_size
+                    ((state.derived.value.node_radius + 5) / state.size) *
+                    state.graph.options.grid_size
 
                 const closest = FG.findClosestNodeLinear(
                     state.graph.nodes,
@@ -310,7 +317,7 @@ const mode_states: MachineStates<{
             const canvas_e_pos = event.positionInElement(e, state.canvas)
             const delta = trig.vec_difference(init_canvas_e_pos, canvas_e_pos)
 
-            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.derived.scale))
+            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.derived.value.scale))
 
             state.position.x = init_graph_pos.x + delta.x
             state.position.y = init_graph_pos.y + delta.y
@@ -344,7 +351,7 @@ function pointToCanvas(state: CanvasState, xy: number): number {
 
 function updateCanvas(state: CanvasState): void {
     const { ctx, size, position, graph } = state,
-        { edge_width, node_radius, scale } = state.derived,
+        { edge_width, node_radius, scale } = state.derived.read(),
         { nodes, edges } = graph
 
     /*
@@ -419,7 +426,7 @@ function updateCanvas(state: CanvasState): void {
 function canvasPosToGraphPos(state: CanvasState, pos: Position): Vector {
     const graph_click_pos = trig.vec_map(
         pos,
-        n => (n - 0.5) * (state.graph.options.grid_size / state.derived.scale),
+        n => (n - 0.5) * (state.graph.options.grid_size / state.derived.read().scale),
     )
     trig.vec_add(graph_click_pos, state.position)
     return graph_click_pos
@@ -450,8 +457,6 @@ export function CanvasForceGraph(props: {
             canvas.height = size
             state.size = size
 
-            updateDerived(state)
-
             S.trigger(state.signal)
         })
         ro.observe(canvas)
@@ -475,7 +480,7 @@ export function CanvasForceGraph(props: {
             const { deltaY } = e
 
             state.zoom = math.clamp(state.zoom + deltaY * -0.0005, 0, 1)
-            updateDerived(state)
+            S.trigger(state.signal)
         },
     })
 
@@ -548,10 +553,7 @@ export function CanvasForceGraph(props: {
             return init
         })
 
-        const active = createMemo(() => {
-            state.signal.read()
-            return mode.type !== Mode.Default || init()()
-        })
+        const active = createMemo(() => mode.type === Mode.DraggingNode || init()())
 
         createEffect(() => {
             if (active()) {
@@ -559,6 +561,12 @@ export function CanvasForceGraph(props: {
             } else {
                 FG.pauseFrameAnimation(animation)
             }
+        })
+
+        createEffect(() => {
+            if (active()) return
+            state.signal.read()
+            requestAnimationFrame(() => updateCanvas(state))
         })
 
         onCleanup(() => {
