@@ -350,6 +350,7 @@ function updateCanvas(state: CanvasState): void {
     /*
         clear
     */
+    ctx.resetTransform()
     ctx.clearRect(0, 0, size, size)
 
     /*
@@ -370,7 +371,7 @@ function updateCanvas(state: CanvasState): void {
     */
     ctx.strokeStyle = 'red'
     ctx.lineWidth = 1
-    ctx.strokeRect(1, 1, size - 2, size - 2)
+    ctx.strokeRect(0, 0, size, size)
 
     /*
         edges
