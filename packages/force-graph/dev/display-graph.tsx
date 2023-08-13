@@ -1,5 +1,5 @@
 import * as S from '@nothing-but/solid/signal'
-import { event, math, trig } from '@nothing-but/utils'
+import { ease, event, math, trig } from '@nothing-but/utils'
 import { Vector } from '@nothing-but/utils/trig'
 import { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
@@ -106,8 +106,19 @@ interface CanvasState {
     graph: FG.Graph
     size: number
     position: Position
-    scale: number
+    /**
+     * min
+     * 0 - 1
+     *     max
+     */
+    zoom: number
     derived: {
+        /**
+         * min
+         * 1 - 5
+         *     max
+         */
+        scale: number
         edge_width: number
         node_radius: number
     }
@@ -126,8 +137,9 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
         ctx,
         size: init_size,
         position: { x: 0, y: 0 },
-        scale: 2,
+        zoom: 0,
         derived: {
+            scale: 0,
             edge_width: 0,
             node_radius: 0,
         },
@@ -141,6 +153,7 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
 function updateDerived(state: CanvasState): void {
     state.derived.edge_width = state.size / 2000
     state.derived.node_radius = state.size / 240
+    state.derived.scale = 1 + ease.in_out_cubic(state.zoom) * 4
 }
 
 interface BaseInput {
@@ -199,16 +212,13 @@ const mode_states: MachineStates<{
 
                 const graph_e_pos = eventToGraphPos(state, e)
 
-                const canvas_missclick_tolerance = state.derived.node_radius + 5
-                const graph_missclick_tolerance = canvasDistToGraphDist(
-                    state,
-                    canvas_missclick_tolerance,
-                )
+                const click_max_dist =
+                    ((state.derived.node_radius + 5) / state.size) * state.graph.options.grid_size
 
                 const closest = FG.findClosestNodeLinear(
                     state.graph.nodes,
                     graph_e_pos,
-                    graph_missclick_tolerance,
+                    click_max_dist,
                 )
                 if (!closest) return
 
@@ -300,7 +310,7 @@ const mode_states: MachineStates<{
             const canvas_e_pos = event.positionInElement(e, state.canvas)
             const delta = trig.vec_difference(init_canvas_e_pos, canvas_e_pos)
 
-            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.scale))
+            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.derived.scale))
 
             state.position.x = init_graph_pos.x + delta.x
             state.position.y = init_graph_pos.y + delta.y
@@ -333,8 +343,8 @@ function pointToCanvas(state: CanvasState, xy: number): number {
 }
 
 function updateCanvas(state: CanvasState): void {
-    const { ctx, size, position, scale, graph } = state,
-        { edge_width, node_radius } = state.derived,
+    const { ctx, size, position, graph } = state,
+        { edge_width, node_radius, scale } = state.derived,
         { nodes, edges } = graph
 
     /*
@@ -405,14 +415,10 @@ function updateCanvas(state: CanvasState): void {
     }
 }
 
-function canvasDistToGraphDist(state: CanvasState, dist: number): number {
-    return (dist / state.size) * (state.graph.options.grid_size / state.scale)
-}
-
 function canvasPosToGraphPos(state: CanvasState, pos: Position): Vector {
     const graph_click_pos = trig.vec_map(
         pos,
-        n => (n - 0.5) * (state.graph.options.grid_size / state.scale),
+        n => (n - 0.5) * (state.graph.options.grid_size / state.derived.scale),
     )
     trig.vec_add(graph_click_pos, state.position)
     return graph_click_pos
@@ -459,8 +465,17 @@ export function CanvasForceGraph(props: {
         },
     })
 
-    createEventListener(canvas, 'pointerdown', e => {
-        mode.value.POINTER_DOWN?.(e)
+    createEventListenerMap(canvas, {
+        pointerdown(e) {
+            mode.value.POINTER_DOWN?.(e)
+        },
+        wheel(e) {
+            e.preventDefault()
+            const { deltaY } = e
+
+            state.zoom = math.clamp(state.zoom + deltaY * -0.0005, 0, 1)
+            updateDerived(state)
+        },
     })
 
     createEventListenerMap(document, {
@@ -510,6 +525,10 @@ export function CanvasForceGraph(props: {
             }
         },
     })
+
+    /*
+        DEBUG
+    */
     ;<Portal>
         <div class="fixed top-5 left-5">{mode.type}</div>
     </Portal>
