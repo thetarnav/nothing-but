@@ -75,21 +75,24 @@ export function makeGraphOptions(options?: Partial<Options>): Options {
  */
 export interface Grid {
     cells: Node[][]
+    size: number
     radius: number
     cell_size: number
     axis_cells: number
 }
 
 export function makeGraphGrid(options: Options): Grid {
-    const grid_radius = options.grid_size / 2,
-        axis_cells = Math.ceil(grid_radius / options.repel_distance) * 2,
+    const size = options.grid_size,
+        radius = size / 2,
+        axis_cells = Math.ceil(radius / options.repel_distance) * 2,
         n_cells = axis_cells * axis_cells
 
     return {
         cells: Array.from({ length: n_cells }, () => []),
         axis_cells,
         cell_size: options.repel_distance,
-        radius: grid_radius,
+        size,
+        radius,
     }
 }
 
@@ -269,9 +272,9 @@ export function findClosestNode(
 
     if (x < -grid.radius || x > grid.radius || y < -grid.radius || y > grid.radius) return
 
-    const idx = toGridIdx(grid, pos),
-        x_axis_idx = idx % grid.axis_cells,
-        y_axis_idx = Math.floor(idx / grid.axis_cells)
+    const pos_idx = toGridIdx(grid, pos),
+        x_axis_idx = pos_idx % grid.axis_cells,
+        y_axis_idx = Math.floor(pos_idx / grid.axis_cells)
 
     /*
         1 | -1, depending on which side of the cell the position is on
@@ -298,8 +301,8 @@ export function findClosestNode(
         const dxi = idx_delta.x * xi
 
         for (let yi = 0; yi <= 1; yi++) {
-            const idx2 = idx + dxi + grid.axis_cells * (idx_delta.y * yi),
-                order = grid.cells[idx2]!
+            const idx = pos_idx + dxi + grid.axis_cells * (idx_delta.y * yi),
+                order = grid.cells[idx]!
 
             if (dxi == -1) {
                 /*
@@ -424,18 +427,18 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
             look only at the nodes right to the current node
             and apply the force to both nodes
         */
-        const idx = toGridIdx(grid, position),
-            dy_min = idx >= grid.axis_cells ? -1 : 0,
-            dy_max = idx < grid.cells.length - grid.axis_cells ? 1 : 0,
-            at_right_edge = idx % grid.axis_cells === grid.axis_cells - 1
+        const node_idx = toGridIdx(grid, position),
+            dy_min = node_idx >= grid.axis_cells ? -1 : 0,
+            dy_max = node_idx < grid.cells.length - grid.axis_cells ? 1 : 0,
+            at_right_edge = node_idx % grid.axis_cells === grid.axis_cells - 1
 
         for (let dy_idx = dy_min; dy_idx <= dy_max; dy_idx++) {
-            const _idx = idx + dy_idx * grid.axis_cells
+            const idx = node_idx + dy_idx * grid.axis_cells
 
             /*
                 from the right cell edge to the node
             */
-            let order = grid.cells[_idx]!
+            let order = grid.cells[idx]!
 
             for (let i = order.length - 1; i >= 0; i--) {
                 const node_b = order[i]!,
@@ -455,7 +458,7 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
             */
             if (at_right_edge) continue
 
-            order = grid.cells[_idx + 1]!
+            order = grid.cells[idx + 1]!
 
             for (const node_b of order) {
                 const dx = x - node_b.position.x

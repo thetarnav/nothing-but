@@ -138,8 +138,8 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
 }
 
 function updateDerived(state: CanvasState): void {
-    state.derived.edge_width = (state.size / 2000) * state.scale
-    state.derived.node_radius = (state.size / 240) * state.scale
+    state.derived.edge_width = state.size / 2000
+    state.derived.node_radius = state.size / 240
 }
 
 interface Events {
@@ -247,19 +247,44 @@ const mode_states: MachineStates<{
     },
 }
 
-function pointToCanvas(state: CanvasState, grid_size: number, xy: number): number {
-    const { size, scale, position } = state
-    return (xy / grid_size + position.x) * scale * size + size / 2
+function pointToCanvas(state: CanvasState, xy: number): number {
+    const { size } = state
+    return (xy / state.graph.grid.size) * size + size / 2
 }
 
-function updateCanvas(state: CanvasState, graph: FG.Graph): void {
-    const { ctx, size } = state,
-        { edge_width, node_radius: node_size } = state.derived,
-        { nodes, edges, options } = graph,
-        { grid_size } = options
+function updateCanvas(state: CanvasState): void {
+    const { ctx, size, position, scale, graph } = state,
+        { edge_width, node_radius } = state.derived,
+        { nodes, edges } = graph
 
+    /*
+        clear
+    */
     ctx.clearRect(0, 0, size, size)
 
+    /*
+        transform - scale and translate
+    */
+    const correct_origin = -(scale - 1) * (size / 2)
+    ctx.setTransform(
+        scale,
+        0,
+        0,
+        scale,
+        correct_origin - (position.x / graph.grid.size) * size * scale,
+        correct_origin - (position.y / graph.grid.size) * size * scale,
+    )
+
+    /*
+        border
+    */
+    ctx.strokeStyle = 'red'
+    ctx.lineWidth = 1
+    ctx.strokeRect(0, 0, size, size)
+
+    /*
+        edges
+    */
     for (const { a, b } of edges) {
         const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
         const opacity = 0.2 + (edges_mod / 10) * 2
@@ -267,17 +292,14 @@ function updateCanvas(state: CanvasState, graph: FG.Graph): void {
         ctx.strokeStyle = `rgba(129, 140, 248, ${opacity})`
         ctx.lineWidth = edge_width
         ctx.beginPath()
-        ctx.moveTo(
-            pointToCanvas(state, grid_size, a.position.x),
-            pointToCanvas(state, grid_size, a.position.y),
-        )
-        ctx.lineTo(
-            pointToCanvas(state, grid_size, b.position.x),
-            pointToCanvas(state, grid_size, b.position.y),
-        )
+        ctx.moveTo(pointToCanvas(state, a.position.x), pointToCanvas(state, a.position.y))
+        ctx.lineTo(pointToCanvas(state, b.position.x), pointToCanvas(state, b.position.y))
         ctx.stroke()
     }
 
+    /*
+        nodes
+    */
     for (const node of nodes) {
         const { x, y } = node.position
         const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
@@ -286,10 +308,10 @@ function updateCanvas(state: CanvasState, graph: FG.Graph): void {
         ctx.fillStyle = `rgba(248, 113, 113, ${opacity})`
         ctx.beginPath()
         ctx.ellipse(
-            pointToCanvas(state, grid_size, x),
-            pointToCanvas(state, grid_size, y),
-            node_size,
-            node_size,
+            pointToCanvas(state, x),
+            pointToCanvas(state, y),
+            node_radius,
+            node_radius,
             0,
             0,
             Math.PI * 2,
@@ -390,8 +412,8 @@ export function CanvasForceGraph(props: {
     })
 
     {
-        const animation = FG.makeFrameAnimation(graph, () => updateCanvas(state, graph), targetFPS)
-        updateCanvas(state, graph)
+        const animation = FG.makeFrameAnimation(graph, () => updateCanvas(state), targetFPS)
+        updateCanvas(state)
 
         const init = createMemo(() => {
             trackNodes() // track changes to nodes
