@@ -7,6 +7,7 @@ import { resolveElements } from '@solid-primitives/refs'
 import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
 import { MachineStates, createMachine } from '@solid-primitives/state-machine'
 import { createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
+import { Portal } from 'solid-js/web'
 import * as FG from '../src/index.js'
 
 export function SvgForceGraph(props: {
@@ -142,39 +143,61 @@ function updateDerived(state: CanvasState): void {
     state.derived.node_radius = state.size / 240
 }
 
+interface BaseInput {
+    state: CanvasState
+}
+
 interface Events {
     ESCAPE?(event: KeyboardEvent): void
     SPACE?(event: KeyboardEvent): void
+    SPACE_UP?(event: KeyboardEvent): void
 
     POINTER_DOWN?(event: PointerEvent): void
     POINTER_UP?(event: PointerEvent): void
 }
 
+const enum Mode {
+    Default = 'default',
+    DraggingNode = 'dragging_node',
+    MoveSpace = 'move_space',
+    MoveDragging = 'move_dragging',
+}
+
 const mode_states: MachineStates<{
-    default: {
-        input: {
-            state: CanvasState
-        }
+    [Mode.Default]: {
+        to: Mode.DraggingNode | Mode.MoveSpace
+        input: BaseInput
         value: Events
     }
-    dragging: {
-        input: {
-            state: CanvasState
+    [Mode.DraggingNode]: {
+        to: Mode.Default
+        input: BaseInput & {
             node: FG.Node
             e: PointerEvent
             init_graph_pos: Position
         }
         value: Events
     }
+    [Mode.MoveSpace]: {
+        to: Mode.Default | Mode.MoveDragging
+        input: BaseInput
+        value: Events
+    }
+    [Mode.MoveDragging]: {
+        to: Mode.Default | Mode.MoveSpace
+        input: BaseInput & {
+            e: PointerEvent
+        }
+        value: Events
+    }
 }> = {
-    default({ state }, to) {
+    [Mode.Default]({ state }, to) {
         return {
             POINTER_DOWN(e) {
                 e.preventDefault()
                 e.stopPropagation()
 
-                const canvas_e_pos = event.positionInElement(e, state.canvas)
-                const graph_e_pos = canvasPosToGraphPos(state, canvas_e_pos)
+                const graph_e_pos = eventToGraphPos(state, e)
 
                 const canvas_missclick_tolerance = state.derived.node_radius + 5
                 const graph_missclick_tolerance = canvasDistToGraphDist(
@@ -189,11 +212,15 @@ const mode_states: MachineStates<{
                 )
                 if (!closest) return
 
-                to.dragging({ state, node: closest, e, init_graph_pos: graph_e_pos })
+                to(Mode.DraggingNode, { state, node: closest, e, init_graph_pos: graph_e_pos })
+            },
+            SPACE(e) {
+                e.preventDefault()
+                to(Mode.MoveSpace, { state })
             },
         }
     },
-    dragging({ state, node, e, init_graph_pos }, to) {
+    [Mode.DraggingNode]({ state, node, e, init_graph_pos }, to) {
         const pointer_id = e.pointerId
 
         node.locked = true
@@ -228,8 +255,7 @@ const mode_states: MachineStates<{
             e.preventDefault()
             e.stopPropagation()
 
-            const canvas_e_pos = event.positionInElement(e, state.canvas)
-            const goal_graph_e_pos = canvasPosToGraphPos(state, canvas_e_pos)
+            const goal_graph_e_pos = eventToGraphPos(state, e)
             last_pos = goal_graph_e_pos
             const graph_e_pos = trig.vec_difference(goal_graph_e_pos, init_pos_delta)
 
@@ -237,14 +263,68 @@ const mode_states: MachineStates<{
         })
 
         return {
-            type: 'dragging',
             POINTER_UP(e) {
                 if (e.pointerId !== pointer_id) return
 
-                to.default({ state })
+                to(Mode.Default, { state })
             },
         }
     },
+    [Mode.MoveSpace]({ state }, to) {
+        return {
+            SPACE(e) {
+                e.preventDefault()
+            },
+            SPACE_UP(e) {
+                to(Mode.Default, { state })
+            },
+            POINTER_DOWN(e) {
+                e.preventDefault()
+                e.stopPropagation()
+
+                to(Mode.MoveDragging, { state, e })
+            },
+        }
+    },
+    [Mode.MoveDragging]({ state, e }, to) {
+        const init_canvas_e_pos = event.positionInElement(e, state.canvas)
+        const init_graph_pos = trig.vector(state.position)
+        const pointer_id = e.pointerId
+
+        createEventListener(document, 'pointermove', e => {
+            if (e.pointerId !== pointer_id) return
+
+            e.preventDefault()
+            e.stopPropagation()
+
+            const canvas_e_pos = event.positionInElement(e, state.canvas)
+            const delta = trig.vec_difference(init_canvas_e_pos, canvas_e_pos)
+
+            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.scale))
+
+            state.position.x = init_graph_pos.x + delta.x
+            state.position.y = init_graph_pos.y + delta.y
+        })
+
+        return {
+            SPACE(e) {
+                e.preventDefault()
+            },
+            SPACE_UP(e) {
+                to(Mode.Default, { state })
+            },
+            POINTER_UP(e) {
+                if (e.pointerId !== pointer_id) return
+
+                to(Mode.MoveSpace, { state })
+            },
+        }
+    },
+}
+
+function eventToGraphPos(state: CanvasState, e: PointerEvent): Position {
+    const canvas_e_pos = event.positionInElement(e, state.canvas)
+    return canvasPosToGraphPos(state, canvas_e_pos)
 }
 
 function pointToCanvas(state: CanvasState, xy: number): number {
@@ -280,7 +360,7 @@ function updateCanvas(state: CanvasState): void {
     */
     ctx.strokeStyle = 'red'
     ctx.lineWidth = 1
-    ctx.strokeRect(0, 0, size, size)
+    ctx.strokeRect(1, 1, size - 2, size - 2)
 
     /*
         edges
@@ -374,7 +454,7 @@ export function CanvasForceGraph(props: {
     const mode = createMachine({
         states: mode_states,
         initial: {
-            type: 'default',
+            type: Mode.Default,
             input: { state },
         },
     })
@@ -390,31 +470,49 @@ export function CanvasForceGraph(props: {
         pointercancel(e) {
             mode.value.POINTER_UP?.(e)
         },
-    })
+        keydown(e) {
+            if (
+                e.ctrlKey ||
+                e.altKey ||
+                e.metaKey ||
+                e.shiftKey ||
+                e.isComposing ||
+                e.defaultPrevented ||
+                e.target !== document.body
+            )
+                return
 
-    createEventListener(document, 'keydown', e => {
-        if (
-            e.ctrlKey ||
-            e.altKey ||
-            e.metaKey ||
-            e.shiftKey ||
-            e.isComposing ||
-            e.defaultPrevented ||
-            e.target !== document.body
-        )
-            return
+            switch (e.key) {
+                case 'Escape': {
+                    mode.value.ESCAPE?.(e)
+                    break
+                }
+                case ' ': {
+                    mode.value.SPACE?.(e)
+                    break
+                }
+            }
+        },
+        keyup(e) {
+            if (
+                e.ctrlKey ||
+                e.altKey ||
+                e.metaKey ||
+                e.shiftKey ||
+                e.isComposing ||
+                e.defaultPrevented ||
+                e.target !== document.body
+            )
+                return
 
-        switch (e.key) {
-            case 'Escape': {
-                mode.value.ESCAPE?.(e)
-                break
+            if (e.key === ' ') {
+                mode.value.SPACE_UP?.(e)
             }
-            case ' ': {
-                mode.value.SPACE?.(e)
-                break
-            }
-        }
+        },
     })
+    ;<Portal>
+        <div class="fixed top-5 left-5">{mode.type}</div>
+    </Portal>
 
     {
         const animation = FG.makeFrameAnimation(graph, () => updateCanvas(state), targetFPS)
@@ -432,7 +530,7 @@ export function CanvasForceGraph(props: {
 
         const active = createMemo(() => {
             state.signal.read()
-            return mode.type === 'dragging' || init()()
+            return mode.type !== Mode.Default || init()()
         })
 
         createEffect(() => {

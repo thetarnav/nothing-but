@@ -1,9 +1,7 @@
 import * as S from '@nothing-but/solid/signal'
 import { event, math } from '@nothing-but/utils'
 import { Position } from '@nothing-but/utils/types'
-import { createEventListener, makeEventListener } from '@solid-primitives/event-listener'
-import { createMachine } from '@solid-primitives/state-machine'
-import { createSelector, onCleanup, type Component } from 'solid-js'
+import { type Component } from 'solid-js'
 import * as FG from '../src/index.js'
 import { CanvasForceGraph } from './display-graph.jsx'
 import { getLAGraph } from './init.js'
@@ -38,175 +36,175 @@ export const App: Component = () => {
         }
     }
 
-    const enum StateType {
-        Default,
-        Dragging,
-        MovingSpace,
-        Moving,
-    }
+    // const enum StateType {
+    //     Default,
+    //     Dragging,
+    //     MovingSpace,
+    //     Moving,
+    // }
 
-    type KeyboardEventNames = 'ESCAPE' | 'SPACE'
+    // type KeyboardEventNames = 'ESCAPE' | 'SPACE'
 
-    type KeyboardEvents = {
-        [K in KeyboardEventNames]?: (e: KeyboardEvent) => void
-    }
+    // type KeyboardEvents = {
+    //     [K in KeyboardEventNames]?: (e: KeyboardEvent) => void
+    // }
 
-    const state = createMachine<{
-        [StateType.Default]: {
-            value: KeyboardEvents
-            to: StateType.Dragging | StateType.MovingSpace
-        }
-        [StateType.Dragging]: {
-            input: {
-                node: FG.Node
-                e: PointerEvent
-            }
-            value: KeyboardEvents & { node: FG.Node }
-            to: StateType.Default
-        }
-        [StateType.MovingSpace]: {
-            value: KeyboardEvents
-            to: StateType.Default | StateType.Moving
-        }
-        [StateType.Moving]: {
-            input: PointerEvent
-            value: KeyboardEvents
-            to: StateType.Default | StateType.MovingSpace
-        }
-    }>({
-        initial: StateType.Default,
-        states: {
-            [StateType.Default](input, next) {
-                return {
-                    SPACE(e) {
-                        e.preventDefault()
-                        next(StateType.MovingSpace)
-                    },
-                }
-            },
-            [StateType.Dragging](data, next) {
-                data.node.locked = true
-                onCleanup(() => (data.node.locked = false))
+    // const state = createMachine<{
+    //     [StateType.Default]: {
+    //         value: KeyboardEvents
+    //         to: StateType.Dragging | StateType.MovingSpace
+    //     }
+    //     [StateType.Dragging]: {
+    //         input: {
+    //             node: FG.Node
+    //             e: PointerEvent
+    //         }
+    //         value: KeyboardEvents & { node: FG.Node }
+    //         to: StateType.Default
+    //     }
+    //     [StateType.MovingSpace]: {
+    //         value: KeyboardEvents
+    //         to: StateType.Default | StateType.Moving
+    //     }
+    //     [StateType.Moving]: {
+    //         input: PointerEvent
+    //         value: KeyboardEvents
+    //         to: StateType.Default | StateType.MovingSpace
+    //     }
+    // }>({
+    //     initial: StateType.Default,
+    //     states: {
+    //         [StateType.Default](input, next) {
+    //             return {
+    //                 SPACE(e) {
+    //                     e.preventDefault()
+    //                     next(StateType.MovingSpace)
+    //                 },
+    //             }
+    //         },
+    //         [StateType.Dragging](data, next) {
+    //             data.node.locked = true
+    //             onCleanup(() => (data.node.locked = false))
 
-                const pointer_id = data.e.pointerId
+    //             const pointer_id = data.e.pointerId
 
-                function handleDrag(e: PointerEvent) {
-                    if (e.pointerId !== pointer_id) return
+    //             function handleDrag(e: PointerEvent) {
+    //                 if (e.pointerId !== pointer_id) return
 
-                    e.preventDefault()
-                    e.stopPropagation()
+    //                 e.preventDefault()
+    //                 e.stopPropagation()
 
-                    const pos = getEventPosition(e)
+    //                 const pos = getEventPosition(e)
 
-                    FG.changeNodePosition(force_graph.grid, data.node, pos.x, pos.y)
-                }
+    //                 FG.changeNodePosition(force_graph.grid, data.node, pos.x, pos.y)
+    //             }
 
-                handleDrag(data.e)
-                makeEventListener(document, 'pointermove', handleDrag)
+    //             handleDrag(data.e)
+    //             makeEventListener(document, 'pointermove', handleDrag)
 
-                createEventListener(document, ['pointerup', 'pointercancel', 'pointerleave'], e => {
-                    if (e.pointerId !== pointer_id) return
-                    next(StateType.Default)
-                })
+    //             createEventListener(document, ['pointerup', 'pointercancel', 'pointerleave'], e => {
+    //                 if (e.pointerId !== pointer_id) return
+    //                 next(StateType.Default)
+    //             })
 
-                return {
-                    node: data.node,
-                    ESCAPE(e) {
-                        e.preventDefault()
-                        next(StateType.Default)
-                    },
-                }
-            },
-            [StateType.MovingSpace](data, next) {
-                makeEventListener(document, 'pointerdown', e => {
-                    if (e.button !== 0) return
+    //             return {
+    //                 node: data.node,
+    //                 ESCAPE(e) {
+    //                     e.preventDefault()
+    //                     next(StateType.Default)
+    //                 },
+    //             }
+    //         },
+    //         [StateType.MovingSpace](data, next) {
+    //             makeEventListener(document, 'pointerdown', e => {
+    //                 if (e.button !== 0) return
 
-                    e.preventDefault()
+    //                 e.preventDefault()
 
-                    next(StateType.Moving, e)
-                })
+    //                 next(StateType.Moving, e)
+    //             })
 
-                makeEventListener(document, 'keyup', e => {
-                    if (e.key === ' ') {
-                        e.preventDefault()
-                        next(StateType.Default)
-                    }
-                })
+    //             makeEventListener(document, 'keyup', e => {
+    //                 if (e.key === ' ') {
+    //                     e.preventDefault()
+    //                     next(StateType.Default)
+    //                 }
+    //             })
 
-                return {
-                    ESCAPE(e) {
-                        e.preventDefault()
-                        next(StateType.Default)
-                    },
-                }
-            },
-            [StateType.Moving](e, next) {
-                const start = getEventPosition(e)
-                const pointer_id = e.pointerId
+    //             return {
+    //                 ESCAPE(e) {
+    //                     e.preventDefault()
+    //                     next(StateType.Default)
+    //                 },
+    //             }
+    //         },
+    //         [StateType.Moving](e, next) {
+    //             const start = getEventPosition(e)
+    //             const pointer_id = e.pointerId
 
-                makeEventListener(document, 'pointermove', e => {
-                    if (e.pointerId !== pointer_id) return
+    //             makeEventListener(document, 'pointermove', e => {
+    //                 if (e.pointerId !== pointer_id) return
 
-                    e.preventDefault()
-                    e.stopPropagation()
+    //                 e.preventDefault()
+    //                 e.stopPropagation()
 
-                    const pos = getEventPosition(e)
+    //                 const pos = getEventPosition(e)
 
-                    S.mutate(position, p => {
-                        p.x += pos.x - start.x
-                        p.y += pos.y - start.y
-                    })
-                })
+    //                 S.mutate(position, p => {
+    //                     p.x += pos.x - start.x
+    //                     p.y += pos.y - start.y
+    //                 })
+    //             })
 
-                createEventListener(document, ['pointerup', 'pointercancel', 'pointerleave'], e => {
-                    if (e.pointerId !== pointer_id) return
-                    next(StateType.MovingSpace)
-                })
+    //             createEventListener(document, ['pointerup', 'pointercancel', 'pointerleave'], e => {
+    //                 if (e.pointerId !== pointer_id) return
+    //                 next(StateType.MovingSpace)
+    //             })
 
-                makeEventListener(document, 'keyup', e => {
-                    if (e.key === ' ') {
-                        next(StateType.Default)
-                    }
-                })
+    //             makeEventListener(document, 'keyup', e => {
+    //                 if (e.key === ' ') {
+    //                     next(StateType.Default)
+    //                 }
+    //             })
 
-                return {
-                    ESCAPE(e) {
-                        e.preventDefault()
-                        next(StateType.Default)
-                    },
-                }
-            },
-        },
-    })
+    //             return {
+    //                 ESCAPE(e) {
+    //                     e.preventDefault()
+    //                     next(StateType.Default)
+    //                 },
+    //             }
+    //         },
+    //     },
+    // })
 
-    makeEventListener(document, 'keydown', e => {
-        if (
-            e.ctrlKey ||
-            e.altKey ||
-            e.metaKey ||
-            e.shiftKey ||
-            e.isComposing ||
-            e.defaultPrevented ||
-            e.target !== document.body
-        )
-            return
+    // makeEventListener(document, 'keydown', e => {
+    //     if (
+    //         e.ctrlKey ||
+    //         e.altKey ||
+    //         e.metaKey ||
+    //         e.shiftKey ||
+    //         e.isComposing ||
+    //         e.defaultPrevented ||
+    //         e.target !== document.body
+    //     )
+    //         return
 
-        switch (e.key) {
-            case 'Escape': {
-                state.value.ESCAPE?.(e)
-                break
-            }
-            case ' ': {
-                state.value.SPACE?.(e)
-                break
-            }
-        }
-    })
+    //     switch (e.key) {
+    //         case 'Escape': {
+    //             state.value.ESCAPE?.(e)
+    //             break
+    //         }
+    //         case ' ': {
+    //             state.value.SPACE?.(e)
+    //             break
+    //         }
+    //     }
+    // })
 
-    const isDraggingNode = createSelector(
-        state,
-        (node: FG.Node, v) => v.type === StateType.Dragging && v.value.node === node,
-    )
+    // const isDraggingNode = createSelector(
+    //     state,
+    //     (node: FG.Node, v) => v.type === StateType.Dragging && v.value.node === node,
+    // )
 
     // const interval = setInterval(() => {
     //     for (const node of force_graph.nodes) {
