@@ -176,7 +176,7 @@ const mode_states: MachineStates<{
                 const canvas_e_pos = event.positionInElement(e, state.canvas)
                 const graph_e_pos = canvasPosToGraphPos(state, canvas_e_pos)
 
-                const canvas_missclick_tolerance = state.derived.node_radius + 3
+                const canvas_missclick_tolerance = state.derived.node_radius + 5
                 const graph_missclick_tolerance = canvasDistToGraphDist(
                     state,
                     canvas_missclick_tolerance,
@@ -289,7 +289,10 @@ function updateCanvas(state: CanvasState): void {
         const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
         const opacity = 0.2 + (edges_mod / 10) * 2
 
-        ctx.strokeStyle = `rgba(129, 140, 248, ${opacity})`
+        ctx.strokeStyle =
+            a.locked || b.locked
+                ? `rgba(129, 140, 248, ${opacity})`
+                : `rgba(150, 150, 150, ${opacity})`
         ctx.lineWidth = edge_width
         ctx.beginPath()
         ctx.moveTo(pointToCanvas(state, a.position.x), pointToCanvas(state, a.position.y))
@@ -305,7 +308,9 @@ function updateCanvas(state: CanvasState): void {
         const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
         const opacity = 0.6 + (edges_mod / 10) * 4
 
-        ctx.fillStyle = `rgba(248, 113, 113, ${opacity})`
+        ctx.fillStyle = node.locked
+            ? `rgba(129, 140, 248, ${opacity})`
+            : `rgba(248, 113, 113, ${opacity})`
         ctx.beginPath()
         ctx.ellipse(
             pointToCanvas(state, x),
