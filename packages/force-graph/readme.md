@@ -12,5 +12,10 @@ TODO:
 -   [x] stop simulation when inactive (alpha)
 -   [ ] adding/removing nodes
 -   [x] canvas rendering
+-   [x] dragging nodes
+-         [ ] mobile
 -   [x] movement gestures
+-         [ ] mobile
 -   [x] zoom gestures
+-         [ ] zoom to mouse position
+-         [ ] mobile

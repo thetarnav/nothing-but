@@ -479,6 +479,7 @@ export function CanvasForceGraph(props: {
             e.preventDefault()
             const { deltaY } = e
 
+            // TODO: zoom to mouse position
             state.zoom = math.clamp(state.zoom + deltaY * -0.0005, 0, 1)
             S.trigger(state.signal)
         },
