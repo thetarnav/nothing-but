@@ -13,9 +13,9 @@ TODO:
 -   [ ] adding/removing nodes
 -   [x] canvas rendering
 -   [x] dragging nodes
--         [ ] mobile
+    -   [ ] mobile
 -   [x] movement gestures
--         [ ] mobile
+    -   [ ] mobile
 -   [x] zoom gestures
--         [ ] zoom to mouse position
--         [ ] mobile
+    -   [ ] zoom to mouse position
+    -   [ ] mobile
