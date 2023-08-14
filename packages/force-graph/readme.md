@@ -17,5 +17,5 @@ TODO:
 -   [x] movement gestures
     -   [ ] mobile
 -   [x] zoom gestures
-    -   [ ] zoom to mouse position
+    -   [x] zoom to mouse position
     -   [ ] mobile
