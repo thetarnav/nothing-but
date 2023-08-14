@@ -28,7 +28,10 @@ export function preventMobileScrolling(container: HTMLElement): void {
     container.addEventListener('touchmove', preventCancelable, NOT_PASSIVE)
 }
 
-export function positionInElement(e: PointerEvent, el: HTMLElement): Position {
+export function positionInElement(
+    e: { readonly clientX: number; readonly clientY: number },
+    el: HTMLElement,
+): Position {
     const rect = el.getBoundingClientRect()
     return {
         x: (e.clientX - rect.left) / rect.width,

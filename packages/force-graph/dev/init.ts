@@ -29,7 +29,7 @@ export function getLAGraph() {
         }
     }
 
-    FG.randomizeNodePositions(nodes, graph_options)
+    FG.randomizeNodePositions(nodes, graph_options.grid_size)
 
     return FG.makeGraph(graph_options, nodes, edges)
 }
@@ -54,7 +54,7 @@ export function generateInitialGraph(length: number = 256): FG.Graph {
         edges.push(FG.connect(node, node_b))
     }
 
-    FG.randomizeNodePositions(nodes, graph_options)
+    FG.randomizeNodePositions(nodes, graph_options.grid_size)
 
     return FG.makeGraph(graph_options, nodes, edges)
 }

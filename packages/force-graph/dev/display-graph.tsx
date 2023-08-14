@@ -1,11 +1,10 @@
 import * as S from '@nothing-but/solid/signal'
 import { ease, event, math, trig } from '@nothing-but/utils'
-import { Vector } from '@nothing-but/utils/trig'
-import { Position } from '@nothing-but/utils/types'
+import type { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { resolveElements } from '@solid-primitives/refs'
-import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
-import { MachineStates, createMachine } from '@solid-primitives/state-machine'
+import { createRootPool, type RootPoolFactory } from '@solid-primitives/rootless'
+import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
 import { createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import * as FG from '../src/index.js'
@@ -119,10 +118,10 @@ interface CanvasState {
 interface CanvasDerived {
     /**
      * min
-     * 1 - 5
+     * 1 - 6
      *     max
      */
-    scale: number
+    scale: number // TODO user configurable
     edge_width: number
     node_radius: number
 }
@@ -155,11 +154,32 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
         signal.read()
         derived_state.edge_width = state.size / 2000
         derived_state.node_radius = state.size / 240
-        derived_state.scale = 1 + ease.in_out_cubic(state.zoom) * 4
+        derived_state.scale = 1 + ease.in_out_cubic(state.zoom) * 5
         return derived_state
     })
 
     return state
+}
+
+function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Position {
+    const canvas_e_pos = event.positionInElement(e, state.canvas)
+    return canvasPosToGraphPos(state, canvas_e_pos)
+}
+
+function canvasPosToGraphPos(state: CanvasState, pos: Position): trig.Vector {
+    const scale = state.derived.read().scale,
+        grid_size = state.graph.grid.size,
+        scaled_size = grid_size / scale
+
+    const graph_click_pos = trig.vec_map(
+        pos,
+        n => n * scaled_size + grid_size / 2 - scaled_size / 2,
+    )
+
+    graph_click_pos.x += state.position.x
+    graph_click_pos.y += state.position.y
+
+    return graph_click_pos
 }
 
 interface BaseInput {
@@ -247,14 +267,14 @@ const mode_states: MachineStates<{
             Smoothly move the node to the pointer position
         */
         const init_pos_delta = trig.vec_difference(init_graph_pos, node.position)
-        let last_pos = init_graph_pos
+        let last_graph_pos = init_graph_pos
         const interval = setInterval(() => {
             trig.vec_mut(init_pos_delta, v => v * 0.95)
             FG.changeNodePosition(
                 state.graph.grid,
                 node,
-                last_pos.x - init_pos_delta.x,
-                last_pos.y - init_pos_delta.y,
+                last_graph_pos.x - init_pos_delta.x,
+                last_graph_pos.y - init_pos_delta.y,
             )
 
             const d = trig.distance(trig.ZERO, init_pos_delta)
@@ -273,7 +293,7 @@ const mode_states: MachineStates<{
             e.stopPropagation()
 
             const goal_graph_e_pos = eventToGraphPos(state, e)
-            last_pos = goal_graph_e_pos
+            last_graph_pos = goal_graph_e_pos
             const graph_e_pos = trig.vec_difference(goal_graph_e_pos, init_pos_delta)
 
             FG.changeNodePosition(state.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
@@ -315,8 +335,8 @@ const mode_states: MachineStates<{
             e.stopPropagation()
 
             const canvas_e_pos = event.positionInElement(e, state.canvas)
-            const delta = trig.vec_difference(init_canvas_e_pos, canvas_e_pos)
 
+            const delta = trig.vec_difference(init_canvas_e_pos, canvas_e_pos)
             trig.vec_mut(delta, n => n * (state.graph.grid.size / state.derived.value.scale))
 
             state.position.x = init_graph_pos.x + delta.x
@@ -339,38 +359,30 @@ const mode_states: MachineStates<{
     },
 }
 
-function eventToGraphPos(state: CanvasState, e: PointerEvent): Position {
-    const canvas_e_pos = event.positionInElement(e, state.canvas)
-    return canvasPosToGraphPos(state, canvas_e_pos)
-}
-
-function pointToCanvas(state: CanvasState, xy: number): number {
-    const { size } = state
-    return (xy / state.graph.grid.size) * size + size / 2
-}
-
 function updateCanvas(state: CanvasState): void {
-    const { ctx, size, position, graph } = state,
+    const { ctx, position, graph } = state,
         { edge_width, node_radius, scale } = state.derived.read(),
-        { nodes, edges } = graph
+        { nodes, edges } = graph,
+        canvas_size = state.size,
+        grid_size = graph.grid.size
 
     /*
         clear
     */
     ctx.resetTransform()
-    ctx.clearRect(0, 0, size, size)
+    ctx.clearRect(0, 0, canvas_size, canvas_size)
 
     /*
         transform - scale and translate
     */
-    const correct_origin = -(scale - 1) * (size / 2)
+    const correct_origin = -(scale - 1) * (canvas_size / 2)
     ctx.setTransform(
         scale,
         0,
         0,
         scale,
-        correct_origin - (position.x / graph.grid.size) * size * scale,
-        correct_origin - (position.y / graph.grid.size) * size * scale,
+        correct_origin - (position.x / grid_size) * canvas_size * scale,
+        correct_origin - (position.y / grid_size) * canvas_size * scale,
     )
 
     /*
@@ -378,7 +390,7 @@ function updateCanvas(state: CanvasState): void {
     */
     ctx.strokeStyle = 'red'
     ctx.lineWidth = 1
-    ctx.strokeRect(0, 0, size, size)
+    ctx.strokeRect(0, 0, canvas_size, canvas_size)
 
     /*
         edges
@@ -393,8 +405,14 @@ function updateCanvas(state: CanvasState): void {
                 : `rgba(150, 150, 150, ${opacity})`
         ctx.lineWidth = edge_width
         ctx.beginPath()
-        ctx.moveTo(pointToCanvas(state, a.position.x), pointToCanvas(state, a.position.y))
-        ctx.lineTo(pointToCanvas(state, b.position.x), pointToCanvas(state, b.position.y))
+        ctx.moveTo(
+            (a.position.x / grid_size) * canvas_size,
+            (a.position.y / grid_size) * canvas_size,
+        )
+        ctx.lineTo(
+            (b.position.x / grid_size) * canvas_size,
+            (b.position.y / grid_size) * canvas_size,
+        )
         ctx.stroke()
     }
 
@@ -411,8 +429,8 @@ function updateCanvas(state: CanvasState): void {
             : `rgba(248, 113, 113, ${opacity})`
         ctx.beginPath()
         ctx.ellipse(
-            pointToCanvas(state, x),
-            pointToCanvas(state, y),
+            (x / grid_size) * canvas_size,
+            (y / grid_size) * canvas_size,
             node_radius,
             node_radius,
             0,
@@ -421,15 +439,6 @@ function updateCanvas(state: CanvasState): void {
         )
         ctx.fill()
     }
-}
-
-function canvasPosToGraphPos(state: CanvasState, pos: Position): Vector {
-    const graph_click_pos = trig.vec_map(
-        pos,
-        n => (n - 0.5) * (state.graph.options.grid_size / state.derived.read().scale),
-    )
-    trig.vec_add(graph_click_pos, state.position)
-    return graph_click_pos
 }
 
 export function CanvasForceGraph(props: {
@@ -478,6 +487,10 @@ export function CanvasForceGraph(props: {
         wheel(e) {
             e.preventDefault()
             const { deltaY } = e
+
+            // const graph_e_pos = eventToGraphPos(state, e)
+
+            // console.log(graph_e_pos)
 
             // TODO: zoom to mouse position
             state.zoom = math.clamp(state.zoom + deltaY * -0.0005, 0, 1)

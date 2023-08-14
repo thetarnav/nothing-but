@@ -37,7 +37,7 @@ export interface Options {
      * Pull towards the origin.
      *
      * ```ts
-     * velocity -= node_position * origin_strength
+     * velocity += origin_position - node_position * origin_strength
      * ```
      */
     origin_strength: number
@@ -100,12 +100,11 @@ export function makeGraphGrid(options: Options): Grid {
  * **Note:** This function does not clamp the position to the grid.
  */
 export function toGridIdx(grid: Grid, pos: Position): number {
-    const { radius, axis_cells, cell_size } = grid,
-        xi = Math.floor((pos.x + radius) / cell_size),
-        yi = Math.floor((pos.y + radius) / cell_size)
+    const { axis_cells, cell_size } = grid,
+        xi = Math.floor(pos.x / cell_size),
+        yi = Math.floor(pos.y / cell_size)
     return xi + yi * axis_cells
 }
-// const get_node_x = (node: Node): number => node.position.x
 
 export function addNodeToGrid(
     grid: Grid,
@@ -339,13 +338,11 @@ export function findClosestNode(
     return closest
 }
 
-export function randomizeNodePositions(nodes: readonly Node[], options: Options): void {
-    const { grid_size } = options
-    const radius = grid_size / 4
-
+export function randomizeNodePositions(nodes: readonly Node[], grid_size: number): void {
+    const margin = grid_size / 4
     for (const node of nodes) {
-        node.position.x = math.random_from(-radius, radius)
-        node.position.y = math.random_from(-radius, radius)
+        node.position.x = math.random_from(margin, grid_size - margin)
+        node.position.y = math.random_from(margin, grid_size - margin)
         node.moved = true
     }
 }
@@ -354,8 +351,8 @@ export function changeNodePosition(grid: Grid, node: Node, x: number, y: number)
     const prev_idx = toGridIdx(grid, node.position)
     const prev_x = node.position.x
 
-    node.position.x = math.clamp(x, -grid.radius, grid.radius - 1)
-    node.position.y = math.clamp(y, -grid.radius, grid.radius - 1)
+    node.position.x = math.clamp(x, 0, grid.size)
+    node.position.y = math.clamp(y, 0, grid.size)
     node.moved = true
 
     const idx = toGridIdx(grid, node.position)
@@ -419,8 +416,8 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
         /*
             towards the origin
         */
-        velocity.x -= x * options.origin_strength * alpha
-        velocity.y -= y * options.origin_strength * alpha
+        velocity.x += (grid.radius - x) * options.origin_strength * alpha
+        velocity.y += (grid.radius - y) * options.origin_strength * alpha
 
         /*
             away from other nodes
