@@ -12,10 +12,14 @@ TODO:
 -   [x] stop simulation when inactive (alpha)
 -   [ ] adding/removing nodes
 -   [x] canvas rendering
+    -   [ ] dispaly node labels
+-   [x] ~~svg rendering~~ (deprecated for now, canvas is way faster)
 -   [x] dragging nodes
-    -   [ ] mobile
+    -   [ ] touch
 -   [x] movement gestures
-    -   [ ] mobile
+    -   [x] with space
+    -   [x] without space
+    -   [ ] touch
 -   [x] zoom gestures
     -   [x] zoom to mouse position
-    -   [ ] mobile
+    -   [ ] touch
