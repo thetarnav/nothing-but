@@ -38,3 +38,15 @@ export function ratioInElement(
         y: (e.clientY - rect.top) / rect.height,
     }
 }
+
+export function shouldIgnoreKeydown(e: KeyboardEvent): boolean {
+    return (
+        e.ctrlKey ||
+        e.altKey ||
+        e.metaKey ||
+        e.shiftKey ||
+        e.isComposing ||
+        e.defaultPrevented ||
+        e.target !== document.body
+    )
+}

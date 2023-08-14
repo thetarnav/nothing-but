@@ -207,7 +207,7 @@ interface Events {
     SPACE_UP?(event: KeyboardEvent): void
 
     POINTER_DOWN?(event: PointerEvent): void
-    POINTER_UP?(event: PointerEvent): void
+    POINTER_UP?(event: PointerEvent | null): void
 }
 
 const enum Mode {
@@ -327,7 +327,7 @@ const mode_states: MachineStates<{
 
         return {
             POINTER_UP(e) {
-                if (e.pointerId !== pointer_id) return
+                if (e instanceof PointerEvent && e.pointerId !== pointer_id) return
 
                 to(Mode.Default, { state })
             },
@@ -366,7 +366,7 @@ const mode_states: MachineStates<{
             },
             POINTER_UP(e) {
                 const init = init$.read()
-                if (!init || e.pointerId !== init.pointer_id) return
+                if (!init || (e instanceof PointerEvent && e.pointerId !== init.pointer_id)) return
 
                 S.set(init$, undefined)
             },
@@ -381,7 +381,7 @@ const mode_states: MachineStates<{
 
         return {
             POINTER_UP(e) {
-                if (e.pointerId !== input.pointer_id) return
+                if (e instanceof PointerEvent && e.pointerId !== input.pointer_id) return
 
                 to(Mode.Default, { state })
             },
@@ -546,17 +546,11 @@ export function CanvasForceGraph(props: {
         pointercancel(e) {
             mode.value.POINTER_UP?.(e)
         },
+        contextmenu() {
+            mode.value.POINTER_UP?.(null)
+        },
         keydown(e) {
-            if (
-                e.ctrlKey ||
-                e.altKey ||
-                e.metaKey ||
-                e.shiftKey ||
-                e.isComposing ||
-                e.defaultPrevented ||
-                e.target !== document.body
-            )
-                return
+            if (event.shouldIgnoreKeydown(e)) return
 
             switch (e.key) {
                 case 'Escape': {
@@ -570,16 +564,7 @@ export function CanvasForceGraph(props: {
             }
         },
         keyup(e) {
-            if (
-                e.ctrlKey ||
-                e.altKey ||
-                e.metaKey ||
-                e.shiftKey ||
-                e.isComposing ||
-                e.defaultPrevented ||
-                e.target !== document.body
-            )
-                return
+            if (event.shouldIgnoreKeydown(e)) return
 
             if (e.key === ' ') {
                 mode.value.SPACE_UP?.(e)
