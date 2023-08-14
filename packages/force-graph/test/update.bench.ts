@@ -16,9 +16,11 @@ function generateExampleGraph(mod: typeof FG, length: number): FG.Graph {
         edges.push(mod.connect(node, node_b))
     }
 
-    FG.randomizeNodePositions(nodes, FG.default_options)
+    const options = FG.default_options
 
-    return FG.makeGraph(FG.default_options, nodes, edges)
+    FG.randomizeNodePositions(nodes, options.grid_size)
+
+    return FG.makeGraph(options, nodes, edges)
 }
 
 const fns = {
