@@ -24,31 +24,31 @@ describe('makeGraphGrid', () => {
         expect(grid.axis_cells).toBe(4)
         expect(grid.cells.length).toBe(16)
         expect(grid.cell_size).toBe(10)
-        expect(grid.radius).toBe(20)
+        expect(grid.size).toBe(40)
     })
 })
 
 describe('find closest node', () => {
     /*
-        -20  -10    0    10    20
-        ------------------------- -20
+        0    10    20    30    40
+        ------------------------- 0
         |     |     |     |     |
         |     |     |     |     |
         |     |     |     |     |
-        ------------------------- -10
+        ------------------------- 10
         |     | a   |b    |     |
         |     |     |     |     |
         |     |    c|     |     |
-        ------------------------- 0
+        ------------------------- 20
         |     |     |     |     |
         |     |     |  d  |     |
         |     |     |e    |     |
-        ------------------------- 10
+        ------------------------- 30
         |     |     |     |     |
         |     |     |     |     |
         |     |     |     |     |
-        ------------------------- 20
-        -20  -10    0    10    20
+        ------------------------- 40
+        0    10    20    30    40
     */
 
     const node_a = makeNode('a')
@@ -57,11 +57,11 @@ describe('find closest node', () => {
     const node_d = makeNode('d')
     const node_e = makeNode('e')
 
-    node_a.position = { x: -9, y: -8 }
-    node_b.position = { x: 2, y: -7 }
-    node_c.position = { x: -1, y: -1 }
-    node_d.position = { x: 6, y: 2 }
-    node_e.position = { x: 1, y: 9 }
+    node_a.position = { x: 11, y: 12 }
+    node_b.position = { x: 22, y: 13 }
+    node_c.position = { x: 19, y: 19 }
+    node_d.position = { x: 26, y: 22 }
+    node_e.position = { x: 21, y: 29 }
 
     const graph = makeGraph(test_options, [node_a, node_b, node_c, node_d, node_e])
 
@@ -75,57 +75,57 @@ describe('find closest node', () => {
     Object.entries(fns).forEach(([name, fn]) => {
         describe(name, () => {
             test('same pos', () => {
-                const closest = fn(graph, { x: -9, y: -8 })
+                const closest = fn(graph, { x: 11, y: 12 })
                 expect(closest).toBe(node_a)
             })
 
             test('same cell', () => {
-                const closest = fn(graph, { x: 4, y: -8 })
+                const closest = fn(graph, { x: 24, y: 12 })
                 expect(closest).toBe(node_b)
             })
 
             test('cell above', () => {
-                const closest = fn(graph, { x: -1, y: 2 })
+                const closest = fn(graph, { x: 19, y: 22 })
                 expect(closest).toBe(node_c)
             })
 
             test('cell below', () => {
-                const closest = fn(graph, { x: -9, y: -11 })
+                const closest = fn(graph, { x: 11, y: 9 })
                 expect(closest).toBe(node_a)
             })
 
             test('cell left', () => {
-                const closest = fn(graph, { x: 12, y: 5 })
+                const closest = fn(graph, { x: 32, y: 25 })
                 expect(closest).toBe(node_d)
             })
 
             test('cell right', () => {
-                const closest = fn(graph, { x: -1, y: 8 })
+                const closest = fn(graph, { x: 19, y: 28 })
                 expect(closest).toBe(node_e)
             })
 
             test('cell above left', () => {
-                const closest = fn(graph, { x: 12, y: 11 })
+                const closest = fn(graph, { x: 32, y: 31 })
                 expect(closest).toBe(node_d)
             })
 
             test('cell above right', () => {
-                const closest = fn(graph, { x: -1, y: 11 })
+                const closest = fn(graph, { x: 19, y: 31 })
                 expect(closest).toBe(node_e)
             })
 
             test('cell below left', () => {
-                const closest = fn(graph, { x: 12, y: -1 })
+                const closest = fn(graph, { x: 32, y: 19 })
                 expect(closest).toBe(node_d)
             })
 
             test('cell below right', () => {
-                const closest = fn(graph, { x: -11, y: -11 })
+                const closest = fn(graph, { x: 9, y: 9 })
                 expect(closest).toBe(node_a)
             })
 
             test('max distance', () => {
-                const pos = { x: 14, y: 5 }
+                const pos = { x: 34, y: 25 }
 
                 const fail = fn(graph, pos, 5)
                 expect(fail).toBeUndefined()

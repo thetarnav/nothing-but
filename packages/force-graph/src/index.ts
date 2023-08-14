@@ -76,15 +76,13 @@ export function makeGraphOptions(options?: Partial<Options>): Options {
 export interface Grid {
     cells: Node[][]
     size: number
-    radius: number
     cell_size: number
     axis_cells: number
 }
 
 export function makeGraphGrid(options: Options): Grid {
     const size = options.grid_size,
-        radius = size / 2,
-        axis_cells = Math.ceil(radius / options.repel_distance) * 2,
+        axis_cells = Math.ceil(size / 2 / options.repel_distance) * 2,
         n_cells = axis_cells * axis_cells
 
     return {
@@ -92,7 +90,6 @@ export function makeGraphGrid(options: Options): Grid {
         axis_cells,
         cell_size: options.repel_distance,
         size,
-        radius,
     }
 }
 
@@ -269,7 +266,7 @@ export function findClosestNode(
     const { x, y } = pos,
         { grid } = graph
 
-    if (x < -grid.radius || x > grid.radius || y < -grid.radius || y > grid.radius) return
+    if (x < 0 || x > grid.size || y < 0 || y > grid.size) return
 
     const pos_idx = toGridIdx(grid, pos),
         x_axis_idx = pos_idx % grid.axis_cells,
@@ -416,8 +413,8 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
         /*
             towards the origin
         */
-        velocity.x += (grid.radius - x) * options.origin_strength * alpha
-        velocity.y += (grid.radius - y) * options.origin_strength * alpha
+        velocity.x += (grid.size / 2 - x) * options.origin_strength * alpha
+        velocity.y += (grid.size / 2 - y) * options.origin_strength * alpha
 
         /*
             away from other nodes
