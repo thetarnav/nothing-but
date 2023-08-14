@@ -1,5 +1,14 @@
 # @nothing-but/force-graph
 
+## 0.0.8
+
+### Patch Changes
+
+-   ed277c5: Keep the same graph position under the cursor when zooming
+-   Updated dependencies [ed277c5]
+-   Updated dependencies [ed277c5]
+    -   @nothing-but/utils@0.7.1
+
 ## 0.0.7
 
 ### Patch Changes

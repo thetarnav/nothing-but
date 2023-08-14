@@ -1,5 +1,12 @@
 # @nothing-but/utils
 
+## 0.7.1
+
+### Patch Changes
+
+-   ed277c5: Rename `positionInElement` to `ratioInElement`
+-   ed277c5: Lower vec_add param type to Position
+
 ## 0.7.0
 
 ### Minor Changes
