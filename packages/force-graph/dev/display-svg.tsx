@@ -1,6 +1,6 @@
 import { resolveElements } from '@solid-primitives/refs'
-import { RootPoolFactory, createRootPool } from '@solid-primitives/rootless'
-import { JSX, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
+import { createRootPool, type RootPoolFactory } from '@solid-primitives/rootless'
+import { createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
 import * as FG from '../src/index.js'
 
 export function SvgForceGraph(props: {

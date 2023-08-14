@@ -1,19 +1,19 @@
-import * as S from '@nothing-but/solid/signal'
+import * as s from '@nothing-but/solid/signal'
 import { ease, event, math, trig } from '@nothing-but/utils'
 import type { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
 import { batch, createEffect, createMemo, createSignal, onCleanup, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
-import * as FG from '../src/index.js'
+import * as fg from '../src/index.js'
 
 interface CanvasState {
     canvas: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
-    graph: FG.Graph
-    size: S.Signal<number>
-    position: S.Signal<Position>
-    zoom: S.Signal<{
+    graph: fg.Graph
+    size: s.Signal<number>
+    position: s.Signal<Position>
+    zoom: s.Signal<{
         /**
          * min
          * 0 - 1
@@ -33,7 +33,7 @@ const calcZoomScale = (zoom: number): number => 1 + ease.in_out_cubic(zoom) * 5
 const calcNodeRadius = (canvas_size: number): number => canvas_size / 240
 const calcEdgeWidth = (canvas_size: number): number => canvas_size / 2000
 
-function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasState | Error {
+function makeCanvasState(canvas: HTMLCanvasElement, graph: fg.Graph): CanvasState | Error {
     const ctx = canvas.getContext('2d')
     if (!ctx) return new Error('Could not get canvas context')
 
@@ -43,9 +43,9 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
         canvas,
         graph,
         ctx,
-        size: S.signal(init_size),
-        position: S.signal({ x: 0, y: 0 }),
-        zoom: S.signal({
+        size: s.signal(init_size),
+        position: s.signal({ x: 0, y: 0 }),
+        zoom: s.signal({
             ratio: 0,
             scale: calcZoomScale(0),
         }),
@@ -80,23 +80,6 @@ interface MoveDraggingInit {
     pointer_id: number
 }
 
-function handleMoveEvent(state: CanvasState, e: PointerEvent, init: MoveDraggingInit): void {
-    if (e.pointerId !== init.pointer_id) return
-
-    e.preventDefault()
-    e.stopPropagation()
-
-    const click_ratio = event.ratioInElement(e, state.canvas)
-
-    const delta = trig.vec_difference(init.point_ratio, click_ratio)
-    trig.vec_mut(delta, n => n * (state.graph.grid.size / state.zoom.read().scale))
-
-    S.mutate(state.position, pos => {
-        pos.x = init.graph_position.x + delta.x
-        pos.y = init.graph_position.y + delta.y
-    })
-}
-
 interface BaseInput {
     state: CanvasState
 }
@@ -117,7 +100,7 @@ const enum Mode {
     MoveDragging = 'move_dragging',
 }
 
-const mode_states: MachineStates<{
+type ModeStates = MachineStates<{
     [Mode.Default]: {
         to: Mode.DraggingNode | Mode.MoveSpace | Mode.MoveDragging
         input: BaseInput
@@ -126,7 +109,7 @@ const mode_states: MachineStates<{
     [Mode.DraggingNode]: {
         to: Mode.Default
         input: BaseInput & {
-            node: FG.Node
+            node: fg.Node
             pointer_id: number
             init_graph_point: Position
         }
@@ -142,7 +125,47 @@ const mode_states: MachineStates<{
         input: BaseInput & MoveDraggingInit
         value: Events
     }
-}> = {
+}>
+
+function handleMoveEvent(state: CanvasState, e: PointerEvent, init: MoveDraggingInit): void {
+    if (e.pointerId !== init.pointer_id) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    const click_ratio = event.ratioInElement(e, state.canvas)
+
+    const delta = trig.vec_difference(init.point_ratio, click_ratio)
+    trig.vec_mut(delta, n => n * (state.graph.grid.size / state.zoom.read().scale))
+
+    s.mutate(state.position, pos => {
+        pos.x = init.graph_position.x + delta.x
+        pos.y = init.graph_position.y + delta.y
+    })
+}
+
+function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
+    e.preventDefault()
+    const { deltaY } = e
+    const graph_point_before = eventToGraphPos(state, e)
+
+    batch(() => {
+        s.mutate(state.zoom, zoom => {
+            zoom.ratio = math.clamp(zoom.ratio + deltaY * -0.0005, 0, 1)
+            zoom.scale = calcZoomScale(zoom.ratio)
+        })
+
+        /*
+            keep the same graph point under the cursor
+        */
+        const graph_point_after = eventToGraphPos(state, e)
+        const delta = trig.vec_difference(graph_point_before, graph_point_after)
+
+        s.update(state.position, pos => trig.vec_sum(pos, delta))
+    })
+}
+
+const mode_states: ModeStates = {
     [Mode.Default]({ state }, to) {
         return {
             POINTER_DOWN(e) {
@@ -157,7 +180,7 @@ const mode_states: MachineStates<{
                     ((calcNodeRadius(canvas_size) + 5) / canvas_size) *
                     state.graph.options.grid_size
 
-                const node = FG.findClosestNodeLinear(
+                const node = fg.findClosestNodeLinear(
                     state.graph.nodes,
                     point_graph,
                     click_max_dist,
@@ -196,7 +219,7 @@ const mode_states: MachineStates<{
         let last_graph_pos = init_graph_point
         const interval = setInterval(() => {
             trig.vec_mut(init_pos_delta, v => v * 0.95)
-            FG.changeNodePosition(
+            fg.changeNodePosition(
                 state.graph.grid,
                 node,
                 last_graph_pos.x - init_pos_delta.x,
@@ -222,7 +245,7 @@ const mode_states: MachineStates<{
             last_graph_pos = goal_graph_e_pos
             const graph_e_pos = trig.vec_difference(goal_graph_e_pos, init_pos_delta)
 
-            FG.changeNodePosition(state.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
+            fg.changeNodePosition(state.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
         })
 
         return {
@@ -234,7 +257,7 @@ const mode_states: MachineStates<{
         }
     },
     [Mode.MoveSpace]({ state }, to) {
-        const init$ = S.signal<MoveDraggingInit>()
+        const init$ = s.signal<MoveDraggingInit>()
 
         createEffect(() => {
             const init = init$.read()
@@ -258,7 +281,7 @@ const mode_states: MachineStates<{
                 e.preventDefault()
                 e.stopPropagation()
 
-                S.set(init$, {
+                s.set(init$, {
                     point_ratio: event.ratioInElement(e, state.canvas),
                     graph_position: trig.vector(state.position.read()),
                     pointer_id: e.pointerId,
@@ -268,7 +291,7 @@ const mode_states: MachineStates<{
                 const init = init$.read()
                 if (!init || (e instanceof PointerEvent && e.pointerId !== init.pointer_id)) return
 
-                S.set(init$, undefined)
+                s.set(init$, undefined)
             },
         }
     },
@@ -376,7 +399,7 @@ function updateCanvas(state: CanvasState): void {
 }
 
 export function CanvasForceGraph(props: {
-    graph: FG.Graph
+    graph: fg.Graph
     trackNodes: () => void
     targetFPS?: number
 }): JSX.Element {
@@ -399,7 +422,7 @@ export function CanvasForceGraph(props: {
             canvas.width = size
             canvas.height = size
 
-            S.set(state.size, size)
+            s.set(state.size, size)
         })
         ro.observe(canvas)
         onCleanup(() => ro.disconnect())
@@ -418,24 +441,7 @@ export function CanvasForceGraph(props: {
             mode.value.POINTER_DOWN?.(e)
         },
         wheel(e) {
-            batch(() => {
-                e.preventDefault()
-                const { deltaY } = e
-                const graph_point_before = eventToGraphPos(state, e)
-
-                S.mutate(state.zoom, zoom => {
-                    zoom.ratio = math.clamp(zoom.ratio + deltaY * -0.0005, 0, 1)
-                    zoom.scale = calcZoomScale(zoom.ratio)
-                })
-
-                /*
-                    keep the same graph point under the cursor
-                */
-                const graph_point_after = eventToGraphPos(state, e)
-                const delta = trig.vec_difference(graph_point_before, graph_point_after)
-
-                S.update(state.position, pos => trig.vec_sum(pos, delta))
-            })
+            handleWheelEvent(state, e)
         },
     })
 
@@ -480,7 +486,7 @@ export function CanvasForceGraph(props: {
     </Portal>
 
     {
-        const animation = FG.makeFrameAnimation(graph, () => updateCanvas(state), targetFPS)
+        const animation = fg.makeFrameAnimation(graph, () => updateCanvas(state), targetFPS)
         updateCanvas(state)
 
         const init = createMemo(() => {
@@ -497,9 +503,9 @@ export function CanvasForceGraph(props: {
 
         createEffect(() => {
             if (active()) {
-                FG.startFrameAnimation(animation)
+                fg.startFrameAnimation(animation)
             } else {
-                FG.pauseFrameAnimation(animation)
+                fg.pauseFrameAnimation(animation)
             }
         })
 
@@ -515,7 +521,7 @@ export function CanvasForceGraph(props: {
         })
 
         onCleanup(() => {
-            FG.stopFrameAnimation(animation)
+            fg.stopFrameAnimation(animation)
         })
     }
 
