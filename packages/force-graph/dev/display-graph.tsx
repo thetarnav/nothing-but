@@ -174,6 +174,29 @@ function pointRatioToGraphPos(state: CanvasState, pos: Position): trig.Vector {
     return graph_click_pos
 }
 
+interface MoveDraggingInit {
+    point_ratio: Position
+    graph_position: Position
+    pointer_id: number
+}
+
+function handleMoveEvent(state: CanvasState, e: PointerEvent, init: MoveDraggingInit): void {
+    if (e.pointerId !== init.pointer_id) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    const click_ratio = event.ratioInElement(e, state.canvas)
+
+    const delta = trig.vec_difference(init.point_ratio, click_ratio)
+    trig.vec_mut(delta, n => n * (state.graph.grid.size / state.zoom.read().scale))
+
+    S.mutate(state.position, pos => {
+        pos.x = init.graph_position.x + delta.x
+        pos.y = init.graph_position.y + delta.y
+    })
+}
+
 interface BaseInput {
     state: CanvasState
 }
@@ -196,7 +219,7 @@ const enum Mode {
 
 const mode_states: MachineStates<{
     [Mode.Default]: {
-        to: Mode.DraggingNode | Mode.MoveSpace
+        to: Mode.DraggingNode | Mode.MoveSpace | Mode.MoveDragging
         input: BaseInput
         value: Events
     }
@@ -204,21 +227,19 @@ const mode_states: MachineStates<{
         to: Mode.Default
         input: BaseInput & {
             node: FG.Node
-            e: PointerEvent
-            init_graph_pos: Position
+            pointer_id: number
+            init_graph_point: Position
         }
         value: Events
     }
     [Mode.MoveSpace]: {
-        to: Mode.Default | Mode.MoveDragging
+        to: Mode.Default
         input: BaseInput
         value: Events
     }
     [Mode.MoveDragging]: {
-        to: Mode.Default | Mode.MoveSpace
-        input: BaseInput & {
-            e: PointerEvent
-        }
+        to: Mode.Default
+        input: BaseInput & MoveDraggingInit
         value: Events
     }
 }> = {
@@ -228,21 +249,35 @@ const mode_states: MachineStates<{
                 e.preventDefault()
                 e.stopPropagation()
 
-                const graph_e_pos = eventToGraphPos(state, e)
                 const canvas_size = state.size.read()
+                const pointer_id = e.pointerId
+                const point_graph = eventToGraphPos(state, e)
 
                 const click_max_dist =
                     ((calcNodeRadius(canvas_size) + 5) / canvas_size) *
                     state.graph.options.grid_size
 
-                const closest = FG.findClosestNodeLinear(
+                const node = FG.findClosestNodeLinear(
                     state.graph.nodes,
-                    graph_e_pos,
+                    point_graph,
                     click_max_dist,
                 )
-                if (!closest) return
 
-                to(Mode.DraggingNode, { state, node: closest, e, init_graph_pos: graph_e_pos })
+                if (node) {
+                    to(Mode.DraggingNode, {
+                        state,
+                        node,
+                        pointer_id,
+                        init_graph_point: point_graph,
+                    })
+                } else {
+                    to(Mode.MoveDragging, {
+                        state,
+                        point_ratio: event.ratioInElement(e, state.canvas),
+                        graph_position: trig.vector(state.position.read()),
+                        pointer_id,
+                    })
+                }
             },
             SPACE(e) {
                 e.preventDefault()
@@ -250,17 +285,15 @@ const mode_states: MachineStates<{
             },
         }
     },
-    [Mode.DraggingNode]({ state, node, e, init_graph_pos }, to) {
-        const pointer_id = e.pointerId
-
+    [Mode.DraggingNode]({ state, node, pointer_id, init_graph_point }, to) {
         node.locked = true
         onCleanup(() => (node.locked = false))
 
         /*
             Smoothly move the node to the pointer position
         */
-        const init_pos_delta = trig.vec_difference(init_graph_pos, node.position)
-        let last_graph_pos = init_graph_pos
+        const init_pos_delta = trig.vec_difference(init_graph_point, node.position)
+        let last_graph_pos = init_graph_point
         const interval = setInterval(() => {
             trig.vec_mut(init_pos_delta, v => v * 0.95)
             FG.changeNodePosition(
@@ -301,40 +334,14 @@ const mode_states: MachineStates<{
         }
     },
     [Mode.MoveSpace]({ state }, to) {
-        return {
-            SPACE(e) {
-                e.preventDefault()
-            },
-            SPACE_UP(e) {
-                to(Mode.Default, { state })
-            },
-            POINTER_DOWN(e) {
-                e.preventDefault()
-                e.stopPropagation()
+        const init$ = S.signal<MoveDraggingInit>()
 
-                to(Mode.MoveDragging, { state, e })
-            },
-        }
-    },
-    [Mode.MoveDragging]({ state, e }, to) {
-        const init_click_ratio = event.ratioInElement(e, state.canvas)
-        const init_graph_pos = trig.vector(state.position.read())
-        const pointer_id = e.pointerId
+        createEffect(() => {
+            const init = init$.read()
+            if (!init) return
 
-        createEventListener(document, 'pointermove', e => {
-            if (e.pointerId !== pointer_id) return
-
-            e.preventDefault()
-            e.stopPropagation()
-
-            const click_ratio = event.ratioInElement(e, state.canvas)
-
-            const delta = trig.vec_difference(init_click_ratio, click_ratio)
-            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.zoom.read().scale))
-
-            S.mutate(state.position, pos => {
-                pos.x = init_graph_pos.x + delta.x
-                pos.y = init_graph_pos.y + delta.y
+            createEventListener(document, 'pointermove', e => {
+                handleMoveEvent(state, e, init)
             })
         })
 
@@ -345,10 +352,38 @@ const mode_states: MachineStates<{
             SPACE_UP(e) {
                 to(Mode.Default, { state })
             },
-            POINTER_UP(e) {
-                if (e.pointerId !== pointer_id) return
+            POINTER_DOWN(e) {
+                if (init$.read() !== undefined) return
 
-                to(Mode.MoveSpace, { state })
+                e.preventDefault()
+                e.stopPropagation()
+
+                S.set(init$, {
+                    point_ratio: event.ratioInElement(e, state.canvas),
+                    graph_position: trig.vector(state.position.read()),
+                    pointer_id: e.pointerId,
+                })
+            },
+            POINTER_UP(e) {
+                const init = init$.read()
+                if (!init || e.pointerId !== init.pointer_id) return
+
+                S.set(init$, undefined)
+            },
+        }
+    },
+    [Mode.MoveDragging](input, to) {
+        const { state } = input
+
+        createEventListener(document, 'pointermove', e => {
+            handleMoveEvent(state, e, input)
+        })
+
+        return {
+            POINTER_UP(e) {
+                if (e.pointerId !== input.pointer_id) return
+
+                to(Mode.Default, { state })
             },
         }
     },
