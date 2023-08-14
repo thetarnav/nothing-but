@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.0.9
+
+### Patch Changes
+
+-   483fe33: Ability to move around canvas without pressing space
+
 ## 0.0.8
 
 ### Patch Changes
