@@ -1,5 +1,13 @@
 # @nothing-but/utils
 
+## 0.1.1
+
+### Patch Changes
+
+-   Updated dependencies [ed277c5]
+-   Updated dependencies [ed277c5]
+    -   @nothing-but/utils@0.7.1
+
 ## 0.1.0
 
 ### Minor Changes
