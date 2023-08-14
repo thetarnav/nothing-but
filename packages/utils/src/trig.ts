@@ -101,9 +101,9 @@ export function vec_difference(a: Position, b: Position): Vector {
 /**
  * Adds a vector or a force to another vector in place. The first vector is **mutated**.
  */
-export function vec_add(vec: Vector, velocity: Position | Force | number): void
-export function vec_add(vec: Vector, x: number, y: number): void
-export function vec_add(vec: Vector, x: Position | Force | number, y?: number): void {
+export function vec_add(vec: Position, velocity: Position | Force | number): void
+export function vec_add(vec: Position, x: number, y: number): void
+export function vec_add(vec: Position, x: Position | Force | number, y?: number): void {
     if (typeof x === 'number') {
         vec.x += x
         vec.y += y ?? x

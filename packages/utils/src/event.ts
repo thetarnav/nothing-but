@@ -28,7 +28,7 @@ export function preventMobileScrolling(container: HTMLElement): void {
     container.addEventListener('touchmove', preventCancelable, NOT_PASSIVE)
 }
 
-export function positionInElement(
+export function ratioInElement(
     e: { readonly clientX: number; readonly clientY: number },
     el: HTMLElement,
 ): Position {

@@ -5,7 +5,15 @@ import { createEventListener, createEventListenerMap } from '@solid-primitives/e
 import { resolveElements } from '@solid-primitives/refs'
 import { createRootPool, type RootPoolFactory } from '@solid-primitives/rootless'
 import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
-import { createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
+import {
+    batch,
+    createEffect,
+    createMemo,
+    createSignal,
+    onCleanup,
+    onMount,
+    type JSX,
+} from 'solid-js'
 import { Portal } from 'solid-js/web'
 import * as FG from '../src/index.js'
 
@@ -103,28 +111,27 @@ interface CanvasState {
     canvas: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
     graph: FG.Graph
-    size: number
-    position: Position
-    /**
-     * min
-     * 0 - 1
-     *     max
-     */
-    zoom: number
-    derived: S.Reactive<CanvasDerived>
-    signal: S.Signal<undefined>
+    size: S.Signal<number>
+    position: S.Signal<Position>
+    zoom: S.Signal<{
+        /**
+         * min
+         * 0 - 1
+         *     max
+         */
+        ratio: number
+        /**
+         * min
+         * 1 - 6
+         *     max
+         */
+        scale: number // TODO user configurable
+    }>
 }
 
-interface CanvasDerived {
-    /**
-     * min
-     * 1 - 6
-     *     max
-     */
-    scale: number // TODO user configurable
-    edge_width: number
-    node_radius: number
-}
+const calcZoomScale = (zoom: number): number => 1 + ease.in_out_cubic(zoom) * 5
+const calcNodeRadius = (canvas_size: number): number => canvas_size / 240
+const calcEdgeWidth = (canvas_size: number): number => canvas_size / 2000
 
 function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasState | Error {
     const ctx = canvas.getContext('2d')
@@ -132,52 +139,37 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: FG.Graph): CanvasStat
 
     const init_size = Math.min(canvas.width, canvas.height)
 
-    const signal = S.signal()
-
-    const state: CanvasState = {
+    return {
         canvas,
         graph,
         ctx,
-        size: init_size,
-        position: { x: 0, y: 0 },
-        zoom: 0,
-        derived: null!,
-        signal,
+        size: S.signal(init_size),
+        position: S.signal({ x: 0, y: 0 }),
+        zoom: S.signal({
+            ratio: 0,
+            scale: calcZoomScale(0),
+        }),
     }
-
-    const derived_state: CanvasDerived = {
-        scale: 0,
-        edge_width: 0,
-        node_radius: 0,
-    }
-    state.derived = S.memo(() => {
-        signal.read()
-        derived_state.edge_width = state.size / 2000
-        derived_state.node_radius = state.size / 240
-        derived_state.scale = 1 + ease.in_out_cubic(state.zoom) * 5
-        return derived_state
-    })
-
-    return state
 }
 
 function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Position {
-    const canvas_e_pos = event.positionInElement(e, state.canvas)
-    return canvasPosToGraphPos(state, canvas_e_pos)
+    const ratio = event.ratioInElement(e, state.canvas)
+    return pointRatioToGraphPos(state, ratio)
 }
 
-function canvasPosToGraphPos(state: CanvasState, pos: Position): trig.Vector {
-    const scale = state.derived.read().scale,
+function pointRatioToGraphPos(state: CanvasState, pos: Position): trig.Vector {
+    const { scale } = state.zoom.read(),
         grid_size = state.graph.grid.size,
-        scaled_size = grid_size / scale
+        scaled_size = grid_size / scale,
+        grid_pos = state.position.read()
 
     const graph_click_pos = trig.vec_map(
         pos,
         n => n * scaled_size + grid_size / 2 - scaled_size / 2,
     )
 
-    graph_click_pos.x += state.position.x
-    graph_click_pos.y += state.position.y
+    graph_click_pos.x += grid_pos.x
+    graph_click_pos.y += grid_pos.y
 
     return graph_click_pos
 }
@@ -237,9 +229,10 @@ const mode_states: MachineStates<{
                 e.stopPropagation()
 
                 const graph_e_pos = eventToGraphPos(state, e)
+                const canvas_size = state.size.read()
 
                 const click_max_dist =
-                    ((state.derived.value.node_radius + 5) / state.size) *
+                    ((calcNodeRadius(canvas_size) + 5) / canvas_size) *
                     state.graph.options.grid_size
 
                 const closest = FG.findClosestNodeLinear(
@@ -324,8 +317,8 @@ const mode_states: MachineStates<{
         }
     },
     [Mode.MoveDragging]({ state, e }, to) {
-        const init_canvas_e_pos = event.positionInElement(e, state.canvas)
-        const init_graph_pos = trig.vector(state.position)
+        const init_click_ratio = event.ratioInElement(e, state.canvas)
+        const init_graph_pos = trig.vector(state.position.read())
         const pointer_id = e.pointerId
 
         createEventListener(document, 'pointermove', e => {
@@ -334,13 +327,15 @@ const mode_states: MachineStates<{
             e.preventDefault()
             e.stopPropagation()
 
-            const canvas_e_pos = event.positionInElement(e, state.canvas)
+            const click_ratio = event.ratioInElement(e, state.canvas)
 
-            const delta = trig.vec_difference(init_canvas_e_pos, canvas_e_pos)
-            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.derived.value.scale))
+            const delta = trig.vec_difference(init_click_ratio, click_ratio)
+            trig.vec_mut(delta, n => n * (state.graph.grid.size / state.zoom.read().scale))
 
-            state.position.x = init_graph_pos.x + delta.x
-            state.position.y = init_graph_pos.y + delta.y
+            S.mutate(state.position, pos => {
+                pos.x = init_graph_pos.x + delta.x
+                pos.y = init_graph_pos.y + delta.y
+            })
         })
 
         return {
@@ -360,11 +355,15 @@ const mode_states: MachineStates<{
 }
 
 function updateCanvas(state: CanvasState): void {
-    const { ctx, position, graph } = state,
-        { edge_width, node_radius, scale } = state.derived.read(),
+    const { ctx, graph } = state,
+        { scale } = state.zoom.read(),
         { nodes, edges } = graph,
-        canvas_size = state.size,
-        grid_size = graph.grid.size
+        canvas_size = state.size.read(),
+        grid_size = graph.grid.size,
+        grid_pos = state.position.read()
+
+    const node_radius = calcNodeRadius(canvas_size)
+    const edge_width = calcEdgeWidth(canvas_size)
 
     /*
         clear
@@ -381,8 +380,8 @@ function updateCanvas(state: CanvasState): void {
         0,
         0,
         scale,
-        correct_origin - (position.x / grid_size) * canvas_size * scale,
-        correct_origin - (position.y / grid_size) * canvas_size * scale,
+        correct_origin - (grid_pos.x / grid_size) * canvas_size * scale,
+        correct_origin - (grid_pos.y / grid_size) * canvas_size * scale,
     )
 
     /*
@@ -464,9 +463,8 @@ export function CanvasForceGraph(props: {
 
             canvas.width = size
             canvas.height = size
-            state.size = size
 
-            S.trigger(state.signal)
+            S.set(state.size, size)
         })
         ro.observe(canvas)
         onCleanup(() => ro.disconnect())
@@ -485,16 +483,24 @@ export function CanvasForceGraph(props: {
             mode.value.POINTER_DOWN?.(e)
         },
         wheel(e) {
-            e.preventDefault()
-            const { deltaY } = e
+            batch(() => {
+                e.preventDefault()
+                const { deltaY } = e
+                const graph_point_before = eventToGraphPos(state, e)
 
-            // const graph_e_pos = eventToGraphPos(state, e)
+                S.mutate(state.zoom, zoom => {
+                    zoom.ratio = math.clamp(zoom.ratio + deltaY * -0.0005, 0, 1)
+                    zoom.scale = calcZoomScale(zoom.ratio)
+                })
 
-            // console.log(graph_e_pos)
+                /*
+                    keep the same graph point under the cursor
+                */
+                const graph_point_after = eventToGraphPos(state, e)
+                const delta = trig.vec_difference(graph_point_before, graph_point_after)
 
-            // TODO: zoom to mouse position
-            state.zoom = math.clamp(state.zoom + deltaY * -0.0005, 0, 1)
-            S.trigger(state.signal)
+                S.update(state.position, pos => trig.vec_sum(pos, delta))
+            })
         },
     })
 
@@ -579,7 +585,12 @@ export function CanvasForceGraph(props: {
 
         createEffect(() => {
             if (active()) return
-            state.signal.read()
+
+            // track changes to the canvas
+            state.size.read()
+            state.zoom.read()
+            state.position.read()
+
             requestAnimationFrame(() => updateCanvas(state))
         })
 
