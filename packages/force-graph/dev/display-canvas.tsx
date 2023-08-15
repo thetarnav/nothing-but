@@ -180,6 +180,9 @@ const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
     })
 
     return {
+        SPACE(e) {
+            e.preventDefault()
+        },
         POINTER_UP(e) {
             if (e instanceof PointerEvent && e.pointerId !== input.pointer_id) return
 
@@ -620,7 +623,7 @@ export function CanvasForceGraph(props: {
                     mode.value.ESCAPE?.(e)
                     break
                 }
-                case ' ': {
+                case 'Control': {
                     mode.value.SPACE?.(e)
                     break
                 }
