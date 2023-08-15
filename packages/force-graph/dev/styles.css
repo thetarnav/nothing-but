@@ -19,5 +19,5 @@ body {
 }
 
 #root {
-    --at-apply: overflow-hidden;
+    --at-apply: w-max h-max;
 }

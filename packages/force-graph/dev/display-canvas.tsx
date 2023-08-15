@@ -146,7 +146,8 @@ function handleMoveEvent(state: CanvasState, e: PointerEvent, init: MoveDragging
 
 function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
     e.preventDefault()
-    const { deltaY } = e
+
+    const { deltaY, deltaX } = e
     const graph_point_before = eventToGraphPos(state, e)
 
     batch(() => {
@@ -161,7 +162,10 @@ function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
         const graph_point_after = eventToGraphPos(state, e)
         const delta = trig.vec_difference(graph_point_before, graph_point_after)
 
-        s.update(state.position, pos => trig.vec_sum(pos, delta))
+        s.mutate(state.position, pos => {
+            pos.x += delta.x + deltaX * (0.1 / state.zoom.read().scale)
+            pos.y += delta.y
+        })
     })
 }
 

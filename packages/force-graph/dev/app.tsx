@@ -23,7 +23,7 @@ export const App: Component = () => {
 
     let container!: HTMLDivElement
     return (
-        <div class="w-screen min-h-110vh center-child flex-col overflow-hidden">
+        <div class="min-h-110vh min-w-110vw center-child flex-col overflow-hidden">
             <div
                 ref={el => {
                     container = el
