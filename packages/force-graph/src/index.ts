@@ -275,7 +275,7 @@ export function findClosestNode(
     /*
         1 | -1, depending on which side of the cell the position is on
     */
-    const idx_delta = trig.vec_map(
+    const idx_delta = trig.map(
         pos,
         n => Math.floor(math.remainder(n / grid.cell_size, 1) + 0.5) * 2 - 1,
     )

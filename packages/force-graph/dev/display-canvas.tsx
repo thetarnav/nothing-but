@@ -57,21 +57,18 @@ function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Posi
     return pointRatioToGraphPos(state, ratio)
 }
 
-function pointRatioToGraphPos(state: CanvasState, pos: Position): trig.Vector {
+function pointRatioToGraphPos(state: CanvasState, pos: Position): Position {
     const { scale } = state.zoom.read(),
         grid_size = state.graph.grid.size,
         scaled_size = grid_size / scale,
         grid_pos = state.position.read()
 
-    const graph_click_pos = trig.vec_map(
-        pos,
-        n => n * scaled_size + grid_size / 2 - scaled_size / 2,
-    )
+    const correct_origin = grid_size / 2 - scaled_size / 2
 
-    graph_click_pos.x += grid_pos.x
-    graph_click_pos.y += grid_pos.y
-
-    return graph_click_pos
+    return {
+        x: pos.x * scaled_size + grid_pos.x + correct_origin,
+        y: pos.y * scaled_size + grid_pos.y + correct_origin,
+    }
 }
 
 interface BaseInput {
@@ -157,8 +154,8 @@ function handleMoveEvent(state: MoveDragging, e: PointerEvent): void {
     const ratio = event.ratioInElement(e, canvas.el)
     state.last_ratio = ratio
 
-    const delta = trig.vec_difference(state.init_ratio, ratio)
-    trig.vec_mut(delta, n => n * (canvas.graph.grid.size / canvas.zoom.read().scale))
+    const delta = trig.difference(state.init_ratio, ratio)
+    trig.multiply(delta, canvas.graph.grid.size / canvas.zoom.read().scale)
 
     s.mutate(canvas.position, pos => {
         pos.x = state.init_graph_position.x + delta.x
@@ -234,16 +231,16 @@ const handleMultiTouchEvent = (state: MultiTouch, e: PointerEvent): void => {
         state.last_ratio_1 = ratio_1 = event.ratioInElement(e, canvas.el)
     }
 
-    const delta_0 = trig.vec_difference(state.init_ratio_0, ratio_0)
-    const delta_1 = trig.vec_difference(state.init_ratio_1, ratio_1)
+    const delta_0 = trig.difference(state.init_ratio_0, ratio_0)
+    const delta_1 = trig.difference(state.init_ratio_1, ratio_1)
 
     const zoom = canvas.zoom.read()
     let prev = zoom.ratio
     zoom.ratio = (state.init_zoom + 1) * (trig.distance(ratio_0, ratio_1) / state.init_dist) - 1
     zoom.scale = calcZoomScale(zoom.ratio)
 
-    const delta = trig.vec_average(delta_0, delta_1)
-    trig.vec_mut(delta, n => n * (canvas.graph.grid.size / canvas.zoom.read().scale))
+    const delta = trig.average(delta_0, delta_1)
+    trig.multiply(delta, canvas.graph.grid.size / canvas.zoom.read().scale)
 
     const pos = canvas.position.read()
     pos.x = state.init_graph_position.x + delta.x
@@ -318,7 +315,7 @@ function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
         keep the same graph point under the cursor
     */
     const graph_point_after = eventToGraphPos(state, e)
-    const delta = trig.vec_difference(graph_point_before, graph_point_after)
+    const delta = trig.difference(graph_point_before, graph_point_after)
 
     const pos = state.position.read()
     pos.x += delta.x + e.deltaX * (0.1 / zoom.scale)
@@ -380,10 +377,10 @@ const mode_states: ModeStates = {
         /*
             Smoothly move the node to the pointer position
         */
-        const init_pos_delta = trig.vec_difference(init_graph_point, node.position)
+        const init_pos_delta = trig.difference(init_graph_point, node.position)
         let last_graph_pos = init_graph_point
         const interval = setInterval(() => {
-            trig.vec_mut(init_pos_delta, v => v * 0.95)
+            trig.multiply(init_pos_delta, 0.95)
             fg.changeNodePosition(
                 canvas.graph.grid,
                 node,
@@ -408,7 +405,7 @@ const mode_states: ModeStates = {
 
             const goal_graph_e_pos = eventToGraphPos(canvas, e)
             last_graph_pos = goal_graph_e_pos
-            const graph_e_pos = trig.vec_difference(goal_graph_e_pos, init_pos_delta)
+            const graph_e_pos = trig.difference(goal_graph_e_pos, init_pos_delta)
 
             fg.changeNodePosition(canvas.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
         })
