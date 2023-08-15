@@ -154,8 +154,8 @@ function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
     zoom.scale = calcZoomScale(zoom.ratio)
 
     /*
-    keep the same graph point under the cursor
-        */
+        keep the same graph point under the cursor
+    */
     const graph_point_after = eventToGraphPos(state, e)
     const delta = trig.vec_difference(graph_point_before, graph_point_after)
 
@@ -316,6 +316,9 @@ const mode_states: ModeStates = {
     },
 }
 
+const line_dash_dashed = [8, 16] as const
+const line_dash_empty = [] as const
+
 function updateCanvas(state: CanvasState): void {
     const { ctx, graph } = state,
         { scale } = state.zoom.read(),
@@ -349,9 +352,11 @@ function updateCanvas(state: CanvasState): void {
     /*
         border
     */
-    ctx.strokeStyle = 'red'
+    ctx.strokeStyle = 'yellow'
+    ctx.setLineDash(line_dash_dashed)
     ctx.lineWidth = 1
     ctx.strokeRect(0, 0, canvas_size, canvas_size)
+    ctx.setLineDash(line_dash_empty)
 
     /*
         edges
@@ -421,7 +426,7 @@ export function CanvasForceGraph(props: {
     {
         const ro = new ResizeObserver(() => {
             const { width, height } = canvas.getBoundingClientRect()
-            const size = Math.min(width, height)
+            const size = Math.min(width, height) * window.devicePixelRatio
 
             canvas.width = size
             canvas.height = size

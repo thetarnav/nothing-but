@@ -23,19 +23,21 @@ export const App: Component = () => {
 
     let container!: HTMLDivElement
     return (
-        <div class="min-h-110vh min-w-110vw center-child flex-col overflow-hidden">
-            <div
-                ref={el => {
-                    container = el
-                    event.preventMobileScrolling(container)
-                }}
-                class="relative w-90vmin h-90vmin m-auto bg-dark-9 relative overflow-hidden overscroll-none touch-none"
-            >
-                <CanvasForceGraph
-                    graph={force_graph}
-                    targetFPS={TARGET_FPS}
-                    trackNodes={change_signal.read}
-                />
+        <div class="min-h-110vh min-w-110vw">
+            <div class="w-screen h-screen center-child flex-col">
+                <div
+                    ref={el => {
+                        container = el
+                        event.preventMobileScrolling(container)
+                    }}
+                    class="relative w-90vmin h-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
+                >
+                    <CanvasForceGraph
+                        graph={force_graph}
+                        targetFPS={TARGET_FPS}
+                        trackNodes={change_signal.read}
+                    />
+                </div>
             </div>
         </div>
     )
