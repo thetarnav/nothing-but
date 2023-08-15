@@ -181,6 +181,16 @@ export function distance(a: Position, b: Position): number {
     return Math.sqrt(x * x + y * y)
 }
 
+export function vec_average(...vectors: Position[]): Vector {
+    let x = 0,
+        y = 0
+    for (const vec of vectors) {
+        x += vec.x
+        y += vec.y
+    }
+    return vector(x / vectors.length, y / vectors.length)
+}
+
 /**
  * Calculates the angle between two vectors.
  * @returns The angle between the vectors in radians.

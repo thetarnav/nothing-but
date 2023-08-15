@@ -15,11 +15,11 @@ TODO:
     -   [ ] dispaly node labels
 -   [x] ~~svg rendering~~ (deprecated for now, canvas is way faster)
 -   [x] dragging nodes
-    -   [ ] touch
+    -   [x] touch
 -   [x] movement gestures
     -   [x] with space
     -   [x] without space
-    -   [ ] touch
+    -   [x] touch
 -   [x] zoom gestures
     -   [x] zoom to mouse position
-    -   [ ] touch
+    -   [x] touch

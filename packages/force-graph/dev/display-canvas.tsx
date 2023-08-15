@@ -8,7 +8,7 @@ import { Portal } from 'solid-js/web'
 import * as fg from '../src/index.js'
 
 interface CanvasState {
-    canvas: HTMLCanvasElement
+    el: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
     graph: fg.Graph
     size: s.Signal<number>
@@ -40,7 +40,7 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: fg.Graph): CanvasStat
     const init_size = Math.min(canvas.width, canvas.height)
 
     return {
-        canvas,
+        el: canvas,
         graph,
         ctx,
         size: s.signal(init_size),
@@ -53,7 +53,7 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: fg.Graph): CanvasStat
 }
 
 function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Position {
-    const ratio = event.ratioInElement(e, state.canvas)
+    const ratio = event.ratioInElement(e, state.el)
     return pointRatioToGraphPos(state, ratio)
 }
 
@@ -74,14 +74,8 @@ function pointRatioToGraphPos(state: CanvasState, pos: Position): trig.Vector {
     return graph_click_pos
 }
 
-interface MoveDraggingInit {
-    point_ratio: Position
-    graph_position: Position
-    pointer_id: number
-}
-
 interface BaseInput {
-    state: CanvasState
+    canvas: CanvasState
 }
 
 interface Events {
@@ -98,6 +92,7 @@ const enum Mode {
     DraggingNode = 'dragging_node',
     MoveSpace = 'move_space',
     MoveDragging = 'move_dragging',
+    MoveMultiTouch = 'move_multi_touch',
 }
 
 type ModeStates = MachineStates<{
@@ -116,32 +111,198 @@ type ModeStates = MachineStates<{
         value: Events
     }
     [Mode.MoveSpace]: {
-        to: Mode.Default
+        to: Mode.Default | Mode.MoveDragging
         input: BaseInput
         value: Events
     }
     [Mode.MoveDragging]: {
-        to: Mode.Default
-        input: BaseInput & MoveDraggingInit
+        to: Mode.Default | Mode.MoveSpace | Mode.MoveMultiTouch
+        input: BaseInput & {
+            from: Mode.Default | Mode.MoveSpace
+            init_ratio: Position
+            pointer_id: number
+        }
+        value: Events
+    }
+    [Mode.MoveMultiTouch]: {
+        to: Mode.MoveDragging | Mode.Default
+        input: BaseInput & {
+            from: MoveDragging['from']
+            pointer_id_0: number
+            pointer_id_1: number
+            init_ratio_0: Position
+            init_ratio_1: Position
+        }
         value: Events
     }
 }>
 
-function handleMoveEvent(state: CanvasState, e: PointerEvent, init: MoveDraggingInit): void {
-    if (e.pointerId !== init.pointer_id) return
+interface MoveDragging {
+    canvas: CanvasState
+    from: Mode.Default | Mode.MoveSpace
+    init_ratio: Position
+    last_ratio: Position
+    init_graph_position: Position
+    pointer_id: number
+}
+
+function handleMoveEvent(state: MoveDragging, e: PointerEvent): void {
+    if (e.pointerId !== state.pointer_id) return
 
     e.preventDefault()
     e.stopPropagation()
 
-    const click_ratio = event.ratioInElement(e, state.canvas)
+    const { canvas } = state
 
-    const delta = trig.vec_difference(init.point_ratio, click_ratio)
-    trig.vec_mut(delta, n => n * (state.graph.grid.size / state.zoom.read().scale))
+    const ratio = event.ratioInElement(e, canvas.el)
+    state.last_ratio = ratio
 
-    s.mutate(state.position, pos => {
-        pos.x = init.graph_position.x + delta.x
-        pos.y = init.graph_position.y + delta.y
+    const delta = trig.vec_difference(state.init_ratio, ratio)
+    trig.vec_mut(delta, n => n * (canvas.graph.grid.size / canvas.zoom.read().scale))
+
+    s.mutate(canvas.position, pos => {
+        pos.x = state.init_graph_position.x + delta.x
+        pos.y = state.init_graph_position.y + delta.y
     })
+}
+
+const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
+    const { canvas } = input
+
+    const state: MoveDragging = {
+        canvas: canvas,
+        from: input.from,
+        init_ratio: input.init_ratio,
+        last_ratio: input.init_ratio,
+        init_graph_position: trig.vector(input.canvas.position.read()),
+        pointer_id: input.pointer_id,
+    }
+
+    createEventListener(document, 'pointermove', e => {
+        handleMoveEvent(state, e)
+    })
+
+    return {
+        POINTER_UP(e) {
+            if (e instanceof PointerEvent && e.pointerId !== input.pointer_id) return
+
+            to(input.from, { canvas })
+        },
+        POINTER_DOWN(e) {
+            e.preventDefault()
+            e.stopPropagation()
+
+            to(Mode.MoveMultiTouch, {
+                canvas,
+                from: input.from,
+                pointer_id_0: input.pointer_id,
+                pointer_id_1: e.pointerId,
+                init_ratio_0: state.last_ratio,
+                init_ratio_1: event.ratioInElement(e, canvas.el),
+            })
+        },
+    }
+}
+
+interface MultiTouch {
+    canvas: CanvasState
+    pointer_id_0: number
+    pointer_id_1: number
+    init_ratio_0: Position
+    init_ratio_1: Position
+    last_ratio_0: Position
+    last_ratio_1: Position
+    init_zoom: number
+    init_dist: number
+    init_graph_position: Position
+}
+
+const handleMultiTouchEvent = (state: MultiTouch, e: PointerEvent): void => {
+    if (e.pointerId !== state.pointer_id_0 && e.pointerId !== state.pointer_id_1) return
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    const { canvas } = state
+
+    let ratio_0 = state.last_ratio_0
+    let ratio_1 = state.last_ratio_1
+
+    if (e.pointerId === state.pointer_id_0) {
+        state.last_ratio_0 = ratio_0 = event.ratioInElement(e, canvas.el)
+    } else {
+        state.last_ratio_1 = ratio_1 = event.ratioInElement(e, canvas.el)
+    }
+
+    const delta_0 = trig.vec_difference(state.init_ratio_0, ratio_0)
+    const delta_1 = trig.vec_difference(state.init_ratio_1, ratio_1)
+
+    const zoom = canvas.zoom.read()
+    let prev = zoom.ratio
+    zoom.ratio = (state.init_zoom + 1) * (trig.distance(ratio_0, ratio_1) / state.init_dist) - 1
+    zoom.scale = calcZoomScale(zoom.ratio)
+
+    const delta = trig.vec_average(delta_0, delta_1)
+    trig.vec_mut(delta, n => n * (canvas.graph.grid.size / canvas.zoom.read().scale))
+
+    const pos = canvas.position.read()
+    pos.x = state.init_graph_position.x + delta.x
+    pos.y = state.init_graph_position.y + delta.y
+
+    batch(() => {
+        s.trigger(canvas.position)
+        s.trigger(canvas.zoom)
+    })
+}
+
+const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
+    const { canvas } = input
+
+    const state: MultiTouch = {
+        canvas,
+        pointer_id_0: input.pointer_id_0,
+        pointer_id_1: input.pointer_id_1,
+        init_ratio_0: input.init_ratio_0,
+        init_ratio_1: input.init_ratio_1,
+        last_ratio_0: input.init_ratio_0,
+        last_ratio_1: input.init_ratio_1,
+        init_zoom: canvas.zoom.read().ratio,
+        init_dist: trig.distance(input.init_ratio_0, input.init_ratio_1),
+        init_graph_position: trig.vector(input.canvas.position.read()),
+    }
+
+    createEventListener(document, 'pointermove', e => {
+        handleMultiTouchEvent(state, e)
+    })
+
+    return {
+        POINTER_UP(e) {
+            if (e == null) {
+                to(Mode.Default, input)
+                return
+            }
+
+            let pointer_id: number
+            let ratio: Position
+
+            if (e.pointerId === input.pointer_id_0) {
+                pointer_id = input.pointer_id_1
+                ratio = state.last_ratio_1
+            } else if (e.pointerId === input.pointer_id_1) {
+                pointer_id = input.pointer_id_0
+                ratio = state.last_ratio_0
+            } else {
+                return
+            }
+
+            to(Mode.MoveDragging, {
+                from: input.from,
+                canvas,
+                init_ratio: ratio,
+                pointer_id,
+            })
+        },
+    }
 }
 
 function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
@@ -170,7 +331,7 @@ function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
 }
 
 const mode_states: ModeStates = {
-    [Mode.Default]({ state }, to) {
+    [Mode.Default]({ canvas: state }, to) {
         return {
             POINTER_DOWN(e) {
                 e.preventDefault()
@@ -192,27 +353,27 @@ const mode_states: ModeStates = {
 
                 if (node) {
                     to(Mode.DraggingNode, {
-                        state,
+                        canvas: state,
                         node,
                         pointer_id,
                         init_graph_point: point_graph,
                     })
                 } else {
                     to(Mode.MoveDragging, {
-                        state,
-                        point_ratio: event.ratioInElement(e, state.canvas),
-                        graph_position: trig.vector(state.position.read()),
-                        pointer_id,
+                        from: Mode.Default,
+                        canvas: state,
+                        init_ratio: event.ratioInElement(e, state.el),
+                        pointer_id: e.pointerId,
                     })
                 }
             },
             SPACE(e) {
                 e.preventDefault()
-                to(Mode.MoveSpace, { state })
+                to(Mode.MoveSpace, { canvas: state })
             },
         }
     },
-    [Mode.DraggingNode]({ state, node, pointer_id, init_graph_point }, to) {
+    [Mode.DraggingNode]({ canvas: canvas, node, pointer_id, init_graph_point }, to) {
         node.locked = true
         onCleanup(() => (node.locked = false))
 
@@ -224,7 +385,7 @@ const mode_states: ModeStates = {
         const interval = setInterval(() => {
             trig.vec_mut(init_pos_delta, v => v * 0.95)
             fg.changeNodePosition(
-                state.graph.grid,
+                canvas.graph.grid,
                 node,
                 last_graph_pos.x - init_pos_delta.x,
                 last_graph_pos.y - init_pos_delta.y,
@@ -245,75 +406,44 @@ const mode_states: ModeStates = {
             e.preventDefault()
             e.stopPropagation()
 
-            const goal_graph_e_pos = eventToGraphPos(state, e)
+            const goal_graph_e_pos = eventToGraphPos(canvas, e)
             last_graph_pos = goal_graph_e_pos
             const graph_e_pos = trig.vec_difference(goal_graph_e_pos, init_pos_delta)
 
-            fg.changeNodePosition(state.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
+            fg.changeNodePosition(canvas.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
         })
 
         return {
             POINTER_UP(e) {
                 if (e instanceof PointerEvent && e.pointerId !== pointer_id) return
 
-                to(Mode.Default, { state })
+                to(Mode.Default, { canvas })
             },
         }
     },
-    [Mode.MoveSpace]({ state }, to) {
-        const init$ = s.signal<MoveDraggingInit>()
-
-        createEffect(() => {
-            const init = init$.read()
-            if (!init) return
-
-            createEventListener(document, 'pointermove', e => {
-                handleMoveEvent(state, e, init)
-            })
-        })
-
+    [Mode.MoveSpace]({ canvas }, to) {
         return {
             SPACE(e) {
                 e.preventDefault()
             },
             SPACE_UP(e) {
-                to(Mode.Default, { state })
+                to(Mode.Default, { canvas })
             },
             POINTER_DOWN(e) {
-                if (init$.read() !== undefined) return
-
                 e.preventDefault()
                 e.stopPropagation()
 
-                s.set(init$, {
-                    point_ratio: event.ratioInElement(e, state.canvas),
-                    graph_position: trig.vector(state.position.read()),
+                to(Mode.MoveDragging, {
+                    from: Mode.MoveSpace,
+                    canvas: canvas,
+                    init_ratio: event.ratioInElement(e, canvas.el),
                     pointer_id: e.pointerId,
                 })
             },
-            POINTER_UP(e) {
-                const init = init$.read()
-                if (!init || (e instanceof PointerEvent && e.pointerId !== init.pointer_id)) return
-
-                s.set(init$, undefined)
-            },
         }
     },
-    [Mode.MoveDragging](input, to) {
-        const { state } = input
-
-        createEventListener(document, 'pointermove', e => {
-            handleMoveEvent(state, e, input)
-        })
-
-        return {
-            POINTER_UP(e) {
-                if (e instanceof PointerEvent && e.pointerId !== input.pointer_id) return
-
-                to(Mode.Default, { state })
-            },
-        }
-    },
+    [Mode.MoveDragging]: moveDragging,
+    [Mode.MoveMultiTouch]: moveMultiTouch,
 }
 
 const line_dash_dashed = [8, 16] as const
@@ -416,24 +546,24 @@ export function CanvasForceGraph(props: {
 
     const init_size = graph.options.grid_size
 
-    const canvas = (
+    const canvas_el = (
         <canvas class="absolute w-full h-full" width={init_size} height={init_size} />
     ) as HTMLCanvasElement
 
-    const state = makeCanvasState(canvas, graph)
-    if (state instanceof Error) throw state
+    const canvas = makeCanvasState(canvas_el, graph)
+    if (canvas instanceof Error) throw canvas
 
     {
         const ro = new ResizeObserver(() => {
-            const { width, height } = canvas.getBoundingClientRect()
+            const { width, height } = canvas_el.getBoundingClientRect()
             const size = Math.min(width, height) * window.devicePixelRatio
 
-            canvas.width = size
-            canvas.height = size
+            canvas_el.width = size
+            canvas_el.height = size
 
-            s.set(state.size, size)
+            s.set(canvas.size, size)
         })
-        ro.observe(canvas)
+        ro.observe(canvas_el)
         onCleanup(() => ro.disconnect())
     }
 
@@ -441,16 +571,16 @@ export function CanvasForceGraph(props: {
         states: mode_states,
         initial: {
             type: Mode.Default,
-            input: { state },
+            input: { canvas },
         },
     })
 
-    createEventListenerMap(canvas, {
+    createEventListenerMap(canvas_el, {
         pointerdown(e) {
             mode.value.POINTER_DOWN?.(e)
         },
         wheel(e) {
-            handleWheelEvent(state, e)
+            handleWheelEvent(canvas, e)
         },
     })
 
@@ -495,8 +625,8 @@ export function CanvasForceGraph(props: {
     </Portal>
 
     {
-        const animation = fg.makeFrameAnimation(graph, () => updateCanvas(state), targetFPS)
-        updateCanvas(state)
+        const animation = fg.makeFrameAnimation(graph, () => updateCanvas(canvas), targetFPS)
+        updateCanvas(canvas)
 
         const init = createMemo(() => {
             trackNodes() // track changes to nodes
@@ -522,11 +652,11 @@ export function CanvasForceGraph(props: {
             if (active()) return
 
             // track changes to the canvas
-            state.size.read()
-            state.zoom.read()
-            state.position.read()
+            canvas.size.read()
+            canvas.zoom.read()
+            canvas.position.read()
 
-            requestAnimationFrame(() => updateCanvas(state))
+            requestAnimationFrame(() => updateCanvas(canvas))
         })
 
         onCleanup(() => {
@@ -534,5 +664,5 @@ export function CanvasForceGraph(props: {
         })
     }
 
-    return canvas
+    return canvas_el
 }
