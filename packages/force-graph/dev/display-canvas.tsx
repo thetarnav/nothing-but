@@ -147,25 +147,25 @@ function handleMoveEvent(state: CanvasState, e: PointerEvent, init: MoveDragging
 function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
     e.preventDefault()
 
-    const { deltaY, deltaX } = e
     const graph_point_before = eventToGraphPos(state, e)
 
-    batch(() => {
-        s.mutate(state.zoom, zoom => {
-            zoom.ratio = math.clamp(zoom.ratio + deltaY * -0.0005, 0, 1)
-            zoom.scale = calcZoomScale(zoom.ratio)
-        })
+    const zoom = state.zoom.read()
+    zoom.ratio = math.clamp(zoom.ratio + e.deltaY * -0.0005, 0, 1)
+    zoom.scale = calcZoomScale(zoom.ratio)
 
-        /*
-            keep the same graph point under the cursor
+    /*
+    keep the same graph point under the cursor
         */
-        const graph_point_after = eventToGraphPos(state, e)
-        const delta = trig.vec_difference(graph_point_before, graph_point_after)
+    const graph_point_after = eventToGraphPos(state, e)
+    const delta = trig.vec_difference(graph_point_before, graph_point_after)
 
-        s.mutate(state.position, pos => {
-            pos.x += delta.x + deltaX * (0.1 / state.zoom.read().scale)
-            pos.y += delta.y
-        })
+    const pos = state.position.read()
+    pos.x += delta.x + e.deltaX * (0.1 / zoom.scale)
+    pos.y += delta.y
+
+    batch(() => {
+        s.trigger(state.zoom)
+        s.trigger(state.position)
     })
 }
 
