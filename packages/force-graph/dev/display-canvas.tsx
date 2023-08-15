@@ -99,11 +99,12 @@ type ModeStates = MachineStates<{
         value: Events
     }
     [Mode.DraggingNode]: {
-        to: Mode.Default
+        to: Mode.Default | Mode.MoveMultiTouch
         input: BaseInput & {
             node: fg.Node
             pointer_id: number
-            init_graph_point: Position
+            point_graph: Position
+            point_ratio: Position
         }
         value: Events
     }
@@ -126,9 +127,8 @@ type ModeStates = MachineStates<{
         input: BaseInput & {
             from: MoveDragging['from']
             pointer_id_0: number
-            pointer_id_1: number
             init_ratio_0: Position
-            init_ratio_1: Position
+            e: PointerEvent
         }
         value: Events
     }
@@ -190,12 +190,11 @@ const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
             e.stopPropagation()
 
             to(Mode.MoveMultiTouch, {
+                e,
                 canvas,
                 from: input.from,
                 pointer_id_0: input.pointer_id,
-                pointer_id_1: e.pointerId,
                 init_ratio_0: state.last_ratio,
-                init_ratio_1: event.ratioInElement(e, canvas.el),
             })
         },
     }
@@ -255,17 +254,20 @@ const handleMultiTouchEvent = (state: MultiTouch, e: PointerEvent): void => {
 const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
     const { canvas } = input
 
+    const init_ratio_0 = input.init_ratio_0
+    const init_ratio_1 = event.ratioInElement(input.e, canvas.el)
+
     const state: MultiTouch = {
         canvas,
         pointer_id_0: input.pointer_id_0,
-        pointer_id_1: input.pointer_id_1,
-        init_ratio_0: input.init_ratio_0,
-        init_ratio_1: input.init_ratio_1,
-        last_ratio_0: input.init_ratio_0,
-        last_ratio_1: input.init_ratio_1,
+        pointer_id_1: input.e.pointerId,
+        init_ratio_0,
+        init_ratio_1,
+        last_ratio_0: init_ratio_0,
+        last_ratio_1: init_ratio_1,
         init_zoom: canvas.zoom.read().ratio,
-        init_dist: trig.distance(input.init_ratio_0, input.init_ratio_1),
-        init_graph_position: trig.vector(input.canvas.position.read()),
+        init_dist: trig.distance(init_ratio_0, init_ratio_1),
+        init_graph_position: trig.vector(canvas.position.read()),
     }
 
     createEventListener(document, 'pointermove', e => {
@@ -282,11 +284,11 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
             let pointer_id: number
             let ratio: Position
 
-            if (e.pointerId === input.pointer_id_0) {
-                pointer_id = input.pointer_id_1
+            if (e.pointerId === state.pointer_id_0) {
+                pointer_id = state.pointer_id_1
                 ratio = state.last_ratio_1
-            } else if (e.pointerId === input.pointer_id_1) {
-                pointer_id = input.pointer_id_0
+            } else if (e.pointerId === state.pointer_id_1) {
+                pointer_id = state.pointer_id_0
                 ratio = state.last_ratio_0
             } else {
                 return
@@ -334,13 +336,14 @@ const mode_states: ModeStates = {
                 e.preventDefault()
                 e.stopPropagation()
 
-                const canvas_size = state.size.read()
-                const pointer_id = e.pointerId
-                const point_graph = eventToGraphPos(state, e)
+                const canvas_size = state.size.read(),
+                    pointer_id = e.pointerId,
+                    point_ratio = event.ratioInElement(e, state.el),
+                    point_graph = pointRatioToGraphPos(state, point_ratio)
 
-                const click_max_dist =
-                    ((calcNodeRadius(canvas_size) + 5) / canvas_size) *
-                    state.graph.options.grid_size
+                let click_max_dist = calcNodeRadius(canvas_size) + 5
+                click_max_dist /= canvas_size
+                click_max_dist *= state.graph.options.grid_size
 
                 const node = fg.findClosestNodeLinear(
                     state.graph.nodes,
@@ -353,14 +356,15 @@ const mode_states: ModeStates = {
                         canvas: state,
                         node,
                         pointer_id,
-                        init_graph_point: point_graph,
+                        point_graph,
+                        point_ratio,
                     })
                 } else {
                     to(Mode.MoveDragging, {
                         from: Mode.Default,
                         canvas: state,
-                        init_ratio: event.ratioInElement(e, state.el),
-                        pointer_id: e.pointerId,
+                        init_ratio: point_ratio,
+                        pointer_id,
                     })
                 }
             },
@@ -370,29 +374,34 @@ const mode_states: ModeStates = {
             },
         }
     },
-    [Mode.DraggingNode]({ canvas: canvas, node, pointer_id, init_graph_point }, to) {
+    [Mode.DraggingNode](input, to) {
+        const { canvas, node, pointer_id } = input
+
         node.locked = true
         onCleanup(() => (node.locked = false))
+
+        const goal_node_pos_delta = trig.difference(input.point_graph, node.position)
+
+        let goal_graph_node_pos = input.point_graph
+        let goal_point_ratio = input.point_ratio
 
         /*
             Smoothly move the node to the pointer position
         */
-        const init_pos_delta = trig.difference(init_graph_point, node.position)
-        let last_graph_pos = init_graph_point
         const interval = setInterval(() => {
-            trig.multiply(init_pos_delta, 0.95)
+            trig.multiply(goal_node_pos_delta, 0.95)
             fg.changeNodePosition(
                 canvas.graph.grid,
                 node,
-                last_graph_pos.x - init_pos_delta.x,
-                last_graph_pos.y - init_pos_delta.y,
+                goal_graph_node_pos.x - goal_node_pos_delta.x,
+                goal_graph_node_pos.y - goal_node_pos_delta.y,
             )
 
-            const d = trig.distance(trig.ZERO, init_pos_delta)
+            const d = trig.distance(trig.ZERO, goal_node_pos_delta)
             if (d < 0.1) {
                 clearInterval(interval)
-                init_pos_delta.x = 0
-                init_pos_delta.y = 0
+                goal_node_pos_delta.x = 0
+                goal_node_pos_delta.y = 0
             }
         })
         onCleanup(() => clearInterval(interval))
@@ -403,11 +412,11 @@ const mode_states: ModeStates = {
             e.preventDefault()
             e.stopPropagation()
 
-            const goal_graph_e_pos = eventToGraphPos(canvas, e)
-            last_graph_pos = goal_graph_e_pos
-            const graph_e_pos = trig.difference(goal_graph_e_pos, init_pos_delta)
+            goal_point_ratio = event.ratioInElement(e, canvas.el)
+            goal_graph_node_pos = pointRatioToGraphPos(canvas, goal_point_ratio)
+            const graph_node_pos = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
 
-            fg.changeNodePosition(canvas.graph.grid, node, graph_e_pos.x, graph_e_pos.y)
+            fg.changeNodePosition(canvas.graph.grid, node, graph_node_pos.x, graph_node_pos.y)
         })
 
         return {
@@ -415,6 +424,18 @@ const mode_states: ModeStates = {
                 if (e instanceof PointerEvent && e.pointerId !== pointer_id) return
 
                 to(Mode.Default, { canvas })
+            },
+            POINTER_DOWN(e) {
+                e.preventDefault()
+                e.stopPropagation()
+
+                to(Mode.MoveMultiTouch, {
+                    e,
+                    canvas,
+                    from: Mode.Default,
+                    pointer_id_0: pointer_id,
+                    init_ratio_0: goal_point_ratio,
+                })
             },
         }
     },
