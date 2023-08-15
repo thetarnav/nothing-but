@@ -13,21 +13,17 @@ interface CanvasState {
     graph: fg.Graph
     size: s.Signal<number>
     position: s.Signal<Position>
-    zoom: s.Signal<{
-        /**
-         * min
-         * 0 - 1
-         *     max
-         */
-        ratio: number
-        /**
-         * min
-         * 1 - 6
-         *     max
-         */
-        scale: number // TODO user configurable
-    }>
+    /**
+     * min
+     * 1 - 6
+     *     max
+     */
+    scale: s.Signal<number> // TODO user configurable
 }
+
+const MIN_SCALE = 1
+const MAX_SCALE = 7
+const SCALE_RANGE = MAX_SCALE - MIN_SCALE
 
 const calcZoomScale = (zoom: number): number => 1 + ease.in_out_cubic(zoom) * 5
 const calcNodeRadius = (canvas_size: number): number => canvas_size / 240
@@ -45,10 +41,7 @@ function makeCanvasState(canvas: HTMLCanvasElement, graph: fg.Graph): CanvasStat
         ctx,
         size: s.signal(init_size),
         position: s.signal({ x: 0, y: 0 }),
-        zoom: s.signal({
-            ratio: 0,
-            scale: calcZoomScale(0),
-        }),
+        scale: s.signal(1),
     }
 }
 
@@ -58,7 +51,7 @@ function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Posi
 }
 
 function pointRatioToGraphPos(state: CanvasState, pos: Position): Position {
-    const { scale } = state.zoom.read(),
+    const scale = state.scale.read(),
         grid_size = state.graph.grid.size,
         scaled_size = grid_size / scale,
         grid_pos = state.position.read()
@@ -155,7 +148,7 @@ function handleMoveEvent(state: MoveDragging, e: PointerEvent): void {
     state.last_ratio = ratio
 
     const delta = trig.difference(state.init_ratio, ratio)
-    trig.multiply(delta, canvas.graph.grid.size / canvas.zoom.read().scale)
+    trig.multiply(delta, canvas.graph.grid.size / canvas.scale.read())
 
     s.mutate(canvas.position, pos => {
         pos.x = state.init_graph_position.x + delta.x
@@ -211,7 +204,7 @@ interface MultiTouch {
     init_ratio_1: Position
     last_ratio_0: Position
     last_ratio_1: Position
-    init_zoom: number
+    init_scale: number
     init_dist: number
     init_graph_position: Position
 }
@@ -233,24 +226,22 @@ const handleMultiTouchEvent = (state: MultiTouch, e: PointerEvent): void => {
         state.last_ratio_1 = ratio_1 = event.ratioInElement(e, canvas.el)
     }
 
-    const delta_0 = trig.difference(state.init_ratio_0, ratio_0)
-    const delta_1 = trig.difference(state.init_ratio_1, ratio_1)
+    let scale = state.init_scale * (trig.distance(ratio_0, ratio_1) / state.init_dist)
+    scale = math.clamp(scale, MIN_SCALE, MAX_SCALE)
 
-    const zoom = canvas.zoom.read()
-    let prev = zoom.ratio
-    zoom.ratio = (state.init_zoom + 1) * (trig.distance(ratio_0, ratio_1) / state.init_dist) - 1
-    zoom.scale = calcZoomScale(zoom.ratio)
-
-    const delta = trig.average(delta_0, delta_1)
-    trig.multiply(delta, canvas.graph.grid.size / canvas.zoom.read().scale)
+    const delta = trig.average(
+        trig.difference(state.init_ratio_0, ratio_0),
+        trig.difference(state.init_ratio_1, ratio_1),
+    )
+    trig.multiply(delta, canvas.graph.grid.size / scale)
 
     const pos = canvas.position.read()
     pos.x = state.init_graph_position.x + delta.x
     pos.y = state.init_graph_position.y + delta.y
 
     batch(() => {
+        s.set(canvas.scale, scale)
         s.trigger(canvas.position)
-        s.trigger(canvas.zoom)
     })
 }
 
@@ -268,7 +259,7 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
         init_ratio_1,
         last_ratio_0: init_ratio_0,
         last_ratio_1: init_ratio_1,
-        init_zoom: canvas.zoom.read().ratio,
+        init_scale: canvas.scale.read(),
         init_dist: trig.distance(init_ratio_0, init_ratio_1),
         init_graph_position: trig.vector(canvas.position.read()),
     }
@@ -310,24 +301,34 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
 function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
     e.preventDefault()
 
-    const graph_point_before = eventToGraphPos(state, e)
-
-    const zoom = state.zoom.read()
-    zoom.ratio = math.clamp(zoom.ratio + e.deltaY * -0.0005, 0, 1)
-    zoom.scale = calcZoomScale(zoom.ratio)
+    let scale = state.scale.read()
 
     /*
-        keep the same graph point under the cursor
+        Use a sine function slow down the zooming as it gets closer to the min and max zoom
+        y = sin(x • π) where x is the current zoom % and y is the delta multiplier
+        the current zoom need to be converted to a % with a small offset
+        because sin(0) = sin(π) = 0 which would completely stop the zooming
     */
-    const graph_point_after = eventToGraphPos(state, e)
-    const delta = trig.difference(graph_point_before, graph_point_after)
-
-    const pos = state.position.read()
-    pos.x += delta.x + e.deltaX * (0.1 / zoom.scale)
-    pos.y += delta.y
+    const offset = 1 / (SCALE_RANGE * 2),
+        scale_with_offset = math.map_range(scale, MIN_SCALE, MAX_SCALE, offset, 1 - offset),
+        zoom_mod = Math.sin(scale_with_offset * Math.PI)
+    scale += e.deltaY * -0.005 * zoom_mod
+    scale = math.clamp(scale, MIN_SCALE, MAX_SCALE)
 
     batch(() => {
-        s.trigger(state.zoom)
+        /*
+            keep the same graph point under the cursor
+        */
+        const graph_point_before = eventToGraphPos(state, e)
+
+        s.set(state.scale, scale)
+
+        const graph_point_after = eventToGraphPos(state, e)
+        const delta = trig.difference(graph_point_before, graph_point_after)
+
+        const pos = state.position.read()
+        pos.x += delta.x + e.deltaX * (0.1 / scale)
+        pos.y += delta.y
         s.trigger(state.position)
     })
 }
@@ -472,7 +473,7 @@ const line_dash_empty = [] as const
 
 function updateCanvas(state: CanvasState): void {
     const { ctx, graph } = state,
-        { scale } = state.zoom.read(),
+        scale = state.scale.read(),
         { nodes, edges } = graph,
         canvas_size = state.size.read(),
         grid_size = graph.grid.size,
@@ -632,7 +633,7 @@ export function CanvasForceGraph(props: {
         keyup(e) {
             if (event.shouldIgnoreKeydown(e)) return
 
-            if (e.key === ' ') {
+            if (e.key === 'Control') {
                 mode.value.SPACE_UP?.(e)
             }
         },
@@ -674,7 +675,7 @@ export function CanvasForceGraph(props: {
 
             // track changes to the canvas
             canvas.size.read()
-            canvas.zoom.read()
+            canvas.scale.read()
             canvas.position.read()
 
             requestAnimationFrame(() => updateCanvas(canvas))
