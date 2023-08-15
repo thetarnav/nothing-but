@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.7.2
+
+### Patch Changes
+
+-   69bbe07: Drop vec\_ prefix
+
 ## 0.7.1
 
 ### Patch Changes
