@@ -30,7 +30,7 @@ export const App: Component = () => {
                         container = el
                         event.preventMobileScrolling(container)
                     }}
-                    class="relative w-90vmin h-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
+                    class="relative aspect-3/4 sm:aspect-4/3 w-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
                 >
                     <CanvasForceGraph
                         graph={force_graph}

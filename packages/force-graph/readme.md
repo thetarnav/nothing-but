@@ -13,7 +13,7 @@ TODO:
 -   [ ] adding/removing nodes
 -   [x] canvas rendering
     -   [ ] dispaly node labels
-    -   [ ] custom aspect ratios
+    -   [x] custom aspect ratios
 -   [x] ~~svg rendering~~ (deprecated for now, canvas is way faster)
 -   [x] dragging nodes
     -   [x] touch

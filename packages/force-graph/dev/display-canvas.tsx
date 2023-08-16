@@ -1,9 +1,9 @@
 import * as s from '@nothing-but/solid/signal'
-import { ease, event, math, trig } from '@nothing-but/utils'
+import { event, math, trig } from '@nothing-but/utils'
 import type { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
-import { batch, createEffect, createMemo, createSignal, onCleanup, type JSX } from 'solid-js'
+import { createEffect, createMemo, createSignal, onCleanup, type JSX } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import * as fg from '../src/index.js'
 
@@ -11,37 +11,54 @@ interface CanvasState {
     el: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
     graph: fg.Graph
-    size: s.Signal<number>
-    position: s.Signal<Position>
+    size: number
+    ar: Position
+    grid_pos: Position
     /**
      * min
-     * 1 - 6
+     * 1 - 7
      *     max
      */
-    scale: s.Signal<number> // TODO user configurable
+    scale: number // TODO user configurable
 }
 
 const MIN_SCALE = 1
 const MAX_SCALE = 7
 const SCALE_RANGE = MAX_SCALE - MIN_SCALE
 
-const calcZoomScale = (zoom: number): number => 1 + ease.in_out_cubic(zoom) * 5
+function makeCanvasState(el: HTMLCanvasElement, graph: fg.Graph): CanvasState | Error {
+    const ctx = el.getContext('2d')
+    if (!ctx) return new Error('Could not get canvas context')
+
+    const canvas: CanvasState = {
+        el,
+        graph,
+        ctx,
+        size: 0,
+        ar: { x: 1, y: 1 },
+        grid_pos: { x: 0, y: 0 },
+        scale: 1,
+    }
+
+    updateCanvasSize(canvas, el.width, el.height)
+
+    return canvas
+}
+
 const calcNodeRadius = (canvas_size: number): number => canvas_size / 240
 const calcEdgeWidth = (canvas_size: number): number => canvas_size / 2000
 
-function makeCanvasState(canvas: HTMLCanvasElement, graph: fg.Graph): CanvasState | Error {
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return new Error('Could not get canvas context')
+function updateCanvasSize(canvas: CanvasState, width: number, height: number): void {
+    canvas.el.width = width
+    canvas.el.height = height
 
-    const init_size = Math.min(canvas.width, canvas.height)
+    canvas.size = Math.max(width, height)
 
-    return {
-        el: canvas,
-        graph,
-        ctx,
-        size: s.signal(init_size),
-        position: s.signal({ x: 0, y: 0 }),
-        scale: s.signal(1),
+    const ar = width / height
+    if (ar < 1) {
+        canvas.ar = { x: ar, y: 1 }
+    } else {
+        canvas.ar = { x: 1, y: height / width }
     }
 }
 
@@ -50,22 +67,39 @@ function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Posi
     return pointRatioToGraphPos(state, ratio)
 }
 
-function pointRatioToGraphPos(state: CanvasState, pos: Position): Position {
-    const scale = state.scale.read(),
-        grid_size = state.graph.grid.size,
-        scaled_size = grid_size / scale,
-        grid_pos = state.position.read()
+function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
+    const { scale, grid_pos, ar } = canvas,
+        grid_size = canvas.graph.grid.size
 
-    const correct_origin = grid_size / 2 - scaled_size / 2
+    let x = pos.x
+    let y = pos.y
 
-    return {
-        x: pos.x * scaled_size + grid_pos.x + correct_origin,
-        y: pos.y * scaled_size + grid_pos.y + correct_origin,
-    }
+    /*
+        correct for aspect ratio by shifting the shorter side's axis
+    */
+    x = x * ar.x + (1 - ar.x) / 2
+    y = y * ar.y + (1 - ar.y) / 2
+
+    /*
+        to graph plane, correct for scale shifting the origin
+    */
+    const scaled_grid_size = grid_size / scale
+    const correct_origin = grid_size / 2 - scaled_grid_size / 2
+    x = x * scaled_grid_size + correct_origin
+    y = y * scaled_grid_size + correct_origin
+
+    /*
+        add user position
+    */
+    x += grid_pos.x
+    y += grid_pos.y
+
+    return { x, y }
 }
 
 interface BaseInput {
     canvas: CanvasState
+    trigger: VoidFunction
 }
 
 interface Events {
@@ -136,7 +170,7 @@ interface MoveDragging {
     pointer_id: number
 }
 
-function handleMoveEvent(state: MoveDragging, e: PointerEvent): void {
+function handleMoveEvent(state: MoveDragging, trigger: VoidFunction, e: PointerEvent): void {
     if (e.pointerId !== state.pointer_id) return
 
     e.preventDefault()
@@ -148,28 +182,28 @@ function handleMoveEvent(state: MoveDragging, e: PointerEvent): void {
     state.last_ratio = ratio
 
     const delta = trig.difference(state.init_ratio, ratio)
-    trig.multiply(delta, canvas.graph.grid.size / canvas.scale.read())
+    trig.multiply(delta, canvas.graph.grid.size / canvas.scale)
 
-    s.mutate(canvas.position, pos => {
-        pos.x = state.init_graph_position.x + delta.x
-        pos.y = state.init_graph_position.y + delta.y
-    })
+    canvas.grid_pos.x = state.init_graph_position.x + delta.x
+    canvas.grid_pos.y = state.init_graph_position.y + delta.y
+
+    trigger()
 }
 
 const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
-    const { canvas } = input
+    const { canvas, trigger } = input
 
     const state: MoveDragging = {
         canvas: canvas,
         from: input.from,
         init_ratio: input.init_ratio,
         last_ratio: input.init_ratio,
-        init_graph_position: trig.vector(input.canvas.position.read()),
+        init_graph_position: trig.vector(input.canvas.grid_pos),
         pointer_id: input.pointer_id,
     }
 
     createEventListener(document, 'pointermove', e => {
-        handleMoveEvent(state, e)
+        handleMoveEvent(state, trigger, e)
     })
 
     return {
@@ -179,7 +213,7 @@ const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
         POINTER_UP(e) {
             if (e instanceof PointerEvent && e.pointerId !== input.pointer_id) return
 
-            to(input.from, { canvas })
+            to(input.from, { canvas, trigger })
         },
         POINTER_DOWN(e) {
             e.preventDefault()
@@ -188,6 +222,7 @@ const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
             to(Mode.MoveMultiTouch, {
                 e,
                 canvas,
+                trigger,
                 from: input.from,
                 pointer_id_0: input.pointer_id,
                 init_ratio_0: state.last_ratio,
@@ -209,7 +244,7 @@ interface MultiTouch {
     init_graph_position: Position
 }
 
-const handleMultiTouchEvent = (state: MultiTouch, e: PointerEvent): void => {
+function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: PointerEvent): void {
     if (e.pointerId !== state.pointer_id_0 && e.pointerId !== state.pointer_id_1) return
 
     e.preventDefault()
@@ -235,18 +270,15 @@ const handleMultiTouchEvent = (state: MultiTouch, e: PointerEvent): void => {
     )
     trig.multiply(delta, canvas.graph.grid.size / scale)
 
-    const pos = canvas.position.read()
-    pos.x = state.init_graph_position.x + delta.x
-    pos.y = state.init_graph_position.y + delta.y
+    canvas.grid_pos.x = state.init_graph_position.x + delta.x
+    canvas.grid_pos.y = state.init_graph_position.y + delta.y
+    canvas.scale = scale
 
-    batch(() => {
-        s.set(canvas.scale, scale)
-        s.trigger(canvas.position)
-    })
+    trigger()
 }
 
 const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
-    const { canvas } = input
+    const { canvas, trigger } = input
 
     const init_ratio_0 = input.init_ratio_0
     const init_ratio_1 = event.ratioInElement(input.e, canvas.el)
@@ -259,13 +291,13 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
         init_ratio_1,
         last_ratio_0: init_ratio_0,
         last_ratio_1: init_ratio_1,
-        init_scale: canvas.scale.read(),
+        init_scale: canvas.scale,
         init_dist: trig.distance(init_ratio_0, init_ratio_1),
-        init_graph_position: trig.vector(canvas.position.read()),
+        init_graph_position: trig.vector(canvas.grid_pos),
     }
 
     createEventListener(document, 'pointermove', e => {
-        handleMultiTouchEvent(state, e)
+        handleMultiTouchEvent(state, trigger, e)
     })
 
     return {
@@ -291,6 +323,7 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
             to(Mode.MoveDragging, {
                 from: input.from,
                 canvas,
+                trigger,
                 init_ratio: ratio,
                 pointer_id,
             })
@@ -298,10 +331,15 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
     }
 }
 
-function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
+function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEvent): void {
     e.preventDefault()
 
-    let scale = state.scale.read()
+    /*
+        keep the same graph point under the cursor
+    */
+    const graph_point_before = eventToGraphPos(canvas, e)
+
+    let { scale } = canvas
 
     /*
         Use a sine function slow down the zooming as it gets closer to the min and max zoom
@@ -315,71 +353,64 @@ function handleWheelEvent(state: CanvasState, e: WheelEvent): void {
     scale += e.deltaY * -0.005 * zoom_mod
     scale = math.clamp(scale, MIN_SCALE, MAX_SCALE)
 
-    batch(() => {
-        /*
-            keep the same graph point under the cursor
-        */
-        const graph_point_before = eventToGraphPos(state, e)
+    canvas.scale = scale
 
-        s.set(state.scale, scale)
+    const graph_point_after = eventToGraphPos(canvas, e)
+    const delta = trig.difference(graph_point_before, graph_point_after)
 
-        const graph_point_after = eventToGraphPos(state, e)
-        const delta = trig.difference(graph_point_before, graph_point_after)
+    canvas.grid_pos.x += delta.x + e.deltaX * (0.1 / scale)
+    canvas.grid_pos.y += delta.y
 
-        const pos = state.position.read()
-        pos.x += delta.x + e.deltaX * (0.1 / scale)
-        pos.y += delta.y
-        s.trigger(state.position)
-    })
+    trigger()
 }
 
 const mode_states: ModeStates = {
-    [Mode.Default]({ canvas: state }, to) {
+    [Mode.Default]({ canvas, trigger }, to) {
         return {
             POINTER_DOWN(e) {
                 e.preventDefault()
                 e.stopPropagation()
 
-                const canvas_size = state.size.read(),
-                    pointer_id = e.pointerId,
-                    point_ratio = event.ratioInElement(e, state.el),
-                    point_graph = pointRatioToGraphPos(state, point_ratio)
+                const point_ratio = event.ratioInElement(e, canvas.el),
+                    point_graph = pointRatioToGraphPos(canvas, point_ratio)
 
-                let click_max_dist = calcNodeRadius(canvas_size) + 5
-                click_max_dist /= canvas_size
-                click_max_dist *= state.graph.options.grid_size
+                let click_max_dist = calcNodeRadius(canvas.size) + 5
+                click_max_dist /= canvas.size
+                click_max_dist *= canvas.graph.options.grid_size
 
                 const node = fg.findClosestNodeLinear(
-                    state.graph.nodes,
+                    canvas.graph.nodes,
                     point_graph,
                     click_max_dist,
                 )
 
                 if (node) {
                     to(Mode.DraggingNode, {
-                        canvas: state,
+                        canvas,
+                        trigger,
                         node,
-                        pointer_id,
+                        pointer_id: e.pointerId,
                         point_graph,
                         point_ratio,
                     })
                 } else {
                     to(Mode.MoveDragging, {
                         from: Mode.Default,
-                        canvas: state,
+                        canvas,
+                        trigger,
                         init_ratio: point_ratio,
-                        pointer_id,
+                        pointer_id: e.pointerId,
                     })
                 }
             },
             SPACE(e) {
                 e.preventDefault()
-                to(Mode.MoveSpace, { canvas: state })
+                to(Mode.MoveSpace, { canvas, trigger })
             },
         }
     },
     [Mode.DraggingNode](input, to) {
-        const { canvas, node, pointer_id } = input
+        const { canvas, trigger, node, pointer_id } = input
 
         node.locked = true
         onCleanup(() => (node.locked = false))
@@ -427,7 +458,7 @@ const mode_states: ModeStates = {
             POINTER_UP(e) {
                 if (e instanceof PointerEvent && e.pointerId !== pointer_id) return
 
-                to(Mode.Default, { canvas })
+                to(Mode.Default, { canvas, trigger })
             },
             POINTER_DOWN(e) {
                 e.preventDefault()
@@ -436,6 +467,7 @@ const mode_states: ModeStates = {
                 to(Mode.MoveMultiTouch, {
                     e,
                     canvas,
+                    trigger,
                     from: Mode.Default,
                     pointer_id_0: pointer_id,
                     init_ratio_0: goal_point_ratio,
@@ -443,13 +475,13 @@ const mode_states: ModeStates = {
             },
         }
     },
-    [Mode.MoveSpace]({ canvas }, to) {
+    [Mode.MoveSpace]({ canvas, trigger }, to) {
         return {
             SPACE(e) {
                 e.preventDefault()
             },
             SPACE_UP(e) {
-                to(Mode.Default, { canvas })
+                to(Mode.Default, { canvas, trigger })
             },
             POINTER_DOWN(e) {
                 e.preventDefault()
@@ -457,7 +489,8 @@ const mode_states: ModeStates = {
 
                 to(Mode.MoveDragging, {
                     from: Mode.MoveSpace,
-                    canvas: canvas,
+                    canvas,
+                    trigger,
                     init_ratio: event.ratioInElement(e, canvas.el),
                     pointer_id: e.pointerId,
                 })
@@ -471,35 +504,40 @@ const mode_states: ModeStates = {
 const line_dash_dashed = [8, 16] as const
 const line_dash_empty = [] as const
 
-function updateCanvas(state: CanvasState): void {
-    const { ctx, graph } = state,
-        scale = state.scale.read(),
-        { nodes, edges } = graph,
-        canvas_size = state.size.read(),
-        grid_size = graph.grid.size,
-        grid_pos = state.position.read()
+function updateCanvas(canvas: CanvasState): void {
+    const { ctx, graph, scale, grid_pos } = canvas,
+        { nodes, edges, grid } = graph
 
-    const node_radius = calcNodeRadius(canvas_size)
-    const edge_width = calcEdgeWidth(canvas_size)
+    const node_radius = calcNodeRadius(canvas.size)
+    const edge_width = calcEdgeWidth(canvas.size)
 
     /*
         clear
     */
     ctx.resetTransform()
-    ctx.clearRect(0, 0, canvas_size, canvas_size)
+    ctx.clearRect(0, 0, canvas.size, canvas.size)
 
     /*
-        transform - scale and translate
+        origin (top-left corner) gets shifted away from the center
     */
-    const correct_origin = -(scale - 1) * (canvas_size / 2)
-    ctx.setTransform(
-        scale,
-        0,
-        0,
-        scale,
-        correct_origin - (grid_pos.x / grid_size) * canvas_size * scale,
-        correct_origin - (grid_pos.y / grid_size) * canvas_size * scale,
-    )
+    const correct_origin = (1 - scale) * (canvas.size / 2)
+    let translate_x = correct_origin
+    let translate_y = correct_origin
+
+    /*
+        subtract user position (to move camera in the opposite direction)
+    */
+    const scaled_canvas_size = canvas.size * scale
+    translate_x -= (grid_pos.x / grid.size) * scaled_canvas_size
+    translate_y -= (grid_pos.y / grid.size) * scaled_canvas_size
+
+    /*
+        correct for aspect ratio by shifting the shorter side's axis
+    */
+    translate_x += ((canvas.ar.x - 1) / 2) * canvas.size
+    translate_y += ((canvas.ar.y - 1) / 2) * canvas.size
+
+    ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
 
     /*
         border
@@ -507,7 +545,7 @@ function updateCanvas(state: CanvasState): void {
     ctx.strokeStyle = 'yellow'
     ctx.setLineDash(line_dash_dashed)
     ctx.lineWidth = 1
-    ctx.strokeRect(0, 0, canvas_size, canvas_size)
+    ctx.strokeRect(0, 0, canvas.size, canvas.size)
     ctx.setLineDash(line_dash_empty)
 
     /*
@@ -524,12 +562,12 @@ function updateCanvas(state: CanvasState): void {
         ctx.lineWidth = edge_width
         ctx.beginPath()
         ctx.moveTo(
-            (a.position.x / grid_size) * canvas_size,
-            (a.position.y / grid_size) * canvas_size,
+            (a.position.x / grid.size) * canvas.size,
+            (a.position.y / grid.size) * canvas.size,
         )
         ctx.lineTo(
-            (b.position.x / grid_size) * canvas_size,
-            (b.position.y / grid_size) * canvas_size,
+            (b.position.x / grid.size) * canvas.size,
+            (b.position.y / grid.size) * canvas.size,
         )
         ctx.stroke()
     }
@@ -547,8 +585,8 @@ function updateCanvas(state: CanvasState): void {
             : `rgba(248, 113, 113, ${opacity})`
         ctx.beginPath()
         ctx.ellipse(
-            (x / grid_size) * canvas_size,
-            (y / grid_size) * canvas_size,
+            (x / grid.size) * canvas.size,
+            (y / grid.size) * canvas.size,
             node_radius,
             node_radius,
             0,
@@ -575,15 +613,17 @@ export function CanvasForceGraph(props: {
     const canvas = makeCanvasState(canvas_el, graph)
     if (canvas instanceof Error) throw canvas
 
+    const signal = s.signal()
+    const trigger = () => s.trigger(signal)
+
     {
         const ro = new ResizeObserver(() => {
-            const { width, height } = canvas_el.getBoundingClientRect()
-            const size = Math.min(width, height) * window.devicePixelRatio
+            const pixel_ratio = window.devicePixelRatio
+            const rect = canvas_el.getBoundingClientRect()
 
-            canvas_el.width = size
-            canvas_el.height = size
+            updateCanvasSize(canvas, rect.width * pixel_ratio, rect.height * pixel_ratio)
 
-            s.set(canvas.size, size)
+            trigger()
         })
         ro.observe(canvas_el)
         onCleanup(() => ro.disconnect())
@@ -593,7 +633,7 @@ export function CanvasForceGraph(props: {
         states: mode_states,
         initial: {
             type: Mode.Default,
-            input: { canvas },
+            input: { canvas, trigger },
         },
     })
 
@@ -602,7 +642,7 @@ export function CanvasForceGraph(props: {
             mode.value.POINTER_DOWN?.(e)
         },
         wheel(e) {
-            handleWheelEvent(canvas, e)
+            handleWheelEvent(canvas, trigger, e)
         },
     })
 
@@ -674,9 +714,7 @@ export function CanvasForceGraph(props: {
             if (active()) return
 
             // track changes to the canvas
-            canvas.size.read()
-            canvas.scale.read()
-            canvas.position.read()
+            signal.read()
 
             requestAnimationFrame(() => updateCanvas(canvas))
         })
