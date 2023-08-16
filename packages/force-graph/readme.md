@@ -5,7 +5,7 @@
 TODO:
 
 -   [x] node key
--   [x] node mass
+-   [ ] node mass
 -   [x] delta time (simulation iterations)
 -   [x] grid config
 -   [x] link strength
