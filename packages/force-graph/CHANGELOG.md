@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.1.0
+
+### Minor Changes
+
+-   45e213b: Add canvas rendering to the package
+
 ## 0.0.10
 
 ### Patch Changes
