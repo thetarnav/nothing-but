@@ -65,17 +65,29 @@ function clampCanvasScale(options: CanvasOptions, new_scale: number): number {
     return math.clamp(new_scale, 1, options.max_scale)
 }
 function updateCanvasGridPos(canvas: CanvasState, x: number, y: number): void {
-    const size = canvas.graph.grid.size / 2
-    const scaled_size = size * canvas.scale
-    const correct_origin = scaled_size - size
-    canvas.grid_pos.x = math.clamp(x, size - correct_origin, size + correct_origin)
-    canvas.grid_pos.y = math.clamp(y, size - correct_origin, size + correct_origin)
+    const size = canvas.graph.grid.size,
+        { scale, width, height, grid_pos } = canvas,
+        radius = size / 2,
+        ar_offset_x = arMargin(width / height) * (size / scale),
+        ar_offset_y = arMargin(height / width) * (size / scale)
+
+    grid_pos.x = math.clamp(
+        x,
+        radius / scale - ar_offset_x,
+        radius * 2 - radius / scale + ar_offset_x,
+    )
+    grid_pos.y = math.clamp(
+        y,
+        radius / scale - ar_offset_y,
+        radius * 2 - radius / scale + ar_offset_y,
+    )
 }
 
 function updateCanvasSize(canvas: CanvasState, width: number, height: number): void {
     canvas.width = canvas.el.width = width
     canvas.height = canvas.el.height = height
     canvas.size = Math.max(width, height)
+    updateCanvasGridPos(canvas, canvas.grid_pos.x, canvas.grid_pos.y)
 }
 
 function calcNodeRadius(canvas_size: number): number {
