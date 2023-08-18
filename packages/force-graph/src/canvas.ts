@@ -30,7 +30,8 @@ interface CanvasState {
     graph: fg.Graph
     options: CanvasOptions
     size: number
-    ar: Position
+    width: number
+    height: number
     grid_pos: Position
     /**
      * 1 - max_scale
@@ -49,7 +50,8 @@ function makeCanvasState(options: CanvasOptions): CanvasState | Error {
         graph: options.graph,
         options,
         size: 0,
-        ar: { x: 1, y: 1 },
+        width: 0,
+        height: 0,
         grid_pos: trig.vector(options.init_grid_pos),
         scale: options.init_scale,
     }
@@ -67,17 +69,13 @@ function calcEdgeWidth(canvas_size: number, scale: number): number {
 }
 
 function updateCanvasSize(canvas: CanvasState, width: number, height: number): void {
-    canvas.el.width = width
-    canvas.el.height = height
-
+    canvas.width = canvas.el.width = width
+    canvas.height = canvas.el.height = height
     canvas.size = Math.max(width, height)
+}
 
-    const ar = width / height
-    if (ar < 1) {
-        canvas.ar = { x: ar, y: 1 }
-    } else {
-        canvas.ar = { x: 1, y: height / width }
-    }
+function arMargin(ar: number): number {
+    return (1 - Math.min(1, ar)) / 2
 }
 
 function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Position {
@@ -86,7 +84,7 @@ function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Posi
 }
 
 function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
-    const { scale, grid_pos, ar } = canvas,
+    const { scale, grid_pos, width, height } = canvas,
         grid_size = canvas.graph.grid.size
 
     let x = pos.x
@@ -95,8 +93,8 @@ function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
     /*
         correct for aspect ratio by shifting the shorter side's axis
     */
-    x = x * ar.x + (1 - ar.x) / 2
-    y = y * ar.y + (1 - ar.y) / 2
+    x = x * Math.min(1, width / height) + arMargin(width / height)
+    y = y * Math.min(1, height / width) + arMargin(height / width)
 
     /*
         to graph plane, correct for scale shifting the origin
@@ -635,8 +633,8 @@ function updateCanvas(canvas: CanvasState): void {
     /*
         correct for aspect ratio by shifting the shorter side's axis
     */
-    translate_x += ((canvas.ar.x - 1) / 2) * canvas.size
-    translate_y += ((canvas.ar.y - 1) / 2) * canvas.size
+    translate_x += -arMargin(canvas.width / canvas.height) * canvas.size
+    translate_y += -arMargin(canvas.height / canvas.width) * canvas.size
 
     ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
 
