@@ -59,8 +59,12 @@ function makeCanvasState(options: CanvasOptions): CanvasState | Error {
     return canvas
 }
 
-const calcNodeRadius = (canvas_size: number): number => canvas_size / 240
-const calcEdgeWidth = (canvas_size: number): number => canvas_size / 2000
+function calcNodeRadius(canvas_size: number): number {
+    return canvas_size / 240
+}
+function calcEdgeWidth(canvas_size: number, scale: number): number {
+    return (canvas_size / 8000 / scale) * 3
+}
 
 function updateCanvasSize(canvas: CanvasState, width: number, height: number): void {
     canvas.el.width = width
@@ -523,12 +527,13 @@ export function drawEdges(
     edges: fg.Edge[],
     canvas_size: number,
     grid_size: number,
+    scale: number,
 ): void {
-    const edge_width = calcEdgeWidth(canvas_size)
+    const edge_width = calcEdgeWidth(canvas_size, scale)
 
     for (const { a, b } of edges) {
         const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
-        const opacity = 0.2 + (edges_mod / 10) * 2
+        const opacity = 0.2 + (edges_mod / 10) * 2 * scale
 
         ctx.strokeStyle =
             a.locked || b.locked
@@ -583,6 +588,7 @@ export function drawTextNodes(
     nodes: fg.Node[],
     canvas_size: number,
     grid_size: number,
+    scale: number,
     nodeLabel: (node: fg.Node) => string,
 ): void {
     ctx.textAlign = 'center'
@@ -593,7 +599,7 @@ export function drawTextNodes(
         const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
         const opacity = 0.6 + (edges_mod / 10) * 4
 
-        ctx.font = `${canvas_size / 200 + edges_mod * (canvas_size / 100)}px sans-serif`
+        ctx.font = `${canvas_size / 200 + (edges_mod * (canvas_size / 100)) / scale}px sans-serif`
         ctx.fillStyle = node.locked
             ? `rgba(129, 140, 248, ${opacity})`
             : `rgba(248, 113, 113, ${opacity})`
@@ -646,12 +652,12 @@ function updateCanvas(canvas: CanvasState): void {
     /*
         edges
     */
-    drawEdges(ctx, edges, canvas.size, grid.size)
+    drawEdges(ctx, edges, canvas.size, grid.size, scale)
 
     /*
         nodes
     */
-    drawTextNodes(ctx, nodes, canvas.size, grid.size, canvas.options.getNodeLabel)
+    drawTextNodes(ctx, nodes, canvas.size, grid.size, scale, canvas.options.getNodeLabel)
 }
 
 export function createCanvasForceGraph(options: CanvasOptions): CanvasState | Error {
