@@ -41,6 +41,11 @@ export const App: Component = () => {
         ...default_canvas_options,
         target: canvas,
         graph: force_graph,
+        init_grid_pos: {
+            x: force_graph.grid.size / 2,
+            y: force_graph.grid.size / 2,
+        },
+        // init_scale: 2,
         trackNodes: () => true,
         getNodeLabel: node => String(node.key),
     })

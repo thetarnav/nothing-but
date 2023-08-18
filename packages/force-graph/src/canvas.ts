@@ -7,14 +7,14 @@ import { createEffect, onCleanup } from 'solid-js'
 import * as fg from './index.js'
 
 interface CanvasOptions {
-    target: HTMLCanvasElement
-    graph: fg.Graph
-    max_scale: number
-    init_scale: number
-    init_grid_pos: Position
-    target_fps: number
-    getNodeLabel(node: fg.Node): string
-    trackNodes: () => void
+    readonly target: HTMLCanvasElement
+    readonly graph: fg.Graph
+    readonly max_scale: number
+    readonly init_scale: number
+    readonly init_grid_pos: Position
+    readonly target_fps: number
+    readonly getNodeLabel: (node: fg.Node) => string
+    readonly trackNodes: () => void
 }
 
 export const default_canvas_options = {
@@ -25,10 +25,10 @@ export const default_canvas_options = {
 } as const satisfies Partial<CanvasOptions>
 
 interface CanvasState {
-    el: HTMLCanvasElement
-    ctx: CanvasRenderingContext2D
-    graph: fg.Graph
-    options: CanvasOptions
+    readonly el: HTMLCanvasElement
+    readonly ctx: CanvasRenderingContext2D
+    readonly graph: fg.Graph
+    readonly options: CanvasOptions
     size: number
     width: number
     height: number
@@ -53,7 +53,7 @@ function makeCanvasState(options: CanvasOptions): CanvasState | Error {
         width: 0,
         height: 0,
         grid_pos: trig.vector(options.init_grid_pos),
-        scale: options.init_scale,
+        scale: clampCanvasScale(options, options.init_scale),
     }
 
     updateCanvasSize(canvas, el.width, el.height)
@@ -61,17 +61,28 @@ function makeCanvasState(options: CanvasOptions): CanvasState | Error {
     return canvas
 }
 
-function calcNodeRadius(canvas_size: number): number {
-    return canvas_size / 240
+function clampCanvasScale(options: CanvasOptions, new_scale: number): number {
+    return math.clamp(new_scale, 1, options.max_scale)
 }
-function calcEdgeWidth(canvas_size: number, scale: number): number {
-    return (canvas_size / 8000 / scale) * 3
+function updateCanvasGridPos(canvas: CanvasState, x: number, y: number): void {
+    const size = canvas.graph.grid.size / 2
+    const scaled_size = size * canvas.scale
+    const correct_origin = scaled_size - size
+    canvas.grid_pos.x = math.clamp(x, size - correct_origin, size + correct_origin)
+    canvas.grid_pos.y = math.clamp(y, size - correct_origin, size + correct_origin)
 }
 
 function updateCanvasSize(canvas: CanvasState, width: number, height: number): void {
     canvas.width = canvas.el.width = width
     canvas.height = canvas.el.height = height
     canvas.size = Math.max(width, height)
+}
+
+function calcNodeRadius(canvas_size: number): number {
+    return canvas_size / 240
+}
+function calcEdgeWidth(canvas_size: number, scale: number): number {
+    return (canvas_size / 8000 / scale) * 3
 }
 
 function arMargin(ar: number): number {
@@ -107,8 +118,8 @@ function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
     /*
         add user position
     */
-    x += grid_pos.x
-    y += grid_pos.y
+    x += grid_pos.x - grid_size / 2
+    y += grid_pos.y - grid_size / 2
 
     return { x, y }
 }
@@ -200,8 +211,11 @@ function handleMoveEvent(state: MoveDragging, trigger: VoidFunction, e: PointerE
     const delta = trig.difference(state.init_ratio, ratio)
     trig.multiply(delta, canvas.graph.grid.size / canvas.scale)
 
-    canvas.grid_pos.x = state.init_graph_position.x + delta.x
-    canvas.grid_pos.y = state.init_graph_position.y + delta.y
+    updateCanvasGridPos(
+        canvas,
+        state.init_graph_position.x + delta.x,
+        state.init_graph_position.y + delta.y,
+    )
 
     trigger()
 }
@@ -278,7 +292,8 @@ function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: Poin
     }
 
     let scale = state.init_scale * (trig.distance(ratio_0, ratio_1) / state.init_dist)
-    scale = math.clamp(scale, 1, canvas.options.max_scale)
+    scale = clampCanvasScale(canvas.options, scale)
+    canvas.scale = scale
 
     const delta = trig.average(
         trig.difference(state.init_ratio_0, ratio_0),
@@ -286,9 +301,11 @@ function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: Poin
     )
     trig.multiply(delta, canvas.graph.grid.size / scale)
 
-    canvas.grid_pos.x = state.init_graph_position.x + delta.x
-    canvas.grid_pos.y = state.init_graph_position.y + delta.y
-    canvas.scale = scale
+    updateCanvasGridPos(
+        canvas,
+        state.init_graph_position.x + delta.x,
+        state.init_graph_position.y + delta.y,
+    )
 
     trigger()
 }
@@ -368,14 +385,17 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
         zoom_mod = Math.sin(scale_with_offset * Math.PI)
 
     scale += e.deltaY * -0.005 * zoom_mod
-    scale = math.clamp(scale, 1, canvas.options.max_scale)
+    scale = clampCanvasScale(canvas.options, scale)
     canvas.scale = scale
 
     const graph_point_after = eventToGraphPos(canvas, e)
     const delta = trig.difference(graph_point_before, graph_point_after)
 
-    canvas.grid_pos.x += delta.x + e.deltaX * (0.1 / scale)
-    canvas.grid_pos.y += delta.y
+    updateCanvasGridPos(
+        canvas,
+        canvas.grid_pos.x + delta.x + e.deltaX * (0.1 / scale),
+        canvas.grid_pos.y + delta.y,
+    )
 
     trigger()
 }
@@ -619,16 +639,15 @@ function updateCanvas(canvas: CanvasState): void {
     /*
         origin (top-left corner) gets shifted away from the center
     */
-    const correct_origin = (1 - scale) * (canvas.size / 2)
+    const correct_origin = ((1 - scale) * canvas.size) / 2
     let translate_x = correct_origin
     let translate_y = correct_origin
 
     /*
         subtract user position (to move camera in the opposite direction)
     */
-    const scaled_canvas_size = canvas.size * scale
-    translate_x -= (grid_pos.x / grid.size) * scaled_canvas_size
-    translate_y -= (grid_pos.y / grid.size) * scaled_canvas_size
+    translate_x -= ((grid_pos.x - grid.size / 2) / grid.size) * canvas.size * scale
+    translate_y -= ((grid_pos.y - grid.size / 2) / grid.size) * canvas.size * scale
 
     /*
         correct for aspect ratio by shifting the shorter side's axis
