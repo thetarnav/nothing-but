@@ -1,0 +1,10 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "installCommand": "pnpm i",
+    "buildCommand": "pnpm run build && pnpm -dir packages/force-graph run build:demo",
+    "outputDirectory": "packages/force-graph/dev/dist",
+    "public": true,
+    "github": {
+        "silent": true
+    }
+}
