@@ -15,7 +15,8 @@ TODO:
 -   [x] canvas rendering
     -   [ ] dispaly node labels
     -   [x] custom aspect ratios
-    -   [ ] move to lib
+    -   [x] move to lib
+    -   [ ] remove solid dependency
 -   [x] ~~svg rendering~~ (deprecated for now, canvas is way faster)
 -   [x] interaction
     -   [x] dragging nodes
