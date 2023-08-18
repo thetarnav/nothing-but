@@ -6,13 +6,6 @@ import { createMachine, type MachineStates } from '@solid-primitives/state-machi
 import { createEffect, onCleanup } from 'solid-js'
 import * as fg from './index.js'
 
-export const default_canvas_options = {
-    max_scale: 7,
-    init_scale: 1,
-    init_grid_pos: trig.ZERO,
-    target_fps: 44,
-} as const satisfies Partial<CanvasOptions>
-
 interface CanvasOptions {
     target: HTMLCanvasElement
     graph: fg.Graph
@@ -23,6 +16,13 @@ interface CanvasOptions {
     getNodeLabel(node: fg.Node): string
     trackNodes: () => void
 }
+
+export const default_canvas_options = {
+    max_scale: 7,
+    init_scale: 1,
+    init_grid_pos: trig.ZERO,
+    target_fps: 44,
+} as const satisfies Partial<CanvasOptions>
 
 interface CanvasState {
     el: HTMLCanvasElement
@@ -548,7 +548,7 @@ export function drawEdges(
     }
 }
 
-export function drawNodes(
+export function drawDotNodes(
     ctx: CanvasRenderingContext2D,
     nodes: fg.Node[],
     canvas_size: number,
@@ -575,6 +575,30 @@ export function drawNodes(
             Math.PI * 2,
         )
         ctx.fill()
+    }
+}
+
+export function drawTextNodes(
+    ctx: CanvasRenderingContext2D,
+    nodes: fg.Node[],
+    canvas_size: number,
+    grid_size: number,
+    nodeLabel: (node: fg.Node) => string,
+): void {
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    for (const node of nodes) {
+        const { x, y } = node.position
+        const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
+        const opacity = 0.6 + (edges_mod / 10) * 4
+
+        ctx.font = `${canvas_size / 200 + edges_mod * (canvas_size / 100)}px sans-serif`
+        ctx.fillStyle = node.locked
+            ? `rgba(129, 140, 248, ${opacity})`
+            : `rgba(248, 113, 113, ${opacity})`
+
+        ctx.fillText(nodeLabel(node), (x / grid_size) * canvas_size, (y / grid_size) * canvas_size)
     }
 }
 
@@ -627,7 +651,7 @@ function updateCanvas(canvas: CanvasState): void {
     /*
         nodes
     */
-    drawNodes(ctx, nodes, canvas.size, grid.size)
+    drawTextNodes(ctx, nodes, canvas.size, grid.size, canvas.options.getNodeLabel)
 }
 
 export function createCanvasForceGraph(options: CanvasOptions): CanvasState | Error {
