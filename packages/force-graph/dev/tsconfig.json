@@ -5,5 +5,5 @@
         "jsxImportSource": "solid-js",
         "types": ["vite/client"]
     },
-    "include": [".", "vite.config.ts"]
+    "include": [".", "vite.config.ts", "../src/canvas.ts"]
 }

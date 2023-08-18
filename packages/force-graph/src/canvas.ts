@@ -4,7 +4,7 @@ import type { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
 import { createEffect, onCleanup } from 'solid-js'
-import * as fg from '../src/index.js'
+import * as fg from './index.js'
 
 export const default_canvas_options = {
     max_scale: 7,
@@ -494,7 +494,7 @@ const mode_states: ModeStates = {
             SPACE(e) {
                 e.preventDefault()
             },
-            SPACE_UP(e) {
+            SPACE_UP() {
                 to(Mode.Default, { canvas, trigger })
             },
             POINTER_DOWN(e) {

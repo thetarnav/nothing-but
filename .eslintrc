@@ -1,7 +1,7 @@
 {
     "root": true,
     "parser": "@typescript-eslint/parser",
-    "plugins": ["@typescript-eslint", "no-only-tests", "eslint-comments"],
+    "plugins": ["@typescript-eslint", "no-only-tests", "eslint-comments", "functional"],
     "ignorePatterns": ["node_modules", "dist", "packages/*/dev"],
     "parserOptions": {
         "project": "./tsconfig.json",
@@ -9,9 +9,9 @@
         "sourceType": "module"
     },
     "rules": {
-        "prefer-const": "warn",
         "no-console": "warn",
         "no-debugger": "warn",
+        "prefer-const": "warn",
         "@typescript-eslint/no-unused-vars": [
             "warn",
             {
@@ -23,7 +23,15 @@
         "@typescript-eslint/no-unnecessary-type-assertion": "warn",
         "@typescript-eslint/no-unnecessary-condition": "warn",
         "@typescript-eslint/no-useless-empty-export": "warn",
-        "no-only-tests/no-only-tests": "warn",
-        "eslint-comments/no-unused-disable": "warn"
+        "eslint-comments/no-unused-disable": "warn",
+        /*
+            no throwing errors
+        */
+        "functional/no-throw-statements": "warn",
+        "functional/no-promise-reject": "warn",
+        /*
+            TESTS
+        */
+        "no-only-tests/no-only-tests": "warn"
     }
 }

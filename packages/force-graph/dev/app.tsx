@@ -1,8 +1,8 @@
 import * as S from '@nothing-but/solid/signal'
 import { event } from '@nothing-but/utils'
 import { JSX, type Component } from 'solid-js'
+import { createCanvasForceGraph, default_canvas_options } from '../src/canvas.js'
 import * as FG from '../src/index.js'
-import { createCanvasForceGraph, default_canvas_options } from './display-canvas.js'
 import { getLAGraph } from './init.js'
 
 function Shell(props: { children: JSX.Element }): JSX.Element {
