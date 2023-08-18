@@ -13,7 +13,8 @@ TODO:
 -   [x] stop simulation when inactive (alpha)
 -   [ ] adding/removing nodes
 -   [x] canvas rendering
-    -   [ ] dispaly node labels
+    -   [x] dispaly node labels
+    -   [ ] custom rendering of nodes/edges
     -   [x] custom aspect ratios
     -   [x] move to lib
     -   [ ] remove solid dependency
@@ -31,4 +32,4 @@ TODO:
         -   [x] touch
     -   [ ] hover
     -   [ ] click
-    -   [ ] move to lib
+    -   [ ] seaprate from rendering
