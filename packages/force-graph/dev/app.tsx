@@ -1,11 +1,25 @@
 import * as S from '@nothing-but/solid/signal'
 import { event } from '@nothing-but/utils'
-import { type Component } from 'solid-js'
+import { JSX, type Component } from 'solid-js'
 import * as FG from '../src/index.js'
-import { CanvasForceGraph } from './display-canvas.jsx'
+import { createCanvasForceGraph, default_canvas_options } from './display-canvas.js'
 import { getLAGraph } from './init.js'
 
-const TARGET_FPS = 44
+function Shell(props: { children: JSX.Element }): JSX.Element {
+    return (
+        <div class="min-h-110vh min-w-110vw">
+            <div class="w-screen h-screen center-child flex-col">
+                <div
+                    ref={event.preventMobileScrolling}
+                    class="relative aspect-3/4 sm:aspect-4/3 w-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
+                >
+                    {props.children}
+                </div>
+            </div>
+        </div>
+    )
+}
+
 export const graph_options = FG.makeGraphOptions({
     inertia_strength: 0.3,
     link_strength: 0.012,
@@ -21,24 +35,15 @@ export const App: Component = () => {
 
     const change_signal = S.signal()
 
-    let container!: HTMLDivElement
-    return (
-        <div class="min-h-110vh min-w-110vw">
-            <div class="w-screen h-screen center-child flex-col">
-                <div
-                    ref={el => {
-                        container = el
-                        event.preventMobileScrolling(container)
-                    }}
-                    class="relative aspect-3/4 sm:aspect-4/3 w-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
-                >
-                    <CanvasForceGraph
-                        graph={force_graph}
-                        targetFPS={TARGET_FPS}
-                        trackNodes={change_signal.read}
-                    />
-                </div>
-            </div>
-        </div>
-    )
+    const canvas = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
+
+    const canvas_state = createCanvasForceGraph({
+        ...default_canvas_options,
+        target: canvas,
+        graph: force_graph,
+        trackNodes: () => true,
+        getNodeLabel: node => String(node.key),
+    })
+
+    return <Shell>{canvas}</Shell>
 }

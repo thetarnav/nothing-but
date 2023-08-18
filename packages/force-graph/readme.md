@@ -24,6 +24,7 @@ TODO:
         -   [x] with space
         -   [x] without space
         -   [x] touch
+        -   [ ] clamp to graph
     -   [x] zoom gestures
         -   [x] zoom to mouse position
         -   [x] touch

@@ -3,41 +3,55 @@ import { event, math, trig } from '@nothing-but/utils'
 import type { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
-import { createEffect, createMemo, createSignal, onCleanup, type JSX } from 'solid-js'
-import { Portal } from 'solid-js/web'
+import { createEffect, onCleanup } from 'solid-js'
 import * as fg from '../src/index.js'
+
+export const default_canvas_options = {
+    max_scale: 7,
+    init_scale: 1,
+    init_grid_pos: trig.ZERO,
+    target_fps: 44,
+} as const satisfies Partial<CanvasOptions>
+
+interface CanvasOptions {
+    target: HTMLCanvasElement
+    graph: fg.Graph
+    max_scale: number
+    init_scale: number
+    init_grid_pos: Position
+    target_fps: number
+    getNodeLabel(node: fg.Node): string
+    trackNodes: () => void
+}
 
 interface CanvasState {
     el: HTMLCanvasElement
     ctx: CanvasRenderingContext2D
     graph: fg.Graph
+    options: CanvasOptions
     size: number
     ar: Position
     grid_pos: Position
     /**
-     * min
-     * 1 - 7
-     *     max
+     * 1 - max_scale
      */
-    scale: number // TODO user configurable
+    scale: number
 }
 
-const MIN_SCALE = 1
-const MAX_SCALE = 7
-const SCALE_RANGE = MAX_SCALE - MIN_SCALE
-
-function makeCanvasState(el: HTMLCanvasElement, graph: fg.Graph): CanvasState | Error {
+function makeCanvasState(options: CanvasOptions): CanvasState | Error {
+    const el = options.target
     const ctx = el.getContext('2d')
     if (!ctx) return new Error('Could not get canvas context')
 
     const canvas: CanvasState = {
         el,
-        graph,
         ctx,
+        graph: options.graph,
+        options,
         size: 0,
         ar: { x: 1, y: 1 },
-        grid_pos: { x: 0, y: 0 },
-        scale: 1,
+        grid_pos: trig.vector(options.init_grid_pos),
+        scale: options.init_scale,
     }
 
     updateCanvasSize(canvas, el.width, el.height)
@@ -262,7 +276,7 @@ function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: Poin
     }
 
     let scale = state.init_scale * (trig.distance(ratio_0, ratio_1) / state.init_dist)
-    scale = math.clamp(scale, MIN_SCALE, MAX_SCALE)
+    scale = math.clamp(scale, 1, canvas.options.max_scale)
 
     const delta = trig.average(
         trig.difference(state.init_ratio_0, ratio_0),
@@ -347,12 +361,12 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
         the current zoom need to be converted to a % with a small offset
         because sin(0) = sin(π) = 0 which would completely stop the zooming
     */
-    const offset = 1 / (SCALE_RANGE * 2),
-        scale_with_offset = math.map_range(scale, MIN_SCALE, MAX_SCALE, offset, 1 - offset),
+    const offset = 1 / ((canvas.options.max_scale - 1) * 2),
+        scale_with_offset = math.map_range(scale, 1, canvas.options.max_scale, offset, 1 - offset),
         zoom_mod = Math.sin(scale_with_offset * Math.PI)
-    scale += e.deltaY * -0.005 * zoom_mod
-    scale = math.clamp(scale, MIN_SCALE, MAX_SCALE)
 
+    scale += e.deltaY * -0.005 * zoom_mod
+    scale = math.clamp(scale, 1, canvas.options.max_scale)
     canvas.scale = scale
 
     const graph_point_after = eventToGraphPos(canvas, e)
@@ -504,12 +518,69 @@ const mode_states: ModeStates = {
 const line_dash_dashed = [8, 16] as const
 const line_dash_empty = [] as const
 
+export function drawEdges(
+    ctx: CanvasRenderingContext2D,
+    edges: fg.Edge[],
+    canvas_size: number,
+    grid_size: number,
+): void {
+    const edge_width = calcEdgeWidth(canvas_size)
+
+    for (const { a, b } of edges) {
+        const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
+        const opacity = 0.2 + (edges_mod / 10) * 2
+
+        ctx.strokeStyle =
+            a.locked || b.locked
+                ? `rgba(129, 140, 248, ${opacity})`
+                : `rgba(150, 150, 150, ${opacity})`
+        ctx.lineWidth = edge_width
+        ctx.beginPath()
+        ctx.moveTo(
+            (a.position.x / grid_size) * canvas_size,
+            (a.position.y / grid_size) * canvas_size,
+        )
+        ctx.lineTo(
+            (b.position.x / grid_size) * canvas_size,
+            (b.position.y / grid_size) * canvas_size,
+        )
+        ctx.stroke()
+    }
+}
+
+export function drawNodes(
+    ctx: CanvasRenderingContext2D,
+    nodes: fg.Node[],
+    canvas_size: number,
+    grid_size: number,
+): void {
+    const node_radius = calcNodeRadius(canvas_size)
+
+    for (const node of nodes) {
+        const { x, y } = node.position
+        const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
+        const opacity = 0.6 + (edges_mod / 10) * 4
+
+        ctx.fillStyle = node.locked
+            ? `rgba(129, 140, 248, ${opacity})`
+            : `rgba(248, 113, 113, ${opacity})`
+        ctx.beginPath()
+        ctx.ellipse(
+            (x / grid_size) * canvas_size,
+            (y / grid_size) * canvas_size,
+            node_radius,
+            node_radius,
+            0,
+            0,
+            Math.PI * 2,
+        )
+        ctx.fill()
+    }
+}
+
 function updateCanvas(canvas: CanvasState): void {
     const { ctx, graph, scale, grid_pos } = canvas,
         { nodes, edges, grid } = graph
-
-    const node_radius = calcNodeRadius(canvas.size)
-    const edge_width = calcEdgeWidth(canvas.size)
 
     /*
         clear
@@ -551,67 +622,19 @@ function updateCanvas(canvas: CanvasState): void {
     /*
         edges
     */
-    for (const { a, b } of edges) {
-        const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
-        const opacity = 0.2 + (edges_mod / 10) * 2
-
-        ctx.strokeStyle =
-            a.locked || b.locked
-                ? `rgba(129, 140, 248, ${opacity})`
-                : `rgba(150, 150, 150, ${opacity})`
-        ctx.lineWidth = edge_width
-        ctx.beginPath()
-        ctx.moveTo(
-            (a.position.x / grid.size) * canvas.size,
-            (a.position.y / grid.size) * canvas.size,
-        )
-        ctx.lineTo(
-            (b.position.x / grid.size) * canvas.size,
-            (b.position.y / grid.size) * canvas.size,
-        )
-        ctx.stroke()
-    }
+    drawEdges(ctx, edges, canvas.size, grid.size)
 
     /*
         nodes
     */
-    for (const node of nodes) {
-        const { x, y } = node.position
-        const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
-        const opacity = 0.6 + (edges_mod / 10) * 4
-
-        ctx.fillStyle = node.locked
-            ? `rgba(129, 140, 248, ${opacity})`
-            : `rgba(248, 113, 113, ${opacity})`
-        ctx.beginPath()
-        ctx.ellipse(
-            (x / grid.size) * canvas.size,
-            (y / grid.size) * canvas.size,
-            node_radius,
-            node_radius,
-            0,
-            0,
-            Math.PI * 2,
-        )
-        ctx.fill()
-    }
+    drawNodes(ctx, nodes, canvas.size, grid.size)
 }
 
-export function CanvasForceGraph(props: {
-    graph: fg.Graph
-    trackNodes: () => void
-    targetFPS?: number
-}): JSX.Element {
-    const { graph, targetFPS = 44, trackNodes } = props
+export function createCanvasForceGraph(options: CanvasOptions): CanvasState | Error {
+    const { target: el, graph } = options
 
-    const init_size = graph.options.grid_size
-
-    const canvas_el = (
-        <canvas class="absolute w-full h-full" width={init_size} height={init_size} />
-    ) as HTMLCanvasElement
-
-    const canvas = makeCanvasState(canvas_el, graph)
-    if (canvas instanceof Error) throw canvas
+    const canvas = makeCanvasState(options)
+    if (canvas instanceof Error) return canvas
 
     const signal = s.signal()
     const trigger = () => s.trigger(signal)
@@ -619,13 +642,13 @@ export function CanvasForceGraph(props: {
     {
         const ro = new ResizeObserver(() => {
             const pixel_ratio = window.devicePixelRatio
-            const rect = canvas_el.getBoundingClientRect()
+            const rect = el.getBoundingClientRect()
 
             updateCanvasSize(canvas, rect.width * pixel_ratio, rect.height * pixel_ratio)
 
             trigger()
         })
-        ro.observe(canvas_el)
+        ro.observe(el)
         onCleanup(() => ro.disconnect())
     }
 
@@ -637,7 +660,7 @@ export function CanvasForceGraph(props: {
         },
     })
 
-    createEventListenerMap(canvas_el, {
+    createEventListenerMap(el, {
         pointerdown(e) {
             mode.value.POINTER_DOWN?.(e)
         },
@@ -679,50 +702,41 @@ export function CanvasForceGraph(props: {
         },
     })
 
-    /*
-        DEBUG
-    */
-    ;<Portal>
-        <div class="fixed top-5 left-5">{mode.type}</div>
-    </Portal>
+    const animation = fg.makeFrameAnimation(graph, () => updateCanvas(canvas), options.target_fps)
+    updateCanvas(canvas)
 
-    {
-        const animation = fg.makeFrameAnimation(graph, () => updateCanvas(canvas), targetFPS)
-        updateCanvas(canvas)
+    const init = s.memo(() => {
+        options.trackNodes() // track changes to nodes
 
-        const init = createMemo(() => {
-            trackNodes() // track changes to nodes
+        const init = s.signal(true)
+        const timeout = setTimeout(() => s.set(init, false), 2000)
+        onCleanup(() => clearTimeout(timeout))
 
-            const [init, setInit] = createSignal(true)
-            const timeout = setTimeout(() => setInit(false), 2000)
-            onCleanup(() => clearTimeout(timeout))
+        return init.read
+    })
 
-            return init
-        })
+    const active = s.memo(() => mode.type === Mode.DraggingNode || init.read()())
 
-        const active = createMemo(() => mode.type === Mode.DraggingNode || init()())
+    createEffect(() => {
+        if (active.read()) {
+            fg.startFrameAnimation(animation)
+        } else {
+            fg.pauseFrameAnimation(animation)
+        }
+    })
 
-        createEffect(() => {
-            if (active()) {
-                fg.startFrameAnimation(animation)
-            } else {
-                fg.pauseFrameAnimation(animation)
-            }
-        })
+    createEffect(() => {
+        if (active.read()) return
 
-        createEffect(() => {
-            if (active()) return
+        // track changes to the canvas
+        signal.read()
 
-            // track changes to the canvas
-            signal.read()
+        requestAnimationFrame(() => updateCanvas(canvas))
+    })
 
-            requestAnimationFrame(() => updateCanvas(canvas))
-        })
+    onCleanup(() => {
+        fg.stopFrameAnimation(animation)
+    })
 
-        onCleanup(() => {
-            fg.stopFrameAnimation(animation)
-        })
-    }
-
-    return canvas_el
+    return canvas
 }
