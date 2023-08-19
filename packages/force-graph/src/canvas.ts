@@ -1,5 +1,5 @@
 import * as s from '@nothing-but/solid/signal'
-import { event, math, trig } from '@nothing-but/utils'
+import { event, math, misc, trig } from '@nothing-but/utils'
 import type { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
@@ -16,6 +16,7 @@ interface CanvasOptions {
     readonly target_fps: number
     readonly nodeLabel: (node: fg.Node) => string
     readonly trackNodes: () => void
+    readonly onNodeClick: (node: fg.Node) => void
 }
 
 export const default_canvas_options = {
@@ -23,6 +24,8 @@ export const default_canvas_options = {
     init_scale: 1,
     init_grid_pos: trig.ZERO,
     target_fps: 44,
+    nodeLabel: (node: fg.Node) => String(node.key),
+    onNodeClick: misc.noop,
 } as const satisfies Partial<CanvasOptions>
 
 interface CanvasState {
@@ -173,7 +176,7 @@ type ModeStates = MachineStates<{
         to: Mode.Default | Mode.MoveMultiTouch
         input: BaseInput & {
             node: fg.Node
-            pointer_id: number
+            e: PointerEvent
             point_graph: Position
             point_ratio: Position
         }
@@ -464,7 +467,7 @@ const mode_states: ModeStates = {
                         canvas,
                         trigger,
                         node,
-                        pointer_id: e.pointerId,
+                        e,
                         point_graph,
                         point_ratio,
                     })
@@ -485,7 +488,7 @@ const mode_states: ModeStates = {
         }
     },
     [Mode.DraggingNode](input, to) {
-        const { canvas, trigger, node, pointer_id } = input
+        const { canvas, trigger, node } = input
 
         node.anchor = true
         onCleanup(() => (node.anchor = false))
@@ -496,7 +499,7 @@ const mode_states: ModeStates = {
         let goal_point_ratio = input.point_ratio
 
         /*
-            Smoothly move the node to the pointer position
+        Smoothly move the node to the pointer position
         */
         const interval = setInterval(() => {
             trig.multiply(goal_node_pos_delta, 0.95)
@@ -516,12 +519,25 @@ const mode_states: ModeStates = {
         })
         onCleanup(() => clearInterval(interval))
 
+        let click_prevented = false
+
+        const pointer_id = input.e.pointerId
+        const down_event_pos = { x: input.e.clientX, y: input.e.clientY }
+
         createEventListener(document, 'pointermove', e => {
             if (e.pointerId !== pointer_id) return
 
             goal_point_ratio = event.ratioInElement(e, canvas.options.el)
             goal_graph_node_pos = pointRatioToGraphPos(canvas, goal_point_ratio)
             const graph_node_pos = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
+
+            if (!click_prevented) {
+                const dist = trig.distance(down_event_pos, { x: e.clientX, y: e.clientY })
+
+                if (dist > 14) {
+                    click_prevented = true
+                }
+            }
 
             fg.changeNodePosition(
                 canvas.options.graph.grid,
@@ -534,6 +550,10 @@ const mode_states: ModeStates = {
         return {
             POINTER_UP(e) {
                 if (e instanceof PointerEvent && e.pointerId !== pointer_id) return
+
+                if (!click_prevented) {
+                    canvas.options.onNodeClick(node)
+                }
 
                 to(Mode.Default, input)
             },

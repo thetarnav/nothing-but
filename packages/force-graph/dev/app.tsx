@@ -51,7 +51,9 @@ export const App: Component = () => {
         // },
         init_scale: 2,
         trackNodes: () => true,
-        nodeLabel: node => String(node.key),
+        onNodeClick: node => {
+            console.log('click', node)
+        },
     })
 
     return <Shell>{canvas}</Shell>

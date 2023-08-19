@@ -14,6 +14,7 @@ TODO:
 -   [ ] link directions (arrows)
 -   [x] stop simulation when inactive (alpha)
 -   [ ] adding/removing nodes
+-   [ ] make the graph bigger
 -   [x] canvas rendering
     -   [x] dispaly node labels
     -   [ ] custom rendering of nodes/edges
@@ -33,5 +34,5 @@ TODO:
         -   [x] zoom to mouse position
         -   [x] touch
     -   [x] hover
-    -   [ ] click
+    -   [x] click
     -   [ ] seaprate from rendering
