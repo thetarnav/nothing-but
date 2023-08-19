@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.1.1
+
+### Patch Changes
+
+-   da0db62: Hover and API change
+
 ## 0.1.0
 
 ### Minor Changes
