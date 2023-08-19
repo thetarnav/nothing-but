@@ -45,11 +45,11 @@ export const App: Component = () => {
         el: canvas,
         ctx,
         graph: force_graph,
-        init_grid_pos: {
-            x: force_graph.grid.size / 2,
-            y: force_graph.grid.size / 2,
-        },
-        // init_scale: 2,
+        // init_grid_pos: {
+        //     x: force_graph.grid.size / 2,
+        //     y: force_graph.grid.size / 2,
+        // },
+        init_scale: 2,
         trackNodes: () => true,
         nodeLabel: node => String(node.key),
     })

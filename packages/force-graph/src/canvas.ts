@@ -30,7 +30,11 @@ interface CanvasState {
     size: number
     width: number
     height: number
-    grid_pos: Position
+    /**
+     * camera translate from the center of the canvas in graph plane
+     * Default: `{ x: 0, y: 0 }`
+     */
+    translate: Position
     /**
      * from 1 to max_scale
      */
@@ -46,7 +50,7 @@ function makeCanvasState(options: CanvasOptions): CanvasState {
         size: 0,
         width: 0,
         height: 0,
-        grid_pos: trig.vector(options.init_grid_pos),
+        translate: trig.vector(options.init_grid_pos),
         scale: clampCanvasScale(options, options.init_scale),
         hover_node: null,
     }
@@ -59,22 +63,22 @@ function makeCanvasState(options: CanvasOptions): CanvasState {
 function clampCanvasScale(options: CanvasOptions, new_scale: number): number {
     return math.clamp(new_scale, 1, options.max_scale)
 }
-function updateCanvasGridPos(canvas: CanvasState, x: number, y: number): void {
+function updateTranslate(canvas: CanvasState, x: number, y: number): void {
     const size = canvas.options.graph.grid.size,
-        { scale, width, height, grid_pos } = canvas,
+        { scale, width, height, translate } = canvas,
         radius = size / 2,
         ar_offset_x = arMargin(width / height) * (size / scale),
         ar_offset_y = arMargin(height / width) * (size / scale)
 
-    grid_pos.x = math.clamp(
+    translate.x = math.clamp(
         x,
-        radius / scale - ar_offset_x,
-        radius * 2 - radius / scale + ar_offset_x,
+        radius / scale - radius - ar_offset_x,
+        radius - radius / scale + ar_offset_x,
     )
-    grid_pos.y = math.clamp(
+    translate.y = math.clamp(
         y,
-        radius / scale - ar_offset_y,
-        radius * 2 - radius / scale + ar_offset_y,
+        radius / scale - radius - ar_offset_y,
+        radius - radius / scale + ar_offset_y,
     )
 }
 
@@ -82,7 +86,7 @@ function updateCanvasSize(canvas: CanvasState, width: number, height: number): v
     canvas.width = canvas.options.el.width = width
     canvas.height = canvas.options.el.height = height
     canvas.size = Math.max(width, height)
-    updateCanvasGridPos(canvas, canvas.grid_pos.x, canvas.grid_pos.y)
+    updateTranslate(canvas, canvas.translate.x, canvas.translate.y)
 }
 
 function nodeRadius(canvas_size: number): number {
@@ -108,7 +112,7 @@ function eventToGraphPos(canvas: CanvasState, e: PointerEvent | WheelEvent | Mou
 }
 
 function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
-    const { scale, grid_pos, width, height } = canvas,
+    const { scale, translate: grid_pos, width, height } = canvas,
         grid_size = canvas.options.graph.grid.size
 
     let x = pos.x
@@ -131,8 +135,8 @@ function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
     /*
         add user position
     */
-    x += grid_pos.x - grid_size / 2
-    y += grid_pos.y - grid_size / 2
+    x += grid_pos.x
+    y += grid_pos.y
 
     return { x, y }
 }
@@ -224,7 +228,7 @@ function handleMoveEvent(state: MoveDragging, trigger: VoidFunction, e: PointerE
     const delta = trig.difference(state.init_ratio, ratio)
     trig.multiply(delta, canvas.options.graph.grid.size / canvas.scale)
 
-    updateCanvasGridPos(
+    updateTranslate(
         canvas,
         state.init_graph_position.x + delta.x,
         state.init_graph_position.y + delta.y,
@@ -241,7 +245,7 @@ const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
         from: input.from,
         init_ratio: input.init_ratio,
         last_ratio: input.init_ratio,
-        init_graph_position: trig.vector(input.canvas.grid_pos),
+        init_graph_position: trig.vector(input.canvas.translate),
         pointer_id: input.pointer_id,
     }
 
@@ -311,7 +315,7 @@ function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: Poin
     )
     trig.multiply(delta, canvas.options.graph.grid.size / scale)
 
-    updateCanvasGridPos(
+    updateTranslate(
         canvas,
         state.init_graph_position.x + delta.x,
         state.init_graph_position.y + delta.y,
@@ -336,7 +340,7 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
         last_ratio_1: init_ratio_1,
         init_scale: canvas.scale,
         init_dist: trig.distance(init_ratio_0, init_ratio_1),
-        init_graph_position: trig.vector(canvas.grid_pos),
+        init_graph_position: trig.vector(canvas.translate),
     }
 
     createEventListener(document, 'pointermove', e => {
@@ -401,10 +405,10 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
     const graph_point_after = eventToGraphPos(canvas, e)
     const delta = trig.difference(graph_point_before, graph_point_after)
 
-    updateCanvasGridPos(
+    updateTranslate(
         canvas,
-        canvas.grid_pos.x + delta.x + e.deltaX * (0.1 / scale),
-        canvas.grid_pos.y + delta.y,
+        canvas.translate.x + delta.x + e.deltaX * (0.1 / scale),
+        canvas.translate.y + delta.y,
     )
 
     trigger()
@@ -651,9 +655,9 @@ export function drawTextNodes(canvas: CanvasState): void {
     }
 }
 
-function updateCanvas(canvas: CanvasState, options: CanvasOptions): void {
+function drawCanvas(canvas: CanvasState, options: CanvasOptions): void {
     const { ctx, graph } = options,
-        { scale, grid_pos } = canvas
+        { scale, translate: grid_pos } = canvas
 
     /*
         clear
@@ -671,8 +675,8 @@ function updateCanvas(canvas: CanvasState, options: CanvasOptions): void {
     /*
         subtract user position (to move camera in the opposite direction)
     */
-    translate_x -= ((grid_pos.x - graph.grid.size / 2) / graph.grid.size) * canvas.size * scale
-    translate_y -= ((grid_pos.y - graph.grid.size / 2) / graph.grid.size) * canvas.size * scale
+    translate_x -= (grid_pos.x / graph.grid.size) * canvas.size * scale
+    translate_y -= (grid_pos.y / graph.grid.size) * canvas.size * scale
 
     /*
         correct for aspect ratio by shifting the shorter side's axis
@@ -764,7 +768,7 @@ export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
         },
     })
 
-    const boundUpdateCanvas = () => updateCanvas(canvas, options)
+    const boundUpdateCanvas = () => drawCanvas(canvas, options)
 
     const animation = fg.makeFrameAnimation(graph, boundUpdateCanvas, options.target_fps)
     boundUpdateCanvas()
