@@ -14,7 +14,7 @@ interface CanvasOptions {
     readonly init_scale: number
     readonly init_grid_pos: Position
     readonly target_fps: number
-    readonly getNodeLabel: (node: fg.Node) => string
+    readonly nodeLabel: (node: fg.Node) => string
     readonly trackNodes: () => void
 }
 
@@ -32,9 +32,10 @@ interface CanvasState {
     height: number
     grid_pos: Position
     /**
-     * 1 - max_scale
+     * from 1 to max_scale
      */
     scale: number
+    hover_node: fg.Node | null
 }
 
 function makeCanvasState(options: CanvasOptions): CanvasState {
@@ -47,6 +48,7 @@ function makeCanvasState(options: CanvasOptions): CanvasState {
         height: 0,
         grid_pos: trig.vector(options.init_grid_pos),
         scale: clampCanvasScale(options, options.init_scale),
+        hover_node: null,
     }
 
     updateCanvasSize(canvas, el.width, el.height)
@@ -412,22 +414,30 @@ const mode_states: ModeStates = {
     [Mode.Default](input, to) {
         const { canvas, trigger } = input
 
-        // createEventListener(canvas.el, 'mousemove', e => {
-        //     if (e.buttons !== 0) return
+        createEventListener(canvas.options.el, 'mousemove', e => {
+            if (e.buttons !== 0) return
 
-        //     const point_graph = eventToGraphPos(canvas, e)
-        //     const pointer_node_radius = pointerNodeRadius(canvas.size, canvas.graph.grid.size)
+            const point_graph = eventToGraphPos(canvas, e)
+            const pointer_node_radius = pointerNodeRadius(
+                canvas.size,
+                canvas.options.graph.grid.size,
+            )
 
-        //     const node = fg.findClosestNodeLinear(
-        //         canvas.graph.nodes,
-        //         point_graph,
-        //         pointer_node_radius,
-        //     )
+            const node = fg.findClosestNodeLinear(
+                canvas.options.graph.nodes,
+                point_graph,
+                pointer_node_radius,
+            )
 
-        //     if (node) {
-        //     } else {
-        //     }
-        // })
+            const prev_hover_node = canvas.hover_node
+            if (prev_hover_node === node) return
+
+            canvas.hover_node = node ?? null
+            trigger()
+        })
+        onCleanup(() => {
+            canvas.hover_node = null
+        })
 
         return {
             POINTER_DOWN(e) {
@@ -473,11 +483,8 @@ const mode_states: ModeStates = {
     [Mode.DraggingNode](input, to) {
         const { canvas, trigger, node, pointer_id } = input
 
-        node.locked = true
-        onCleanup(() => (node.locked = false))
-
-        document.body.style.cursor = 'grabbing'
-        onCleanup(() => (document.body.style.cursor = 'default'))
+        node.anchor = true
+        onCleanup(() => (node.anchor = false))
 
         const goal_node_pos_delta = trig.difference(input.point_graph, node.position)
 
@@ -563,60 +570,50 @@ const mode_states: ModeStates = {
     [Mode.MoveMultiTouch]: moveMultiTouch,
 }
 
-const line_dash_dashed = [8, 16] as const
-const line_dash_empty = [] as const
+export function drawEdges(canvas: CanvasState): void {
+    const { ctx, graph } = canvas.options
 
-export function drawEdges(
-    ctx: CanvasRenderingContext2D,
-    edges: fg.Edge[],
-    canvas_size: number,
-    grid_size: number,
-    scale: number,
-): void {
-    const edge_width = edgeWidth(canvas_size, scale)
+    const edge_width = edgeWidth(canvas.size, canvas.scale)
 
-    for (const { a, b } of edges) {
+    for (const { a, b } of graph.edges) {
         const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
-        const opacity = 0.2 + (edges_mod / 10) * 2 * scale
+        const opacity = 0.2 + (edges_mod / 10) * 2 * canvas.scale
 
         ctx.strokeStyle =
-            a.locked || b.locked
+            a.anchor || b.anchor
                 ? `rgba(129, 140, 248, ${opacity})`
                 : `rgba(150, 150, 150, ${opacity})`
         ctx.lineWidth = edge_width
         ctx.beginPath()
         ctx.moveTo(
-            (a.position.x / grid_size) * canvas_size,
-            (a.position.y / grid_size) * canvas_size,
+            (a.position.x / graph.grid.size) * canvas.size,
+            (a.position.y / graph.grid.size) * canvas.size,
         )
         ctx.lineTo(
-            (b.position.x / grid_size) * canvas_size,
-            (b.position.y / grid_size) * canvas_size,
+            (b.position.x / graph.grid.size) * canvas.size,
+            (b.position.y / graph.grid.size) * canvas.size,
         )
         ctx.stroke()
     }
 }
 
-export function drawDotNodes(
-    ctx: CanvasRenderingContext2D,
-    nodes: fg.Node[],
-    canvas_size: number,
-    grid_size: number,
-): void {
-    const node_radius = nodeRadius(canvas_size)
+export function drawDotNodes(canvas: CanvasState): void {
+    const { ctx, graph } = canvas.options
 
-    for (const node of nodes) {
+    const node_radius = nodeRadius(canvas.size)
+
+    for (const node of graph.nodes) {
         const { x, y } = node.position
         const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
         const opacity = 0.6 + (edges_mod / 10) * 4
 
-        ctx.fillStyle = node.locked
+        ctx.fillStyle = node.anchor
             ? `rgba(129, 140, 248, ${opacity})`
             : `rgba(248, 113, 113, ${opacity})`
         ctx.beginPath()
         ctx.ellipse(
-            (x / grid_size) * canvas_size,
-            (y / grid_size) * canvas_size,
+            (x / graph.grid.size) * canvas.size,
+            (y / graph.grid.size) * canvas.size,
             node_radius,
             node_radius,
             0,
@@ -627,81 +624,73 @@ export function drawDotNodes(
     }
 }
 
-export function drawTextNodes(
-    ctx: CanvasRenderingContext2D,
-    nodes: fg.Node[],
-    canvas_size: number,
-    grid_size: number,
-    scale: number,
-    nodeLabel: (node: fg.Node) => string,
-): void {
+export function drawTextNodes(canvas: CanvasState): void {
+    const { ctx, graph, nodeLabel } = canvas.options
+
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
 
-    for (const node of nodes) {
+    for (const node of graph.nodes) {
         const { x, y } = node.position
         const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
         const opacity = 0.6 + (edges_mod / 10) * 4
 
-        ctx.font = `${canvas_size / 200 + (edges_mod * (canvas_size / 100)) / scale}px sans-serif`
-        ctx.fillStyle = node.locked
-            ? `rgba(129, 140, 248, ${opacity})`
-            : `rgba(248, 113, 113, ${opacity})`
+        ctx.font = `${
+            canvas.size / 200 + (edges_mod * (canvas.size / 100)) / canvas.scale
+        }px sans-serif`
+        ctx.fillStyle =
+            node.anchor || canvas.hover_node === node
+                ? `rgba(129, 140, 248, ${opacity})`
+                : `rgba(248, 113, 113, ${opacity})`
 
-        ctx.fillText(nodeLabel(node), (x / grid_size) * canvas_size, (y / grid_size) * canvas_size)
+        ctx.fillText(
+            nodeLabel(node),
+            (x / graph.grid.size) * canvas.size,
+            (y / graph.grid.size) * canvas.size,
+        )
     }
 }
 
-function updateCanvas(state: CanvasState, options: CanvasOptions): void {
+function updateCanvas(canvas: CanvasState, options: CanvasOptions): void {
     const { ctx, graph } = options,
-        { scale, grid_pos } = state,
-        { nodes, edges, grid } = graph
+        { scale, grid_pos } = canvas
 
     /*
         clear
     */
     ctx.resetTransform()
-    ctx.clearRect(0, 0, state.size, state.size)
+    ctx.clearRect(0, 0, canvas.size, canvas.size)
 
     /*
         origin (top-left corner) gets shifted away from the center
     */
-    const correct_origin = ((1 - scale) * state.size) / 2
+    const correct_origin = ((1 - scale) * canvas.size) / 2
     let translate_x = correct_origin
     let translate_y = correct_origin
 
     /*
         subtract user position (to move camera in the opposite direction)
     */
-    translate_x -= ((grid_pos.x - grid.size / 2) / grid.size) * state.size * scale
-    translate_y -= ((grid_pos.y - grid.size / 2) / grid.size) * state.size * scale
+    translate_x -= ((grid_pos.x - graph.grid.size / 2) / graph.grid.size) * canvas.size * scale
+    translate_y -= ((grid_pos.y - graph.grid.size / 2) / graph.grid.size) * canvas.size * scale
 
     /*
         correct for aspect ratio by shifting the shorter side's axis
     */
-    translate_x += -arMargin(state.width / state.height) * state.size
-    translate_y += -arMargin(state.height / state.width) * state.size
+    translate_x += -arMargin(canvas.width / canvas.height) * canvas.size
+    translate_y += -arMargin(canvas.height / canvas.width) * canvas.size
 
     ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
 
     /*
-        border
-    */
-    ctx.strokeStyle = 'yellow'
-    ctx.setLineDash(line_dash_dashed)
-    ctx.lineWidth = 1
-    ctx.strokeRect(0, 0, state.size, state.size)
-    ctx.setLineDash(line_dash_empty)
-
-    /*
         edges
     */
-    drawEdges(ctx, edges, state.size, grid.size, scale)
+    drawEdges(canvas)
 
     /*
         nodes
     */
-    drawTextNodes(ctx, nodes, state.size, grid.size, scale, options.getNodeLabel)
+    drawTextNodes(canvas)
 }
 
 export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
@@ -805,6 +794,7 @@ export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
 
         // track changes to the canvas
         signal.read()
+        mode()
 
         requestAnimationFrame(boundUpdateCanvas)
     })

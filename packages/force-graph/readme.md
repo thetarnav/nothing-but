@@ -32,6 +32,6 @@ TODO:
     -   [x] zoom gestures
         -   [x] zoom to mouse position
         -   [x] touch
-    -   [ ] hover
+    -   [x] hover
     -   [ ] click
     -   [ ] seaprate from rendering

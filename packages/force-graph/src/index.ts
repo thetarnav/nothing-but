@@ -162,7 +162,7 @@ export interface Node {
     /**
      * Do not change the position of this node.
      */
-    locked: boolean
+    anchor: boolean
     /**
      * Has the node moved since the last frame?
      *
@@ -177,7 +177,7 @@ export function makeNode(key?: string | number | undefined): Node {
         position: { x: 0, y: 0 },
         velocity: { x: 0, y: 0 },
         edges: [],
-        locked: false,
+        anchor: false,
         moved: false,
     }
 }
@@ -485,12 +485,12 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
     }
 
     for (const node of nodes) {
-        const { velocity, position, locked } = node
+        const { velocity, position } = node
 
         /*
             commit and sort
         */
-        if (!locked) {
+        if (!node.anchor) {
             if (velocity.x * velocity.x + velocity.y * velocity.y > options.min_move) {
                 changeNodePosition(grid, node, position.x + velocity.x, position.y + velocity.y)
             }

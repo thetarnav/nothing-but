@@ -51,7 +51,7 @@ export const App: Component = () => {
         },
         // init_scale: 2,
         trackNodes: () => true,
-        getNodeLabel: node => String(node.key),
+        nodeLabel: node => String(node.key),
     })
 
     return <Shell>{canvas}</Shell>
