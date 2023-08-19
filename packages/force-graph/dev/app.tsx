@@ -37,9 +37,13 @@ export const App: Component = () => {
 
     const canvas = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('no context')
+
     const canvas_state = createCanvasForceGraph({
         ...default_canvas_options,
-        target: canvas,
+        el: canvas,
+        ctx,
         graph: force_graph,
         init_grid_pos: {
             x: force_graph.grid.size / 2,
