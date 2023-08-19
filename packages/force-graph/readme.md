@@ -2,6 +2,8 @@
 
 **`@nothing-but/force-graph`**
 
+https://nothing-but.vercel.app
+
 TODO:
 
 -   [x] node key

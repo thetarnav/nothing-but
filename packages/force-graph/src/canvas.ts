@@ -90,10 +90,16 @@ function updateCanvasSize(canvas: CanvasState, width: number, height: number): v
     updateCanvasGridPos(canvas, canvas.grid_pos.x, canvas.grid_pos.y)
 }
 
-function calcNodeRadius(canvas_size: number): number {
+function nodeRadius(canvas_size: number): number {
     return canvas_size / 240
 }
-function calcEdgeWidth(canvas_size: number, scale: number): number {
+function pointerNodeRadius(canvas_size: number, grid_size: number): number {
+    const radius = nodeRadius(canvas_size)
+    const margin = 5
+    return ((radius + margin) / canvas_size) * grid_size
+}
+
+function edgeWidth(canvas_size: number, scale: number): number {
     return (canvas_size / 8000 / scale) * 3
 }
 
@@ -101,7 +107,7 @@ function arMargin(ar: number): number {
     return (1 - Math.min(1, ar)) / 2
 }
 
-function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent): Position {
+function eventToGraphPos(state: CanvasState, e: PointerEvent | WheelEvent | MouseEvent): Position {
     const ratio = event.ratioInElement(e, state.el)
     return pointRatioToGraphPos(state, ratio)
 }
@@ -258,9 +264,6 @@ const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
             to(input.from, { canvas, trigger })
         },
         POINTER_DOWN(e) {
-            e.preventDefault()
-            e.stopPropagation()
-
             to(Mode.MoveMultiTouch, {
                 e,
                 canvas,
@@ -414,22 +417,34 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
 
 const mode_states: ModeStates = {
     [Mode.Default]({ canvas, trigger }, to) {
+        // createEventListener(canvas.el, 'mousemove', e => {
+        //     if (e.buttons !== 0) return
+
+        //     const point_graph = eventToGraphPos(canvas, e)
+        //     const pointer_node_radius = pointerNodeRadius(canvas.size, canvas.graph.grid.size)
+
+        //     const node = fg.findClosestNodeLinear(
+        //         canvas.graph.nodes,
+        //         point_graph,
+        //         pointer_node_radius,
+        //     )
+
+        //     if (node) {
+        //     } else {
+        //     }
+        // })
+
         return {
             POINTER_DOWN(e) {
-                e.preventDefault()
-                e.stopPropagation()
-
                 const point_ratio = event.ratioInElement(e, canvas.el),
                     point_graph = pointRatioToGraphPos(canvas, point_ratio)
 
-                let click_max_dist = calcNodeRadius(canvas.size) + 5
-                click_max_dist /= canvas.size
-                click_max_dist *= canvas.graph.options.grid_size
+                const pointer_node_radius = pointerNodeRadius(canvas.size, canvas.graph.grid.size)
 
                 const node = fg.findClosestNodeLinear(
                     canvas.graph.nodes,
                     point_graph,
-                    click_max_dist,
+                    pointer_node_radius,
                 )
 
                 if (node) {
@@ -463,6 +478,9 @@ const mode_states: ModeStates = {
         node.locked = true
         onCleanup(() => (node.locked = false))
 
+        document.body.style.cursor = 'grabbing'
+        onCleanup(() => (document.body.style.cursor = 'default'))
+
         const goal_node_pos_delta = trig.difference(input.point_graph, node.position)
 
         let goal_graph_node_pos = input.point_graph
@@ -492,9 +510,6 @@ const mode_states: ModeStates = {
         createEventListener(document, 'pointermove', e => {
             if (e.pointerId !== pointer_id) return
 
-            e.preventDefault()
-            e.stopPropagation()
-
             goal_point_ratio = event.ratioInElement(e, canvas.el)
             goal_graph_node_pos = pointRatioToGraphPos(canvas, goal_point_ratio)
             const graph_node_pos = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
@@ -509,9 +524,6 @@ const mode_states: ModeStates = {
                 to(Mode.Default, { canvas, trigger })
             },
             POINTER_DOWN(e) {
-                e.preventDefault()
-                e.stopPropagation()
-
                 to(Mode.MoveMultiTouch, {
                     e,
                     canvas,
@@ -532,9 +544,6 @@ const mode_states: ModeStates = {
                 to(Mode.Default, { canvas, trigger })
             },
             POINTER_DOWN(e) {
-                e.preventDefault()
-                e.stopPropagation()
-
                 to(Mode.MoveDragging, {
                     from: Mode.MoveSpace,
                     canvas,
@@ -559,7 +568,7 @@ export function drawEdges(
     grid_size: number,
     scale: number,
 ): void {
-    const edge_width = calcEdgeWidth(canvas_size, scale)
+    const edge_width = edgeWidth(canvas_size, scale)
 
     for (const { a, b } of edges) {
         const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
@@ -589,7 +598,7 @@ export function drawDotNodes(
     canvas_size: number,
     grid_size: number,
 ): void {
-    const node_radius = calcNodeRadius(canvas_size)
+    const node_radius = nodeRadius(canvas_size)
 
     for (const node of nodes) {
         const { x, y } = node.position
