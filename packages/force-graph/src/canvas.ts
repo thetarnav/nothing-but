@@ -4,19 +4,28 @@ import type { Position } from '@nothing-but/utils/types'
 import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
 import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
 import { createEffect, onCleanup } from 'solid-js'
-import * as fg from './index.js'
+import {
+    Graph,
+    Node,
+    changeNodePosition,
+    findClosestNodeLinear,
+    makeFrameAnimation,
+    pauseFrameAnimation,
+    startFrameAnimation,
+    stopFrameAnimation,
+} from './index.js'
 
 interface CanvasOptions {
     readonly el: HTMLCanvasElement
     readonly ctx: CanvasRenderingContext2D
-    readonly graph: fg.Graph
+    readonly graph: Graph
     readonly max_scale: number
     readonly init_scale: number
     readonly init_grid_pos: Position
     readonly target_fps: number
-    readonly nodeLabel: (node: fg.Node) => string
+    readonly nodeLabel: (node: Node) => string
     readonly trackNodes: () => void
-    readonly onNodeClick: (node: fg.Node) => void
+    readonly onNodeClick: (node: Node) => void
 }
 
 export const default_canvas_options = {
@@ -24,7 +33,7 @@ export const default_canvas_options = {
     init_scale: 1,
     init_grid_pos: trig.ZERO,
     target_fps: 44,
-    nodeLabel: (node: fg.Node) => String(node.key),
+    nodeLabel: (node: Node) => String(node.key),
     onNodeClick: misc.noop,
 } as const satisfies Partial<CanvasOptions>
 
@@ -42,7 +51,8 @@ interface CanvasState {
      * from 1 to max_scale
      */
     scale: number
-    hover_node: fg.Node | null
+    // TODO this should be a part of render & interaction connection
+    hoveredNode(): Node | null
 }
 
 function makeCanvasState(options: CanvasOptions): CanvasState {
@@ -55,7 +65,9 @@ function makeCanvasState(options: CanvasOptions): CanvasState {
         height: 0,
         translate: trig.vector(options.init_grid_pos),
         scale: clampCanvasScale(options, options.init_scale),
-        hover_node: null,
+        hoveredNode() {
+            return null
+        },
     }
 
     updateCanvasSize(canvas, el.width, el.height)
@@ -170,12 +182,12 @@ type ModeStates = MachineStates<{
     [Mode.Default]: {
         to: Mode.DraggingNode | Mode.MoveSpace | Mode.MoveDragging
         input: BaseInput
-        value: Events
+        value: DefaultMode
     }
     [Mode.DraggingNode]: {
         to: Mode.Default | Mode.MoveMultiTouch
         input: BaseInput & {
-            node: fg.Node
+            node: Node
             e: PointerEvent
             point_graph: Position
             point_ratio: Position
@@ -207,6 +219,10 @@ type ModeStates = MachineStates<{
         value: Events
     }
 }>
+
+interface DefaultMode extends Events {
+    hover_node: Node | null
+}
 
 interface MoveDragging {
     canvas: CanvasState
@@ -421,32 +437,8 @@ const mode_states: ModeStates = {
     [Mode.Default](input, to) {
         const { canvas, trigger } = input
 
-        createEventListener(canvas.options.el, 'mousemove', e => {
-            if (e.buttons !== 0) return
-
-            const point_graph = eventToGraphPos(canvas, e)
-            const pointer_node_radius = pointerNodeRadius(
-                canvas.size,
-                canvas.options.graph.grid.size,
-            )
-
-            const node = fg.findClosestNodeLinear(
-                canvas.options.graph.nodes,
-                point_graph,
-                pointer_node_radius,
-            )
-
-            const prev_hover_node = canvas.hover_node
-            if (prev_hover_node === node) return
-
-            canvas.hover_node = node ?? null
-            trigger()
-        })
-        onCleanup(() => {
-            canvas.hover_node = null
-        })
-
-        return {
+        const value: DefaultMode = {
+            hover_node: null,
             POINTER_DOWN(e) {
                 const point_ratio = event.ratioInElement(e, canvas.options.el),
                     point_graph = pointRatioToGraphPos(canvas, point_ratio)
@@ -456,7 +448,7 @@ const mode_states: ModeStates = {
                     canvas.options.graph.grid.size,
                 )
 
-                const node = fg.findClosestNodeLinear(
+                const node = findClosestNodeLinear(
                     canvas.options.graph.nodes,
                     point_graph,
                     pointer_node_radius,
@@ -486,6 +478,33 @@ const mode_states: ModeStates = {
                 to(Mode.MoveSpace, input)
             },
         }
+
+        createEventListener(canvas.options.el, 'mousemove', e => {
+            if (e.buttons !== 0) return
+
+            const point_graph = eventToGraphPos(canvas, e)
+            const pointer_node_radius = pointerNodeRadius(
+                canvas.size,
+                canvas.options.graph.grid.size,
+            )
+
+            const node = findClosestNodeLinear(
+                canvas.options.graph.nodes,
+                point_graph,
+                pointer_node_radius,
+            )
+
+            const prev_hover_node = value.hover_node
+            if (prev_hover_node === node) return
+
+            value.hover_node = node ?? null
+            trigger()
+        })
+        onCleanup(() => {
+            value.hover_node = null
+        })
+
+        return value
     },
     [Mode.DraggingNode](input, to) {
         const { canvas, trigger, node } = input
@@ -503,7 +522,7 @@ const mode_states: ModeStates = {
         */
         const interval = setInterval(() => {
             trig.multiply(goal_node_pos_delta, 0.95)
-            fg.changeNodePosition(
+            changeNodePosition(
                 canvas.options.graph.grid,
                 node,
                 goal_graph_node_pos.x - goal_node_pos_delta.x,
@@ -539,12 +558,7 @@ const mode_states: ModeStates = {
                 }
             }
 
-            fg.changeNodePosition(
-                canvas.options.graph.grid,
-                node,
-                graph_node_pos.x,
-                graph_node_pos.y,
-            )
+            changeNodePosition(canvas.options.graph.grid, node, graph_node_pos.x, graph_node_pos.y)
         })
 
         return {
@@ -649,6 +663,8 @@ export function drawDotNodes(canvas: CanvasState): void {
 export function drawTextNodes(canvas: CanvasState): void {
     const { ctx, graph, nodeLabel } = canvas.options
 
+    const hovered_node = canvas.hoveredNode()
+
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
 
@@ -660,7 +676,7 @@ export function drawTextNodes(canvas: CanvasState): void {
             canvas.size / 200 + (((node.mass - 1) / 5) * (canvas.size / 100)) / canvas.scale
         }px sans-serif`
         ctx.fillStyle =
-            node.anchor || canvas.hover_node === node
+            node.anchor || hovered_node === node
                 ? `rgba(129, 140, 248, ${opacity})`
                 : `rgba(248, 113, 113, ${opacity})`
 
@@ -743,6 +759,8 @@ export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
         },
     })
 
+    canvas.hoveredNode = () => (mode.type === Mode.Default ? mode.value.hover_node : null)
+
     createEventListenerMap(el, {
         pointerdown(e) {
             mode.value.POINTER_DOWN?.(e)
@@ -787,7 +805,7 @@ export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
 
     const boundUpdateCanvas = () => drawCanvas(canvas, options)
 
-    const animation = fg.makeFrameAnimation(graph, boundUpdateCanvas, options.target_fps)
+    const animation = makeFrameAnimation(graph, boundUpdateCanvas, options.target_fps)
     boundUpdateCanvas()
 
     const init = s.memo(() => {
@@ -804,9 +822,9 @@ export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
 
     createEffect(() => {
         if (active.read()) {
-            fg.startFrameAnimation(animation)
+            startFrameAnimation(animation)
         } else {
-            fg.pauseFrameAnimation(animation)
+            pauseFrameAnimation(animation)
         }
     })
 
@@ -821,7 +839,7 @@ export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
     })
 
     onCleanup(() => {
-        fg.stopFrameAnimation(animation)
+        stopFrameAnimation(animation)
     })
 
     return canvas
