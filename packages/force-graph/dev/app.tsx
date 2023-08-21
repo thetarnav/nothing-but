@@ -22,7 +22,6 @@ function Shell(props: { children: JSX.Element }): JSX.Element {
 
 export const graph_options = FG.makeGraphOptions({
     inertia_strength: 0.3,
-    link_strength: 0.012,
     origin_strength: 0.01,
     repel_distance: 22,
     repel_strength: 0.5,

@@ -169,6 +169,7 @@ export interface Node {
      * This value is not changed back to `false` automatically. Change it manually if you handled the movement.
      */
     moved: boolean
+    mass: number
 }
 
 export function makeNode(key?: string | number | undefined): Node {
@@ -179,6 +180,7 @@ export function makeNode(key?: string | number | undefined): Node {
         edges: [],
         anchor: false,
         moved: false,
+        mass: 1,
     }
 }
 
@@ -220,6 +222,10 @@ export function disconnect(a: Node, b: Node): void {
             }
         }
     }
+}
+
+export function nodeMassFromEdges(edges_length: number): number {
+    return Math.log2(edges_length + 1)
 }
 
 /**
@@ -389,10 +395,10 @@ export function pushNodesAway(
         mx = (dx / d) * force,
         my = (dy / d) * force
 
-    a.velocity.x += mx
-    a.velocity.y += my
-    b.velocity.x -= mx
-    b.velocity.y -= my
+    a.velocity.x += (mx / a.mass) * b.mass
+    a.velocity.y += (my / a.mass) * b.mass
+    b.velocity.x -= (mx / b.mass) * a.mass
+    b.velocity.y -= (my / b.mass) * a.mass
 }
 
 /**
@@ -413,8 +419,8 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
         /*
             towards the origin
         */
-        velocity.x += (grid.size / 2 - x) * options.origin_strength * alpha
-        velocity.y += (grid.size / 2 - y) * options.origin_strength * alpha
+        velocity.x += ((grid.size / 2 - x) * options.origin_strength * alpha) / node.mass
+        velocity.y += ((grid.size / 2 - y) * options.origin_strength * alpha) / node.mass
 
         /*
             away from other nodes
@@ -475,13 +481,10 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
         const dx = (b.position.x - a.position.x) * options.link_strength * strength * alpha
         const dy = (b.position.y - a.position.y) * options.link_strength * strength * alpha
 
-        const a_edges_mod = (a.edges.length + 2) / 3
-        const b_edges_mod = (b.edges.length + 2) / 3
-
-        a.velocity.x += dx / a_edges_mod
-        a.velocity.y += dy / a_edges_mod
-        b.velocity.x -= dx / b_edges_mod
-        b.velocity.y -= dy / b_edges_mod
+        a.velocity.x += dx / a.mass / a.mass
+        a.velocity.y += dy / a.mass / a.mass
+        b.velocity.x -= dx / b.mass / b.mass
+        b.velocity.y -= dy / b.mass / b.mass
     }
 
     for (const node of nodes) {

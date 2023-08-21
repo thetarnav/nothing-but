@@ -7,7 +7,7 @@ https://nothing-but.vercel.app
 TODO:
 
 -   [x] node key
--   [ ] node mass
+-   [x] node mass
 -   [x] delta time (simulation iterations)
 -   [x] grid config
 -   [x] link strength
@@ -36,3 +36,5 @@ TODO:
     -   [x] hover
     -   [x] click
     -   [ ] seaprate from rendering
+-   [ ] bugs
+    -   [ ] lifting ctrl when dragging isn't captured

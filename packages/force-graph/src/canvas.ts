@@ -600,8 +600,7 @@ export function drawEdges(canvas: CanvasState): void {
     const edge_width = edgeWidth(canvas.size, canvas.scale)
 
     for (const { a, b } of graph.edges) {
-        const edges_mod = math.clamp(a.edges.length + b.edges.length, 1, 30) / 30
-        const opacity = 0.2 + (edges_mod / 10) * 2 * canvas.scale
+        const opacity = 0.2 + ((a.mass + b.mass - 2) / 100) * 2 * canvas.scale
 
         ctx.strokeStyle =
             a.anchor || b.anchor
@@ -628,8 +627,7 @@ export function drawDotNodes(canvas: CanvasState): void {
 
     for (const node of graph.nodes) {
         const { x, y } = node.position
-        const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
-        const opacity = 0.6 + (edges_mod / 10) * 4
+        const opacity = 0.6 + (node.mass / 10) * 4
 
         ctx.fillStyle = node.anchor
             ? `rgba(129, 140, 248, ${opacity})`
@@ -656,11 +654,10 @@ export function drawTextNodes(canvas: CanvasState): void {
 
     for (const node of graph.nodes) {
         const { x, y } = node.position
-        const edges_mod = math.clamp(node.edges.length, 1, 30) / 30
-        const opacity = 0.6 + (edges_mod / 10) * 4
+        const opacity = 0.6 + ((node.mass - 1) / 50) * 4
 
         ctx.font = `${
-            canvas.size / 200 + (edges_mod * (canvas.size / 100)) / canvas.scale
+            canvas.size / 200 + (((node.mass - 1) / 5) * (canvas.size / 100)) / canvas.scale
         }px sans-serif`
         ctx.fillStyle =
             node.anchor || canvas.hover_node === node
