@@ -121,23 +121,37 @@ function arMargin(ar: number): number {
     return (1 - Math.min(1, ar)) / 2
 }
 
-function eventToGraphPos(canvas: CanvasState, e: PointerEvent | WheelEvent | MouseEvent): Position {
+function eventToPointRatio(
+    canvas: CanvasState,
+    e: PointerEvent | WheelEvent | MouseEvent,
+): Position {
+    const { width, height } = canvas
+
     const ratio = event.ratioInElement(e, canvas.options.el)
-    return pointRatioToGraphPos(canvas, ratio)
-}
-
-function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
-    const { scale, translate: grid_pos, width, height } = canvas,
-        grid_size = canvas.options.graph.grid.size
-
-    let x = pos.x
-    let y = pos.y
 
     /*
         correct for aspect ratio by shifting the shorter side's axis
     */
-    x = x * Math.min(1, width / height) + arMargin(width / height)
-    y = y * Math.min(1, height / width) + arMargin(height / width)
+    ratio.x = ratio.x * Math.min(1, width / height) + arMargin(width / height)
+    ratio.y = ratio.y * Math.min(1, height / width) + arMargin(height / width)
+
+    return ratio
+}
+
+function eventToPointGraph(
+    canvas: CanvasState,
+    e: PointerEvent | WheelEvent | MouseEvent,
+): Position {
+    const ratio = eventToPointRatio(canvas, e)
+    return pointRatioToGraph(canvas, ratio)
+}
+
+function pointRatioToGraph(canvas: CanvasState, pos: Position): Position {
+    const { scale, translate } = canvas,
+        grid_size = canvas.options.graph.grid.size
+
+    let x = pos.x
+    let y = pos.y
 
     /*
         to graph plane, correct for scale shifting the origin
@@ -150,8 +164,8 @@ function pointRatioToGraphPos(canvas: CanvasState, pos: Position): Position {
     /*
         add user position
     */
-    x += grid_pos.x
-    y += grid_pos.y
+    x += translate.x
+    y += translate.y
 
     return { x, y }
 }
@@ -241,7 +255,7 @@ function handleMoveEvent(state: MoveDragging, trigger: VoidFunction, e: PointerE
 
     const { canvas } = state
 
-    const ratio = event.ratioInElement(e, canvas.options.el)
+    const ratio = eventToPointRatio(canvas, e)
     state.last_ratio = ratio
 
     const delta = trig.difference(state.init_ratio, ratio)
@@ -324,9 +338,9 @@ function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: Poin
     let ratio_1 = state.last_ratio_1
 
     if (e.pointerId === state.pointer_id_0) {
-        state.last_ratio_0 = ratio_0 = event.ratioInElement(e, canvas.options.el)
+        state.last_ratio_0 = ratio_0 = eventToPointRatio(canvas, e)
     } else {
-        state.last_ratio_1 = ratio_1 = event.ratioInElement(e, canvas.options.el)
+        state.last_ratio_1 = ratio_1 = eventToPointRatio(canvas, e)
     }
 
     let scale = state.init_scale * (trig.distance(ratio_0, ratio_1) / state.init_dist)
@@ -352,7 +366,7 @@ const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
     const { canvas, trigger } = input
 
     const init_ratio_0 = input.init_ratio_0
-    const init_ratio_1 = event.ratioInElement(input.e, canvas.options.el)
+    const init_ratio_1 = eventToPointRatio(canvas, input.e)
 
     const state: MultiTouch = {
         canvas,
@@ -408,7 +422,7 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
     /*
         keep the same graph point under the cursor
     */
-    const graph_point_before = eventToGraphPos(canvas, e)
+    const graph_point_before = eventToPointGraph(canvas, e)
 
     let { scale } = canvas
 
@@ -426,7 +440,7 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
     scale = clampCanvasScale(canvas.options, scale)
     canvas.scale = scale
 
-    const graph_point_after = eventToGraphPos(canvas, e)
+    const graph_point_after = eventToPointGraph(canvas, e)
     const delta = trig.difference(graph_point_before, graph_point_after)
 
     updateTranslate(
@@ -445,8 +459,8 @@ const mode_states: ModeStates = {
         const value: DefaultMode = {
             hover_node: null,
             POINTER_DOWN(e) {
-                const point_ratio = event.ratioInElement(e, canvas.options.el),
-                    point_graph = pointRatioToGraphPos(canvas, point_ratio)
+                const point_ratio = eventToPointRatio(canvas, e),
+                    point_graph = pointRatioToGraph(canvas, point_ratio)
 
                 const pointer_node_radius = pointerNodeRadius(
                     canvas.size,
@@ -487,7 +501,7 @@ const mode_states: ModeStates = {
         createEventListener(canvas.options.el, 'mousemove', e => {
             if (e.buttons !== 0) return
 
-            const point_graph = eventToGraphPos(canvas, e)
+            const point_graph = eventToPointGraph(canvas, e)
             const pointer_node_radius = pointerNodeRadius(
                 canvas.size,
                 canvas.options.graph.grid.size,
@@ -551,8 +565,8 @@ const mode_states: ModeStates = {
         createEventListener(document, 'pointermove', e => {
             if (e.pointerId !== pointer_id) return
 
-            goal_point_ratio = event.ratioInElement(e, canvas.options.el)
-            goal_graph_node_pos = pointRatioToGraphPos(canvas, goal_point_ratio)
+            goal_point_ratio = eventToPointRatio(canvas, e)
+            goal_graph_node_pos = pointRatioToGraph(canvas, goal_point_ratio)
             const graph_node_pos = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
 
             if (!click_prevented) {
@@ -603,7 +617,7 @@ const mode_states: ModeStates = {
                     from: Mode.MoveSpace,
                     canvas,
                     trigger,
-                    init_ratio: event.ratioInElement(e, canvas.options.el),
+                    init_ratio: eventToPointRatio(canvas, e),
                     pointer_id: e.pointerId,
                 })
             },
