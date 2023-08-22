@@ -36,5 +36,3 @@ TODO:
     -   [x] hover
     -   [x] click
     -   [ ] seaprate from rendering
--   [ ] bugs
-    -   [ ] lifting ctrl when dragging isn't captured

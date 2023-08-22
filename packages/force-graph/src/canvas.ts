@@ -272,14 +272,19 @@ const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
         handleMoveEvent(state, trigger, e)
     })
 
+    let space_lifted = false
+
     return {
         SPACE(e) {
             e.preventDefault()
         },
+        SPACE_UP() {
+            space_lifted = true
+        },
         POINTER_UP(e) {
             if (e instanceof PointerEvent && e.pointerId !== input.pointer_id) return
 
-            to(input.from, input)
+            to(space_lifted ? Mode.Default : input.from, input)
         },
         POINTER_DOWN(e) {
             to(Mode.MoveMultiTouch, {
