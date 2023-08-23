@@ -1,6 +1,6 @@
-import { math } from '@nothing-but/utils'
+import {math} from '@nothing-but/utils'
 import * as fg from '../src/index.js'
-import { graph_options } from './app.jsx'
+import {graph_options} from './app.jsx'
 import la_raw from './la.json'
 
 export function getLAGraph() {
@@ -39,7 +39,7 @@ export function getLAGraph() {
 }
 
 export function generateInitialGraph(length: number = 256): fg.Graph {
-    const nodes: fg.Node[] = Array.from({ length }, fg.makeNode)
+    const nodes: fg.Node[] = Array.from({length}, fg.makeNode)
 
     const edges: fg.Edge[] = []
 

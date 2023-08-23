@@ -1,9 +1,9 @@
 import * as s from '@nothing-but/solid/signal'
-import { event, math, misc, trig } from '@nothing-but/utils'
-import type { Position } from '@nothing-but/utils/types'
-import { createEventListener, createEventListenerMap } from '@solid-primitives/event-listener'
-import { createMachine, type MachineStates } from '@solid-primitives/state-machine'
-import { createEffect, onCleanup } from 'solid-js'
+import {event, math, misc, trig} from '@nothing-but/utils'
+import type {Position} from '@nothing-but/utils/types'
+import {createEventListener, createEventListenerMap} from '@solid-primitives/event-listener'
+import {createMachine, type MachineStates} from '@solid-primitives/state-machine'
+import {createEffect, onCleanup} from 'solid-js'
 import {
     Graph,
     Node,
@@ -80,7 +80,7 @@ function clampCanvasScale(options: CanvasOptions, new_scale: number): number {
 }
 function updateTranslate(canvas: CanvasState, x: number, y: number): void {
     const size = canvas.options.graph.grid.size,
-        { scale, width, height, translate } = canvas,
+        {scale, width, height, translate} = canvas,
         radius = size / 2,
         ar_offset_x = arMargin(width / height) * (size / scale),
         ar_offset_y = arMargin(height / width) * (size / scale)
@@ -125,7 +125,7 @@ function eventToPointRatio(
     canvas: CanvasState,
     e: PointerEvent | WheelEvent | MouseEvent,
 ): Position {
-    const { width, height } = canvas
+    const {width, height} = canvas
 
     const ratio = event.ratioInElement(e, canvas.options.el)
 
@@ -147,7 +147,7 @@ function eventToPointGraph(
 }
 
 function pointRatioToGraph(canvas: CanvasState, pos: Position): Position {
-    const { scale, translate } = canvas,
+    const {scale, translate} = canvas,
         grid_size = canvas.options.graph.grid.size
 
     let x = pos.x
@@ -167,7 +167,7 @@ function pointRatioToGraph(canvas: CanvasState, pos: Position): Position {
     x += translate.x
     y += translate.y
 
-    return { x, y }
+    return {x, y}
 }
 
 interface BaseInput {
@@ -253,7 +253,7 @@ function handleMoveEvent(state: MoveDragging, trigger: VoidFunction, e: PointerE
     e.preventDefault()
     e.stopPropagation()
 
-    const { canvas } = state
+    const {canvas} = state
 
     const ratio = eventToPointRatio(canvas, e)
     state.last_ratio = ratio
@@ -271,7 +271,7 @@ function handleMoveEvent(state: MoveDragging, trigger: VoidFunction, e: PointerE
 }
 
 const moveDragging: ModeStates[Mode.MoveDragging] = (input, to) => {
-    const { canvas, trigger } = input
+    const {canvas, trigger} = input
 
     const state: MoveDragging = {
         canvas: canvas,
@@ -332,7 +332,7 @@ function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: Poin
     e.preventDefault()
     e.stopPropagation()
 
-    const { canvas } = state
+    const {canvas} = state
 
     let ratio_0 = state.last_ratio_0
     let ratio_1 = state.last_ratio_1
@@ -363,7 +363,7 @@ function handleMultiTouchEvent(state: MultiTouch, trigger: VoidFunction, e: Poin
 }
 
 const moveMultiTouch: ModeStates[Mode.MoveMultiTouch] = (input, to) => {
-    const { canvas, trigger } = input
+    const {canvas, trigger} = input
 
     const init_ratio_0 = input.init_ratio_0
     const init_ratio_1 = eventToPointRatio(canvas, input.e)
@@ -424,7 +424,7 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
     */
     const graph_point_before = eventToPointGraph(canvas, e)
 
-    let { scale } = canvas
+    let {scale} = canvas
 
     /*
         Use a sine function slow down the zooming as it gets closer to the min and max zoom
@@ -454,7 +454,7 @@ function handleWheelEvent(canvas: CanvasState, trigger: VoidFunction, e: WheelEv
 
 const mode_states: ModeStates = {
     [Mode.Default](input, to) {
-        const { canvas, trigger } = input
+        const {canvas, trigger} = input
 
         const value: DefaultMode = {
             hover_node: null,
@@ -526,7 +526,7 @@ const mode_states: ModeStates = {
         return value
     },
     [Mode.DraggingNode](input, to) {
-        const { canvas, trigger, node } = input
+        const {canvas, trigger, node} = input
 
         node.anchor = true
         onCleanup(() => (node.anchor = false))
@@ -560,7 +560,7 @@ const mode_states: ModeStates = {
         let click_prevented = false
 
         const pointer_id = input.e.pointerId
-        const down_event_pos = { x: input.e.clientX, y: input.e.clientY }
+        const down_event_pos = {x: input.e.clientX, y: input.e.clientY}
 
         createEventListener(document, 'pointermove', e => {
             if (e.pointerId !== pointer_id) return
@@ -570,7 +570,7 @@ const mode_states: ModeStates = {
             const graph_node_pos = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
 
             if (!click_prevented) {
-                const dist = trig.distance(down_event_pos, { x: e.clientX, y: e.clientY })
+                const dist = trig.distance(down_event_pos, {x: e.clientX, y: e.clientY})
 
                 if (dist > 14) {
                     click_prevented = true
@@ -603,7 +603,7 @@ const mode_states: ModeStates = {
         }
     },
     [Mode.MoveSpace](input, to) {
-        const { canvas, trigger } = input
+        const {canvas, trigger} = input
 
         return {
             SPACE(e) {
@@ -628,11 +628,11 @@ const mode_states: ModeStates = {
 }
 
 export function drawEdges(canvas: CanvasState): void {
-    const { ctx, graph } = canvas.options
+    const {ctx, graph} = canvas.options
 
     const edge_width = edgeWidth(canvas.size, canvas.scale)
 
-    for (const { a, b } of graph.edges) {
+    for (const {a, b} of graph.edges) {
         const opacity = 0.2 + ((a.mass + b.mass - 2) / 100) * 2 * canvas.scale
 
         ctx.strokeStyle =
@@ -654,12 +654,12 @@ export function drawEdges(canvas: CanvasState): void {
 }
 
 export function drawDotNodes(canvas: CanvasState): void {
-    const { ctx, graph } = canvas.options
+    const {ctx, graph} = canvas.options
 
     const node_radius = nodeRadius(canvas.size)
 
     for (const node of graph.nodes) {
-        const { x, y } = node.position
+        const {x, y} = node.position
         const opacity = 0.6 + (node.mass / 10) * 4
 
         ctx.fillStyle = node.anchor
@@ -680,7 +680,7 @@ export function drawDotNodes(canvas: CanvasState): void {
 }
 
 export function drawTextNodes(canvas: CanvasState): void {
-    const { ctx, graph, nodeLabel } = canvas.options
+    const {ctx, graph, nodeLabel} = canvas.options
 
     const hovered_node = canvas.hoveredNode()
 
@@ -688,7 +688,7 @@ export function drawTextNodes(canvas: CanvasState): void {
     ctx.textBaseline = 'middle'
 
     for (const node of graph.nodes) {
-        const { x, y } = node.position
+        const {x, y} = node.position
         const opacity = 0.6 + ((node.mass - 1) / 50) * 4
 
         ctx.font = `${
@@ -708,8 +708,8 @@ export function drawTextNodes(canvas: CanvasState): void {
 }
 
 function drawCanvas(canvas: CanvasState, options: CanvasOptions): void {
-    const { ctx, graph } = options,
-        { scale, translate: grid_pos } = canvas
+    const {ctx, graph} = options,
+        {scale, translate: grid_pos} = canvas
 
     /*
         clear
@@ -750,7 +750,7 @@ function drawCanvas(canvas: CanvasState, options: CanvasOptions): void {
 }
 
 export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
-    const { el: el, graph } = options
+    const {el, graph} = options
 
     const canvas = makeCanvasState(options)
 
@@ -774,7 +774,7 @@ export function createCanvasForceGraph(options: CanvasOptions): CanvasState {
         states: mode_states,
         initial: {
             type: Mode.Default,
-            input: { canvas, trigger },
+            input: {canvas, trigger},
         },
     })
 

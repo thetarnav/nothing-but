@@ -59,7 +59,7 @@ export type NonIterable<T> = T & {
 
 /** Get the required keys of an object */
 export type RequiredKeys<T> = keyof {
-    [K in keyof T as T extends { [_ in K]: unknown } ? K : never]: 0
+    [K in keyof T as T extends {[_ in K]: unknown} ? K : never]: 0
 }
 
 /** `A | B => A & B` */
@@ -72,16 +72,16 @@ export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) ex
 export type ExtractIfPossible<T, U> = Extract<T, U> extends never ? U : Extract<T, U>
 
 /** Unwraps the type definition of an object, making it more readable */
-export type Simplify<T> = T extends object ? { [K in keyof T]: T[K] } : T
+export type Simplify<T> = T extends object ? {[K in keyof T]: T[K]} : T
 /** Unboxes type definition, making it more readable */
 export type UnboxLazy<T> = T extends () => infer U ? U : T
 
-export type Prettify<T> = { [K in keyof T]: T[K] } & {}
+export type Prettify<T> = {[K in keyof T]: T[K]} & {}
 
 type RawNarrow<T> =
     | (T extends [] ? [] : never)
     | (T extends string | number | bigint | boolean ? T : never)
-    | { [K in keyof T]: T[K] extends Function ? T[K] : RawNarrow<T[K]> }
+    | {[K in keyof T]: T[K] extends Function ? T[K] : RawNarrow<T[K]>}
 
 export type Narrow<T extends any> = T extends [] ? T : RawNarrow<T>
 

@@ -1,6 +1,6 @@
-import { resolveElements } from '@solid-primitives/refs'
-import { createRootPool, type RootPoolFactory } from '@solid-primitives/rootless'
-import { createEffect, createMemo, createSignal, onCleanup, onMount, type JSX } from 'solid-js'
+import {resolveElements} from '@solid-primitives/refs'
+import {createRootPool, type RootPoolFactory} from '@solid-primitives/rootless'
+import {createEffect, createMemo, createSignal, onCleanup, onMount, type JSX} from 'solid-js'
 import * as FG from '../src/index.js'
 
 export function SvgForceGraph(props: {
@@ -24,11 +24,11 @@ export function SvgForceGraph(props: {
     function updateElements() {
         const els = nodeEls(),
             line_els = lines(),
-            { nodes, edges, options } = props.graph,
-            { grid_size } = options
+            {nodes, edges, options} = props.graph,
+            {grid_size} = options
 
         for (let i = 0; i < edges.length; i++) {
-            const { a, b } = edges[i]!
+            const {a, b} = edges[i]!
             const line = line_els[i]!
 
             if (a.moved) {
@@ -47,7 +47,7 @@ export function SvgForceGraph(props: {
 
             if (!node.moved) continue
 
-            const { x, y } = node.position
+            const {x, y} = node.position
             const el = els[i]! as HTMLElement
 
             el.style.left = posToP(x, grid_size)

@@ -1,7 +1,7 @@
-import type { Position } from './types.js'
+import type {Position} from './types.js'
 
-export const PASSIVE = { passive: true } as const
-export const NOT_PASSIVE = { passive: false } as const
+export const PASSIVE = {passive: true} as const
+export const NOT_PASSIVE = {passive: false} as const
 
 export function preventCancelable(e: Event): Event {
     if (e.cancelable) e.preventDefault()
@@ -29,7 +29,7 @@ export function preventMobileScrolling(container: HTMLElement): void {
 }
 
 export function ratioInElement(
-    e: { readonly clientX: number; readonly clientY: number },
+    e: {readonly clientX: number; readonly clientY: number},
     el: HTMLElement,
 ): Position {
     const rect = el.getBoundingClientRect()

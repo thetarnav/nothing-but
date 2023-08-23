@@ -1,4 +1,4 @@
-import type { Position } from './types.js'
+import type {Position} from './types.js'
 
 /**
  * Represents a template string type in the format `(${number}, ${number})`.
@@ -51,7 +51,7 @@ export class Vector {
         return `(${this.x}, ${this.y})`
     }
     toJSON(): Position {
-        return { x: this.x, y: this.y }
+        return {x: this.x, y: this.y}
     }
 }
 
@@ -207,7 +207,7 @@ export function angle(a: Position, b: Position): number {
  * The first vector is **mutated**.
  */
 export function rotate(point: Vector, rad: number): void {
-    const { x, y } = point,
+    const {x, y} = point,
         cos = Math.cos(rad),
         sin = Math.sin(rad)
     point.x = x * cos - y * sin
@@ -222,8 +222,8 @@ export function rotate(point: Vector, rad: number): void {
  * @param rad - The angle of rotation in radians.
  */
 export function rotate_around(point: Vector, origin: Vector, rad: number): void {
-    const { x, y } = point,
-        { x: ox, y: oy } = origin,
+    const {x, y} = point,
+        {x: ox, y: oy} = origin,
         cos = Math.cos(rad),
         sin = Math.sin(rad)
     point.x = ox + (x - ox) * cos - (y - oy) * sin

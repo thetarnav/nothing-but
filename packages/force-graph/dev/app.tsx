@@ -1,11 +1,11 @@
 import * as S from '@nothing-but/solid/signal'
-import { event } from '@nothing-but/utils'
-import { JSX, type Component } from 'solid-js'
-import { createCanvasForceGraph, default_canvas_options } from '../src/canvas.js'
+import {event} from '@nothing-but/utils'
+import {JSX, type Component} from 'solid-js'
+import {createCanvasForceGraph, default_canvas_options} from '../src/canvas.js'
 import * as FG from '../src/index.js'
-import { getLAGraph } from './init.js'
+import {getLAGraph} from './init.js'
 
-function Shell(props: { children: JSX.Element }): JSX.Element {
+function Shell(props: {children: JSX.Element}): JSX.Element {
     return (
         <div class="min-h-110vh min-w-110vw">
             <div class="w-screen h-screen center-child flex-col">

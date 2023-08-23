@@ -1,9 +1,9 @@
-import { bench, describe } from 'vitest'
+import {bench, describe} from 'vitest'
 import * as FG from '../src/index.js'
 // import * as graph2 from '../src/index2'
 
 function generateExampleGraph(mod: typeof FG, length: number): FG.Graph {
-    const nodes: FG.Node[] = Array.from({ length }, FG.makeNode)
+    const nodes: FG.Node[] = Array.from({length}, FG.makeNode)
 
     const edges: FG.Edge[] = []
 
@@ -44,7 +44,7 @@ const fns = {
     // 6144,
 ].forEach(n => {
     describe(`update ${n} nodes`, () => {
-        for (const [name, { fn, mod }] of Object.entries(fns)) {
+        for (const [name, {fn, mod}] of Object.entries(fns)) {
             const graph = generateExampleGraph(mod, n)
 
             bench(
@@ -54,7 +54,7 @@ const fns = {
                         fn(graph)
                     }
                 },
-                { iterations: 14 },
+                {iterations: 14},
             )
         }
     })

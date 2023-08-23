@@ -1,5 +1,5 @@
-import { math, trig } from '@nothing-but/utils'
-import { Position } from '@nothing-but/utils/types'
+import {math, trig} from '@nothing-but/utils'
+import {Position} from '@nothing-but/utils/types'
 
 export interface Options {
     /**
@@ -63,7 +63,7 @@ export const default_options: Options = {
 }
 
 export function makeGraphOptions(options?: Partial<Options>): Options {
-    return { ...default_options, ...options }
+    return {...default_options, ...options}
 }
 
 /**
@@ -86,7 +86,7 @@ export function makeGraphGrid(options: Options): Grid {
         n_cells = axis_cells * axis_cells
 
     return {
-        cells: Array.from({ length: n_cells }, () => []),
+        cells: Array.from({length: n_cells}, () => []),
         axis_cells,
         cell_size: options.repel_distance,
         size,
@@ -97,7 +97,7 @@ export function makeGraphGrid(options: Options): Grid {
  * **Note:** This function does not clamp the position to the grid.
  */
 export function toGridIdx(grid: Grid, pos: Position): number {
-    const { axis_cells, cell_size } = grid,
+    const {axis_cells, cell_size} = grid,
         xi = Math.floor(pos.x / cell_size),
         yi = Math.floor(pos.y / cell_size)
     return xi + yi * axis_cells
@@ -109,7 +109,7 @@ export function addNodeToGrid(
     idx: number = toGridIdx(grid, node.position),
 ): void {
     const order = grid.cells[idx]!,
-        { x } = node.position
+        {x} = node.position
 
     let i = 0
     while (i < order.length && order[i]!.position.x < x) i++
@@ -142,7 +142,7 @@ export function makeGraph(options: Options, nodes: Node[] = [], edges: Edge[] = 
     const grid = makeGraphGrid(options)
     addNodesToGrid(grid, nodes)
 
-    return { nodes, edges, grid, options }
+    return {nodes, edges, grid, options}
 }
 
 export interface Node {
@@ -175,8 +175,8 @@ export interface Node {
 export function makeNode(key?: string | number | undefined): Node {
     return {
         key,
-        position: { x: 0, y: 0 },
-        velocity: { x: 0, y: 0 },
+        position: {x: 0, y: 0},
+        velocity: {x: 0, y: 0},
         edges: [],
         anchor: false,
         moved: false,
@@ -203,7 +203,7 @@ export function getEdge(a: Node, b: Node): Edge | undefined {
  * Use {@link getEdge} to check before connecting.
  */
 export function connect(a: Node, b: Node, strength = 1): Edge {
-    const edge: Edge = { a, b, strength }
+    const edge: Edge = {a, b, strength}
     a.edges.push(edge)
     b.edges.push(edge)
     return edge
@@ -269,8 +269,8 @@ export function findClosestNode(
     pos: Position,
     max_dist: number = Infinity,
 ): Node | undefined {
-    const { x, y } = pos,
-        { grid } = graph
+    const {x, y} = pos,
+        {grid} = graph
 
     if (x < 0 || x > grid.size || y < 0 || y > grid.size) return
 
@@ -410,11 +410,11 @@ export function pushNodesAway(
  * @param alpha The simulation speed multiplier. Default is 1. Use this to slow down or speed up the simulation with time.
  */
 export function simulateGraph(graph: Graph, alpha: number = 1): void {
-    const { nodes, edges, grid, options } = graph
+    const {nodes, edges, grid, options} = graph
 
     for (const node of nodes) {
-        const { velocity, position } = node,
-            { x, y } = position
+        const {velocity, position} = node,
+            {x, y} = position
 
         /*
             towards the origin
@@ -477,7 +477,7 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
         the more edges a node has, the more velocity it accumulates
         so the velocity is divided by the number of edges
     */
-    for (const { a, b, strength } of edges) {
+    for (const {a, b, strength} of edges) {
         const dx = (b.position.x - a.position.x) * options.link_strength * strength * alpha
         const dy = (b.position.y - a.position.y) * options.link_strength * strength * alpha
 
@@ -488,7 +488,7 @@ export function simulateGraph(graph: Graph, alpha: number = 1): void {
     }
 
     for (const node of nodes) {
-        const { velocity, position } = node
+        const {velocity, position} = node
 
         /*
             commit and sort
@@ -534,7 +534,7 @@ export function makeFrameAnimation(
 }
 
 export function frame(animation: FrameAnimation, timestamp: DOMHighResTimeStamp) {
-    const { graph, active, target_ms } = animation
+    const {graph, active, target_ms} = animation
 
     const delta_time = timestamp - animation.last_timestamp
     let times = Math.floor(delta_time / target_ms)

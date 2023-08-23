@@ -1,4 +1,4 @@
-import { math } from './index.js'
+import {math} from './index.js'
 
 /**
  * Check shallow array equality

@@ -1,7 +1,7 @@
-import { UnionToIntersection } from '@nothing-but/utils/types'
-import { Accessor, createMemo, untrack } from 'solid-js'
+import {UnionToIntersection} from '@nothing-but/utils/types'
+import {Accessor, createMemo, untrack} from 'solid-js'
 
-type EventsUnion<T> = T extends { [key: string]: any }
+type EventsUnion<T> = T extends {[key: string]: any}
     ? {
           [K in keyof T]-?: T[K] extends (...args: any) => infer R
               ? [event: K, args: Parameters<T[K]>, result: R]
@@ -13,7 +13,7 @@ type EventsUnion<T> = T extends { [key: string]: any }
       }[keyof T]
     : never
 
-type RequiredEventsUnion<T> = T extends { [key: string]: any }
+type RequiredEventsUnion<T> = T extends {[key: string]: any}
     ? {
           [K in keyof T]-?: true
       }
