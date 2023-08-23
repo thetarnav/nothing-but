@@ -69,7 +69,7 @@ export function join<const T extends readonly Reactive<unknown>[]>(
 
 export function effect<T>(
     source: Reactive<T>,
-    fn: (value: T) => void | undefined | VoidFunction,
+    fn: (value: T) => void | undefined | (() => void),
 ): void {
     solid.createEffect(() => {
         const value = source.value
