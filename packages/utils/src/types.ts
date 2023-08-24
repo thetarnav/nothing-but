@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-types */
+
 /**
  * Can be single or in an array
  */

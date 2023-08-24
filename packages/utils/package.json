@@ -53,10 +53,10 @@
                 "default": "./dist/ease.js"
             }
         },
-        "./math": {
+        "./num": {
             "import": {
-                "types": "./dist/math.d.ts",
-                "default": "./dist/math.js"
+                "types": "./dist/num.d.ts",
+                "default": "./dist/num.js"
             }
         },
         "./misc": {
@@ -89,8 +89,8 @@
             "ease": [
                 "./dist/ease.d.ts"
             ],
-            "math": [
-                "./dist/math.d.ts"
+            "num": [
+                "./dist/num.d.ts"
             ],
             "misc": [
                 "./dist/misc.d.ts"

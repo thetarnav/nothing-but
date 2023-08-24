@@ -1,8 +1,7 @@
+import {Ev} from '@nothing-but/dom'
 import * as S from '@nothing-but/solid/signal'
-import {event} from '@nothing-but/utils'
-import {JSX, type Component} from 'solid-js'
-import {createCanvasForceGraph, default_canvas_options} from '../src/canvas.js'
-import * as FG from '../src/index.js'
+import {type Component, type JSX} from 'solid-js'
+import {Anim, Canvas, Graph} from '../src/index.js'
 import {getLAGraph} from './init.js'
 
 function Shell(props: {children: JSX.Element}): JSX.Element {
@@ -10,7 +9,7 @@ function Shell(props: {children: JSX.Element}): JSX.Element {
         <div class="min-h-110vh min-w-110vw">
             <div class="w-screen h-screen center-child flex-col">
                 <div
-                    ref={event.preventMobileScrolling}
+                    ref={Ev.preventMobileScrolling}
                     class="relative aspect-3/4 sm:aspect-4/3 w-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
                 >
                     {props.children}
@@ -20,7 +19,7 @@ function Shell(props: {children: JSX.Element}): JSX.Element {
     )
 }
 
-export const graph_options = FG.makeGraphOptions({
+export const graph_options = Graph.graphOptions({
     inertia_strength: 0.3,
     origin_strength: 0.01,
     repel_distance: 22,
@@ -30,30 +29,56 @@ export const graph_options = FG.makeGraphOptions({
 export const App: Component = () => {
     // const initialGraph = getInitialGraph()
     // const force_graph = generateInitialGraph(1024)
-    const force_graph = getLAGraph()
+    const graph = getLAGraph()
 
     const change_signal = S.signal()
 
-    const canvas = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
+    const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
-    const ctx = canvas.getContext('2d')
+    const ctx = el.getContext('2d')
     if (!ctx) throw new Error('no context')
 
-    const canvas_state = createCanvasForceGraph({
-        ...default_canvas_options,
-        el: canvas,
+    const canvas = Canvas.canvasState({
+        ...Canvas.default_options,
+        el,
         ctx,
-        graph: force_graph,
-        // init_grid_pos: {
-        //     x: force_graph.grid.size / 2,
-        //     y: force_graph.grid.size / 2,
-        // },
+        graph,
         init_scale: 2,
-        trackNodes: () => true,
         onNodeClick: node => {
             console.log('click', node)
         },
     })
 
-    return <Shell>{canvas}</Shell>
+    const removeObserver = Canvas.canvasResizeObserver(el, size => {
+        Canvas.updateCanvasSize(canvas, size)
+    })
+
+    const animation = Anim.frameAnimation({
+        ...Anim.default_options,
+        onIteration(alpha) {
+            Graph.simulate(graph, alpha)
+        },
+        onFrame() {
+            Canvas.drawCanvas(canvas)
+        },
+    })
+
+    Anim.start(animation)
+
+    // const canvas_state = createCanvasForceGraph({
+    //     ...default_canvas_options,
+    //     el: canvas,
+    //     ctx,
+    //     graph: force_graph,
+    //     // init_grid_pos: {
+    //     //     x: force_graph.grid.size / 2,
+    //     //     y: force_graph.grid.size / 2,
+    //     // },
+    //     init_scale: 2,
+    //     onNodeClick: node => {
+    //         console.log('click', node)
+    //     },
+    // })
+
+    return <Shell>{el}</Shell>
 }

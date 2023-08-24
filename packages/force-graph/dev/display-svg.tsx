@@ -1,11 +1,11 @@
 import {resolveElements} from '@solid-primitives/refs'
 import {createRootPool, type RootPoolFactory} from '@solid-primitives/rootless'
 import {createEffect, createMemo, createSignal, onCleanup, onMount, type JSX} from 'solid-js'
-import * as FG from '../src/index.js'
+import {Anim, Graph} from '../src/index.js'
 
 export function SvgForceGraph(props: {
-    graph: FG.Graph
-    node: RootPoolFactory<FG.Node, JSX.Element>
+    graph: Graph.Graph
+    node: RootPoolFactory<Graph.Node, JSX.Element>
     active?: boolean
     targetFPS?: number
 }): JSX.Element {
@@ -58,7 +58,7 @@ export function SvgForceGraph(props: {
     }
 
     onMount(() => {
-        const animation = FG.makeFrameAnimation(props.graph, updateElements, props.targetFPS ?? 44)
+        const animation = Anim.frameAnimation(props.graph, updateElements, props.targetFPS ?? 44)
 
         const init = createMemo(() => {
             props.graph // track graph prop
@@ -74,14 +74,14 @@ export function SvgForceGraph(props: {
 
         createEffect(() => {
             if (isActive() || init()()) {
-                FG.startFrameAnimation(animation)
+                Anim.start(animation)
             } else {
-                FG.pauseFrameAnimation(animation)
+                Anim.pause(animation)
             }
         })
 
         onCleanup(() => {
-            FG.stopFrameAnimation(animation)
+            Anim.cleanup(animation)
         })
     })
 

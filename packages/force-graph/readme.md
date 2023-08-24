@@ -21,6 +21,7 @@ TODO:
     -   [x] custom aspect ratios
     -   [x] move to lib
     -   [ ] remove solid dependency
+    -   [ ] avoid closures - recreating functions
 -   [x] ~~svg rendering~~ (deprecated for now, canvas is way faster)
 -   [x] interaction
     -   [x] dragging nodes

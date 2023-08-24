@@ -255,7 +255,7 @@ export class Force {
      * @param angle - The angle of the force in radians.
      */
     constructor(delta_x: Vector, delta_y: Vector)
-    constructor(distance: number, angle: number)
+    constructor(dist: number, ang: number)
     constructor(a: number | Vector, b: number | Vector) {
         if (typeof a === 'object') {
             this.angle = angle(a, b as Vector)
@@ -284,14 +284,14 @@ export const force: {
  * Converts a Force object to a vector object with x and y components.
  */
 export function force_to_vector(f: Force): Vector
-export function force_to_vector(distance: number, angle: number): Vector
-export function force_to_vector(distance: number | Force, angle?: number): Vector {
-    if (typeof distance === 'object') {
-        angle = distance.angle
-        distance = distance.distance
+export function force_to_vector(dist: number, ang: number): Vector
+export function force_to_vector(dist: number | Force, ang?: number): Vector {
+    if (typeof dist === 'object') {
+        ang = dist.angle
+        dist = dist.distance
     }
-    const x = distance * Math.cos(angle!)
-    const y = distance * Math.sin(angle!)
+    const x = dist * Math.cos(ang!)
+    const y = dist * Math.sin(ang!)
     return vector(x, y)
 }
 

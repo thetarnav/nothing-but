@@ -38,8 +38,8 @@
     },
     "typesVersions": {},
     "dependencies": {
-        "@nothing-but/utils": "workspace:^",
-        "@solid-primitives/resize-observer": "^2.0.20"
+        "@nothing-but/dom": "workspace:^",
+        "@nothing-but/utils": "workspace:^"
     },
     "devDependencies": {
         "@nothing-but/solid": "workspace:^",
