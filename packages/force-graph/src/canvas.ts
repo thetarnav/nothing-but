@@ -41,11 +41,16 @@ interface CanvasState {
 export function canvasState(options: Options): CanvasState {
     const el = options.el
 
+    const canvas_el_size = getCanvasSize(el)
+
     const canvas: CanvasState = {
         options,
         max_size: 0,
-        size: getCanvasSize(el),
-        translate: Trig.vector(options.init_grid_pos),
+        size: {
+            width: canvas_el_size.width || el.width,
+            height: canvas_el_size.height || el.height,
+        },
+        translate: {...options.init_grid_pos},
         scale: clampCanvasScale(options, options.init_scale),
         hoveredNode() {
             return null
@@ -285,15 +290,17 @@ const enum Mode {
     MovingMultiTouch,
 }
 
-interface ModeState {
+interface CanvasInteractivity {
     readonly canvas: CanvasState
-    readonly trigger: () => void
     mode:
         | DefaultState
         | DraggingNodeState
         | MovingSpaceState
         | MovingDraggingState
         | MovingMultiTouchState
+    trigger(): void
+    cleanup1(): void
+    cleanup2(): void
 }
 
 interface BaseStateValue<TMode extends Mode> {
@@ -317,7 +324,7 @@ interface DraggingNodeState extends BaseStateValue<Mode.DraggingNode> {}
 
 interface MovingSpaceState extends BaseStateValue<Mode.MovingSpace> {}
 
-function defaultState(mode_state: ModeState): DefaultState {
+function defaultState(mode_state: CanvasInteractivity): DefaultState {
     const {canvas, trigger} = mode_state
 
     const removeListener = Ev.listener(canvas.options.el, 'mousemove', e => {
@@ -389,7 +396,7 @@ function defaultState(mode_state: ModeState): DefaultState {
 }
 
 function draggingNodeState(
-    mode_state: ModeState,
+    mode_state: CanvasInteractivity,
     input: {
         node: Graph.Node
         e: PointerEvent
@@ -484,7 +491,7 @@ function draggingNodeState(
     }
 }
 
-function movingSpaceState(mode_state: ModeState): MovingSpaceState {
+function movingSpaceState(mode_state: CanvasInteractivity): MovingSpaceState {
     const {canvas} = mode_state
 
     return {
@@ -542,7 +549,7 @@ function handleMoveEvent(state: MovingDraggingState, trigger: () => void, e: Poi
 }
 
 function moveDraggingState(
-    mode_state: ModeState,
+    mode_state: CanvasInteractivity,
     input: {
         from: Mode.Default | Mode.MovingSpace
         init_ratio: T.Position
@@ -650,7 +657,7 @@ function handleMultiTouchEvent(
 }
 
 function moveMultiTouchState(
-    mode_state: ModeState,
+    mode_state: CanvasInteractivity,
     input: {
         from: Mode.Default | Mode.MovingSpace
         pointer_id_0: number
@@ -760,62 +767,60 @@ export function getCanvasSize(el: HTMLCanvasElement): T.Size {
     }
 }
 
-export function canvasResizeObserver(
+export function resizeObserver(
     el: HTMLCanvasElement,
     callback: (size: T.Size) => void,
-): () => void {
+): ResizeObserver {
     const ro = new ResizeObserver(() => callback(getCanvasSize(el)))
     ro.observe(el)
-    return ro.disconnect.bind(ro)
+    return ro
 }
 
-export function createCanvasForceGraph(options: Options): CanvasState {
-    const {el, graph} = options
-
-    const canvas = canvasState(options)
+export function canvasInteractivity(canvas: CanvasState): CanvasInteractivity {
+    const {el} = canvas.options
 
     const trigger = () => {}
 
-    const removeObserver = canvasResizeObserver(el, size => {
-        updateCanvasSize(canvas, size)
-        trigger()
-    })
+    const state: CanvasInteractivity = {
+        canvas,
+        trigger,
+        mode: null!,
+        cleanup1: null!,
+        cleanup2: null!,
+    }
+    state.mode = defaultState(state)
 
-    const mode_state: ModeState = {canvas, trigger, mode: null!}
-    mode_state.mode = defaultState(mode_state)
+    canvas.hoveredNode = () => (state.mode.type === Mode.Default ? state.mode.hover_node : null)
 
-    canvas.hoveredNode = () =>
-        mode_state.mode.type === Mode.Default ? mode_state.mode.hover_node : null
-
-    const cleanup1 = Ev.listenerMap(el, {
+    state.cleanup1 = Ev.listenerMap(el, {
         pointerdown(e) {
-            mode_state.mode.pointerDown?.(e)
+            state.mode.pointerDown?.(e)
         },
         wheel(e) {
             handleWheelEvent(canvas, trigger, e)
         },
     })
 
-    const cleanup2 = Ev.listenerMap(document, {
+    state.cleanup2 = Ev.listenerMap(document, {
         pointerup(e) {
-            mode_state.mode.pointerUp?.(e)
+            state.mode.pointerUp?.(e)
         },
         pointercancel(e) {
-            mode_state.mode.pointerUp?.(e)
+            state.mode.pointerUp?.(e)
         },
         contextmenu() {
-            mode_state.mode.pointerUp?.(null)
+            state.mode.pointerUp?.(null)
         },
         keydown(e) {
             if (Ev.shouldIgnoreKeydown(e)) return
 
             switch (e.key) {
                 case 'Escape': {
-                    mode_state.mode.escape?.(e)
+                    state.mode.escape?.(e)
                     break
                 }
                 case 'Control': {
-                    mode_state.mode.space?.(e)
+                    state.mode.space?.(e)
                     break
                 }
             }
@@ -824,44 +829,50 @@ export function createCanvasForceGraph(options: Options): CanvasState {
             if (Ev.shouldIgnoreKeydown(e)) return
 
             if (e.key === 'Control') {
-                mode_state.mode.spaceUp?.(e)
+                state.mode.spaceUp?.(e)
             }
         },
     })
 
-    // const init = s.memo(() => {
-    //     options.trackNodes() // track changes to nodes
-
-    //     const init = s.signal(true)
-    //     const timeout = setTimeout(() => s.set(init, false), 2000)
-    //     onCleanup(() => clearTimeout(timeout))
-
-    //     return init.read
-    // })
-
-    // const active = s.memo(() => mode.type === Mode.DraggingNode || init.read()())
-
-    // createEffect(() => {
-    //     if (active.read()) {
-    //         startFrameAnimation(animation)
-    //     } else {
-    //         pauseFrameAnimation(animation)
-    //     }
-    // })
-
-    // createEffect(() => {
-    //     if (active.read()) return
-
-    //     // track changes to the canvas
-    //     signal.read()
-    //     mode()
-
-    //     requestAnimationFrame(boundUpdateCanvas)
-    // })
-
-    // onCleanup(() => {
-    //     cleanupFrameAnimation(animation)
-    // })
-
-    return canvas
+    return state
 }
+
+export function cleanupCanvasInteractivity(interaction: CanvasInteractivity): void {
+    interaction.cleanup1()
+    interaction.cleanup2()
+    interaction.mode.cleanup()
+}
+
+// const init = s.memo(() => {
+//     options.trackNodes() // track changes to nodes
+
+//     const init = s.signal(true)
+//     const timeout = setTimeout(() => s.set(init, false), 2000)
+//     onCleanup(() => clearTimeout(timeout))
+
+//     return init.read
+// })
+
+// const active = s.memo(() => mode.type === Mode.DraggingNode || init.read()())
+
+// createEffect(() => {
+//     if (active.read()) {
+//         startFrameAnimation(animation)
+//     } else {
+//         pauseFrameAnimation(animation)
+//     }
+// })
+
+// createEffect(() => {
+//     if (active.read()) return
+
+//     // track changes to the canvas
+//     signal.read()
+//     mode()
+
+//     requestAnimationFrame(boundUpdateCanvas)
+// })
+
+// onCleanup(() => {
+//     cleanupFrameAnimation(animation)
+// })

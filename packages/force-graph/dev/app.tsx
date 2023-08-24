@@ -1,6 +1,6 @@
 import {Ev} from '@nothing-but/dom'
 import * as S from '@nothing-but/solid/signal'
-import {type Component, type JSX} from 'solid-js'
+import {onCleanup, type Component, type JSX} from 'solid-js'
 import {Anim, Canvas, Graph} from '../src/index.js'
 import {getLAGraph} from './init.js'
 
@@ -49,10 +49,6 @@ export const App: Component = () => {
         },
     })
 
-    const removeObserver = Canvas.canvasResizeObserver(el, size => {
-        Canvas.updateCanvasSize(canvas, size)
-    })
-
     const animation = Anim.frameAnimation({
         ...Anim.default_options,
         onIteration(alpha) {
@@ -65,20 +61,14 @@ export const App: Component = () => {
 
     Anim.start(animation)
 
-    // const canvas_state = createCanvasForceGraph({
-    //     ...default_canvas_options,
-    //     el: canvas,
-    //     ctx,
-    //     graph: force_graph,
-    //     // init_grid_pos: {
-    //     //     x: force_graph.grid.size / 2,
-    //     //     y: force_graph.grid.size / 2,
-    //     // },
-    //     init_scale: 2,
-    //     onNodeClick: node => {
-    //         console.log('click', node)
-    //     },
-    // })
+    const ro = Canvas.resizeObserver(el, size => {
+        Canvas.updateCanvasSize(canvas, size)
+        Anim.requestFrame(animation)
+    })
+    onCleanup(() => ro.disconnect())
+
+    const interaction = Canvas.canvasInteractivity(canvas)
+    onCleanup(() => Canvas.cleanupCanvasInteractivity(interaction))
 
     return <Shell>{el}</Shell>
 }

@@ -47,13 +47,13 @@ export function frame(a: FrameAnimation, timestamp: DOMHighResTimeStamp) {
         return
     }
 
-    const progress_alpha = !!(a.active || a.bump_timeout)
+    const is_playing = isPlaying(a)
 
     for (let i = Math.min(times, options.max_iterations_per_frame); i > 0; i--) {
         a.alpha = Num.lerp(
             a.alpha,
-            progress_alpha ? 1 : 0,
-            progress_alpha ? 0.03 : 0.005, // TODO: configurable
+            is_playing ? 1 : 0,
+            is_playing ? 0.03 : 0.005, // TODO: configurable
         )
 
         if (a.alpha < 0.001) {
@@ -100,4 +100,15 @@ export function bump(a: FrameAnimation): void {
     a.bump_timeout = setTimeout(() => {
         a.bump_timeout = undefined
     }, a.options.bump_timeout)
+}
+
+export function isPlaying(a: FrameAnimation): boolean {
+    return a.active || !!a.bump_timeout
+}
+
+export function requestFrame(a: FrameAnimation): void {
+    if (isPlaying(a)) return
+
+    a.last_timestamp = performance.now()
+    a.frame_id = requestAnimationFrame(() => a.options.onFrame())
 }
