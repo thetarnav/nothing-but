@@ -11,12 +11,15 @@
         "test": "turbo run test --filter=./packages/*",
         "typecheck": "turbo run typecheck --filter=./packages/*",
         "build-test": "turbo run build test typecheck --filter=./packages/*",
-        "lint": "eslint --ignore-path .gitignore --max-warnings 0 packages/**/*.{js,ts,tsx,jsx}",
+        "lint:packages": "eslint --ignore-path .gitignore --max-warnings 0 packages/*/src/**/*",
+        "lint:tests": "eslint --ignore-path .gitignore packages/*/test/** --quiet --rule \"no-only-tests/no-only-tests: error\"",
+        "lint": "concurrently pnpm:lint:*",
         "changeset": "changeset",
         "version": "changeset version && pnpm i --no-frozen-lockfile && git add .",
         "release": "pnpm build && changeset publish"
     },
     "devDependencies": {
+        "concurrently": "^8.2.1",
         "@changesets/cli": "^2.26.2",
         "@types/node": "^20.4.8",
         "@typescript-eslint/eslint-plugin": "^6.3.0",
