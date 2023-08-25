@@ -42,6 +42,7 @@
             prevent unexpected behavior
         */
         "@typescript-eslint/ban-types": "warn",
+        "no-fallthrough": ["warn", {"allowEmptyCase": true}],
         /*
             stylistic
         */
