@@ -15,10 +15,10 @@
     "scripts": {
         "dev": "vite serve dev",
         "build:demo": "vite build dev",
-        "build": "tsup",
+        "build": "pnpm tsc -p ./tsconfig.build.json",
         "prepublish": "pnpm build",
         "test": "vitest -c ../../configs/vitest.config.js",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "echo \"Built with TSC\""
     },
     "private": false,
     "sideEffects": false,
@@ -31,12 +31,44 @@
     "types": "./dist/index.d.ts",
     "browser": {},
     "exports": {
-        "import": {
-            "types": "./dist/index.d.ts",
-            "default": "./dist/index.js"
+        ".": {
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            }
+        },
+        "./canvas": {
+            "import": {
+                "types": "./dist/canvas.d.ts",
+                "default": "./dist/canvas.js"
+            }
+        },
+        "./graph": {
+            "import": {
+                "types": "./dist/graph.d.ts",
+                "default": "./dist/graph.js"
+            }
+        },
+        "./animation": {
+            "import": {
+                "types": "./dist/animation.d.ts",
+                "default": "./dist/animation.js"
+            }
         }
     },
-    "typesVersions": {},
+    "typesVersions": {
+        "*": {
+            "canvas": [
+                "./dist/canvas.d.ts"
+            ],
+            "animation": [
+                "./dist/animation.d.ts"
+            ],
+            "graph": [
+                "./dist/graph.d.ts"
+            ]
+        }
+    },
     "dependencies": {
         "@nothing-but/dom": "workspace:^",
         "@nothing-but/utils": "workspace:^"

@@ -16,7 +16,7 @@
         "build": "pnpm tsc -p ./tsconfig.build.json",
         "prepublish": "pnpm build",
         "test": "vitest -c ../../configs/vitest.config.js",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "echo \"Built with TSC\""
     },
     "private": false,
     "sideEffects": false,
