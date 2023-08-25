@@ -123,37 +123,37 @@ export function reset<T>(obj: Signal<T | undefined>): void {
     return obj.setter(undefined)
 }
 
-export function set_nested<T, K extends keyof T>(signal: Signal<T>, key: K, value: T[K]): void {
-    const obj = peek(signal)
+export function set_nested<T, K extends keyof T>(sig: Signal<T>, key: K, value: T[K]): void {
+    const obj = peek(sig)
     if (!obj || typeof obj !== 'object') return
     const old = obj[key]
     if (old !== value) {
         const copy: any = Array.isArray(obj) ? [...obj] : {...obj}
         copy[key] = value as any
-        signal.setter(copy)
+        sig.setter(copy)
     }
 }
 
-export function update<T>(signal: Signal<T>, fn: (value: T) => T): void {
-    signal.setter(fn)
+export function update<T>(sig: Signal<T>, fn: (value: T) => T): void {
+    sig.setter(fn)
 }
 
-export function mutate<T>(signal: Signal<T>, fn: (value: T) => void): void {
-    signal.mutating = true
-    signal.setter(value => {
+export function mutate<T>(sig: Signal<T>, fn: (value: T) => void): void {
+    sig.mutating = true
+    sig.setter(value => {
         fn(value)
         return value
     })
 }
 
-export function trigger(signal: Signal<any>): void {
-    signal.mutating = true
-    signal.setter(value => value)
+export function trigger(sig: Signal<any>): void {
+    sig.mutating = true
+    sig.setter(value => value)
 }
 
 /**
  * For read-only access to a signal.
  */
-export function readonly<T>(signal: Signal<T>): Reactive<T> {
-    return new Reactive(() => signal.value)
+export function readonly<T>(sig: Signal<T>): Reactive<T> {
+    return new Reactive(() => sig.value)
 }
