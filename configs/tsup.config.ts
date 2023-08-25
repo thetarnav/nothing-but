@@ -13,7 +13,7 @@ export const CI =
 export function get_src_entries(from: string): preset.EntryOptions[] {
     const src = path.resolve(from, 'src')
     const entries = fs.readdirSync(src)
-    return entries.map(entry => ({ entry: path.join(src, entry) }))
+    return entries.map(entry => ({entry: path.join(src, entry)}))
 }
 
 export function get_multi_entry_options(
@@ -30,7 +30,7 @@ export function get_multi_entry_options(
 
 export function get_single_entry_options(cli_options: tsup.Options): preset.ParsedPresetOptions {
     const options: preset.PresetOptions = {
-        entries: { entry: 'src/index.ts' },
+        entries: {entry: 'src/index.ts'},
         drop_console: true,
     }
     const watching = !!cli_options.watch

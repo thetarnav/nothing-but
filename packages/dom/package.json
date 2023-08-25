@@ -1,10 +1,10 @@
 {
-    "name": "@nothing-but/force-graph",
-    "version": "0.1.1",
+    "name": "@nothing-but/dom",
+    "version": "0.0.0",
     "license": "MIT",
     "author": "Damian Tarnawski <gthetarnav@gmail.com>",
     "contributors": [],
-    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/force-graph#readme",
+    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/utils#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/thetarnav/nothing-but.git"
@@ -13,9 +13,7 @@
         "url": "https://github.com/thetarnav/nothing-but/issues"
     },
     "scripts": {
-        "dev": "vite serve dev",
-        "build:demo": "vite build dev",
-        "build": "tsup",
+        "build": "pnpm tsc -p ./tsconfig.build.json",
         "prepublish": "pnpm build",
         "test": "vitest -c ../../configs/vitest.config.js",
         "typecheck": "tsc --noEmit"
@@ -31,23 +29,27 @@
     "types": "./dist/index.d.ts",
     "browser": {},
     "exports": {
-        "import": {
-            "types": "./dist/index.d.ts",
-            "default": "./dist/index.js"
+        ".": {
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            }
+        },
+        "./event": {
+            "import": {
+                "types": "./dist/event.d.ts",
+                "default": "./dist/event.js"
+            }
         }
     },
-    "typesVersions": {},
-    "dependencies": {
-        "@nothing-but/dom": "workspace:^",
-        "@nothing-but/utils": "workspace:^"
+    "typesVersions": {
+        "*": {
+            "event": [
+                "./dist/event.d.ts"
+            ]
+        }
     },
-    "devDependencies": {
-        "@nothing-but/solid": "workspace:^",
-        "@solid-primitives/event-listener": "^2.2.14",
-        "@solid-primitives/keyed": "^1.2.0",
-        "@solid-primitives/refs": "^1.0.5",
-        "@solid-primitives/rootless": "^1.4.2",
-        "@solid-primitives/state-machine": "^0.0.1",
-        "clsx": "^2.0.0"
+    "dependencies": {
+        "@nothing-but/utils": "workspace:^"
     }
 }

@@ -1,4 +1,4 @@
-import type { Position } from './types.js'
+import type {Position} from './types.js'
 
 /**
  * Represents a template string type in the format `(${number}, ${number})`.
@@ -51,7 +51,7 @@ export class Vector {
         return `(${this.x}, ${this.y})`
     }
     toJSON(): Position {
-        return { x: this.x, y: this.y }
+        return {x: this.x, y: this.y}
     }
 }
 
@@ -207,7 +207,7 @@ export function angle(a: Position, b: Position): number {
  * The first vector is **mutated**.
  */
 export function rotate(point: Vector, rad: number): void {
-    const { x, y } = point,
+    const {x, y} = point,
         cos = Math.cos(rad),
         sin = Math.sin(rad)
     point.x = x * cos - y * sin
@@ -222,8 +222,8 @@ export function rotate(point: Vector, rad: number): void {
  * @param rad - The angle of rotation in radians.
  */
 export function rotate_around(point: Vector, origin: Vector, rad: number): void {
-    const { x, y } = point,
-        { x: ox, y: oy } = origin,
+    const {x, y} = point,
+        {x: ox, y: oy} = origin,
         cos = Math.cos(rad),
         sin = Math.sin(rad)
     point.x = ox + (x - ox) * cos - (y - oy) * sin
@@ -255,7 +255,7 @@ export class Force {
      * @param angle - The angle of the force in radians.
      */
     constructor(delta_x: Vector, delta_y: Vector)
-    constructor(distance: number, angle: number)
+    constructor(dist: number, ang: number)
     constructor(a: number | Vector, b: number | Vector) {
         if (typeof a === 'object') {
             this.angle = angle(a, b as Vector)
@@ -284,14 +284,14 @@ export const force: {
  * Converts a Force object to a vector object with x and y components.
  */
 export function force_to_vector(f: Force): Vector
-export function force_to_vector(distance: number, angle: number): Vector
-export function force_to_vector(distance: number | Force, angle?: number): Vector {
-    if (typeof distance === 'object') {
-        angle = distance.angle
-        distance = distance.distance
+export function force_to_vector(dist: number, ang: number): Vector
+export function force_to_vector(dist: number | Force, ang?: number): Vector {
+    if (typeof dist === 'object') {
+        ang = dist.angle
+        dist = dist.distance
     }
-    const x = distance * Math.cos(angle!)
-    const y = distance * Math.sin(angle!)
+    const x = dist * Math.cos(ang!)
+    const y = dist * Math.sin(ang!)
     return vector(x, y)
 }
 

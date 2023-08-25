@@ -53,10 +53,10 @@
                 "default": "./dist/ease.js"
             }
         },
-        "./math": {
+        "./num": {
             "import": {
-                "types": "./dist/math.d.ts",
-                "default": "./dist/math.js"
+                "types": "./dist/num.d.ts",
+                "default": "./dist/num.js"
             }
         },
         "./misc": {
@@ -76,12 +76,6 @@
                 "types": "./dist/types.d.ts",
                 "default": "./dist/types.js"
             }
-        },
-        "./event": {
-            "import": {
-                "types": "./dist/event.d.ts",
-                "default": "./dist/event.js"
-            }
         }
     },
     "typesVersions": {
@@ -95,8 +89,8 @@
             "ease": [
                 "./dist/ease.d.ts"
             ],
-            "math": [
-                "./dist/math.d.ts"
+            "num": [
+                "./dist/num.d.ts"
             ],
             "misc": [
                 "./dist/misc.d.ts"
@@ -106,9 +100,6 @@
             ],
             "types": [
                 "./dist/types.d.ts"
-            ],
-            "event": [
-                "./dist/event.d.ts"
             ]
         }
     }

@@ -57,19 +57,19 @@ export function map_nested<T, K extends keyof T, U>(
 
 export function destructure<const T extends readonly unknown[]>(
     source: Reactive<T>,
-): { [K in keyof T]: Reactive<T[K]> } {
+): {[K in keyof T]: Reactive<T[K]>} {
     return peek(source).map(value => new Reactive(() => value)) as any
 }
 
 export function join<const T extends readonly Reactive<unknown>[]>(
     sources: T,
-): Reactive<{ [K in keyof T]: ReactiveValue<T[K]> }> {
+): Reactive<{[K in keyof T]: ReactiveValue<T[K]>}> {
     return new Reactive(() => sources.map(source => source.value)) as any
 }
 
 export function effect<T>(
     source: Reactive<T>,
-    fn: (value: T) => void | undefined | VoidFunction,
+    fn: (value: T) => void | undefined | (() => void),
 ): void {
     solid.createEffect(() => {
         const value = source.value
@@ -128,7 +128,7 @@ export function set_nested<T, K extends keyof T>(signal: Signal<T>, key: K, valu
     if (!obj || typeof obj !== 'object') return
     const old = obj[key]
     if (old !== value) {
-        const copy: any = Array.isArray(obj) ? [...obj] : { ...obj }
+        const copy: any = Array.isArray(obj) ? [...obj] : {...obj}
         copy[key] = value as any
         signal.setter(copy)
     }
