@@ -35,9 +35,10 @@ TODO:
         -   [x] touch
     -   [x] hover
     -   [x] click
-    -   [ ] avoid closures - recreating functions
+    -   [x] avoid closures - recreating functions
     -   [x] separate from rendering
         -   [ ] separate from canvas
         -   [ ] standard interfaces? (strategy pattern)
     -   [ ] classes (has internal lifecycle)
+    -   [ ] escape key to reset
 -   [ ] frame animation class

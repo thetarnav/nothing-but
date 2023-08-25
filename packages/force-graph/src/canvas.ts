@@ -57,6 +57,25 @@ export function canvasState(options: Options): CanvasState {
     return canvas
 }
 
+export function getCanvasSize(el: HTMLCanvasElement): T.Size {
+    const pixel_ratio = window.devicePixelRatio
+    const rect = el.getBoundingClientRect()
+
+    return {
+        width: rect.width * pixel_ratio,
+        height: rect.height * pixel_ratio,
+    }
+}
+
+export function resizeObserver(
+    el: HTMLCanvasElement,
+    callback: (size: T.Size) => void,
+): ResizeObserver {
+    const ro = new ResizeObserver(() => callback(getCanvasSize(el)))
+    ro.observe(el)
+    return ro
+}
+
 function clampCanvasScale(options: Options, new_scale: number): number {
     return Num.clamp(new_scale, 1, options.max_scale)
 }
@@ -293,36 +312,26 @@ export enum Mode {
 }
 
 export interface CanvasGestures extends CanvasGesturesOptions {
-    mode:
-        | DefaultState
-        | DraggingNodeState
-        | MovingSpaceState
-        | MovingDraggingState
-        | MovingMultiTouchState
+    mode: ModeState
     cleanup1(): void
     cleanup2(): void
 }
 
+export type ModeState =
+    | DefaultState
+    | DraggingNodeState
+    | MovingSpaceState
+    | MovingDraggingState
+    | MovingMultiTouchState
+
 interface BaseStateValue<TMode extends Mode> {
     type: TMode
-
-    escape?(event: KeyboardEvent): void
-    space?(event: KeyboardEvent): void
-    spaceUp?(event: KeyboardEvent): void
-
-    pointerDown?(event: PointerEvent): void
-    pointerUp?(event: PointerEvent | null): void
-
     cleanup(): void
 }
 
 interface DefaultState extends BaseStateValue<Mode.Default> {
     hover_node: Graph.Node | null
 }
-
-interface DraggingNodeState extends BaseStateValue<Mode.DraggingNode> {}
-
-interface MovingSpaceState extends BaseStateValue<Mode.MovingSpace> {}
 
 function defaultState(gesture: CanvasGestures): DefaultState {
     const {canvas} = gesture
@@ -353,42 +362,6 @@ function defaultState(gesture: CanvasGestures): DefaultState {
     const value: DefaultState = {
         type: Mode.Default,
         hover_node: null,
-        pointerDown(e) {
-            const point_ratio = eventToPointRatio(canvas, e),
-                point_graph = pointRatioToGraph(canvas, point_ratio)
-
-            const pointer_node_radius = pointerNodeRadius(
-                canvas.max_size,
-                canvas.options.graph.grid.size,
-            )
-
-            const node = Graph.findClosestNodeLinear(
-                canvas.options.graph.nodes,
-                point_graph,
-                pointer_node_radius,
-            )
-
-            gesture.mode.cleanup()
-            gesture.mode = node
-                ? draggingNodeState(gesture, {
-                      node,
-                      e,
-                      point_graph,
-                      point_ratio,
-                  })
-                : moveDraggingState(gesture, {
-                      from: Mode.Default,
-                      init_ratio: point_ratio,
-                      pointer_id: e.pointerId,
-                  })
-            gesture.onModeChange(gesture.mode.type)
-        },
-        space(e) {
-            e.preventDefault()
-            gesture.mode.cleanup()
-            gesture.mode = movingSpaceState(gesture)
-            gesture.onModeChange(gesture.mode.type)
-        },
         cleanup() {
             removeListener()
             if (value.hover_node) {
@@ -399,6 +372,13 @@ function defaultState(gesture: CanvasGestures): DefaultState {
     }
 
     return value
+}
+
+interface DraggingNodeState extends BaseStateValue<Mode.DraggingNode> {
+    node: Graph.Node
+    pointer_id: number
+    goal_point_ratio: T.Position
+    click_prevented: boolean
 }
 
 function draggingNodeState(
@@ -418,7 +398,6 @@ function draggingNodeState(
     const goal_node_pos_delta = Trig.difference(input.point_graph, node.position)
 
     let goal_graph_node_pos = input.point_graph
-    let goal_point_ratio = input.point_ratio
 
     /*
         Smoothly move the node to the pointer T.Position
@@ -437,82 +416,47 @@ function draggingNodeState(
         }
     })
 
-    let click_prevented = false
-
-    const pointer_id = input.e.pointerId
     const down_event_pos = {x: input.e.clientX, y: input.e.clientY}
 
-    const removeListener = Ev.listener(document, 'pointermove', e => {
-        if (e.pointerId !== pointer_id) return
-
-        goal_point_ratio = eventToPointRatio(canvas, e)
-        goal_graph_node_pos = pointRatioToGraph(canvas, goal_point_ratio)
-        const graph_node_pos = Trig.difference(goal_graph_node_pos, goal_node_pos_delta)
-
-        if (!click_prevented) {
-            const dist = Trig.distance(down_event_pos, {x: e.clientX, y: e.clientY})
-
-            if (dist > 14) {
-                click_prevented = true
-            }
-        }
-
-        gesture.onNodeDrag(node, graph_node_pos)
-    })
-
-    return {
+    const state: DraggingNodeState = {
+        node,
         type: Mode.DraggingNode,
-        pointerUp(e) {
-            if (e instanceof PointerEvent && e.pointerId !== pointer_id) return
-
-            if (!click_prevented) {
-                gesture.onNodeClick(node)
-            }
-
-            gesture.mode.cleanup()
-            gesture.mode = defaultState(gesture)
-            gesture.onModeChange(gesture.mode.type)
-        },
-        pointerDown(e) {
-            gesture.mode.cleanup()
-            gesture.mode = moveMultiTouchState(gesture, {
-                e,
-                from: Mode.Default,
-                pointer_id_0: pointer_id,
-                init_ratio_0: goal_point_ratio,
-            })
-            gesture.onModeChange(gesture.mode.type)
-        },
+        pointer_id: input.e.pointerId,
+        goal_point_ratio: input.point_ratio,
+        click_prevented: false,
         cleanup() {
             node.anchor = false
             clearInterval(interval)
             removeListener()
         },
     }
+
+    const removeListener = Ev.listener(document, 'pointermove', e => {
+        if (e.pointerId !== state.pointer_id) return
+
+        state.goal_point_ratio = eventToPointRatio(canvas, e)
+        goal_graph_node_pos = pointRatioToGraph(canvas, state.goal_point_ratio)
+        const graph_node_pos = Trig.difference(goal_graph_node_pos, goal_node_pos_delta)
+
+        if (!state.click_prevented) {
+            const dist = Trig.distance(down_event_pos, {x: e.clientX, y: e.clientY})
+
+            if (dist > 14) {
+                state.click_prevented = true
+            }
+        }
+
+        gesture.onNodeDrag(node, graph_node_pos)
+    })
+
+    return state
 }
 
-function movingSpaceState(gesture: CanvasGestures): MovingSpaceState {
-    const {canvas} = gesture
+interface MovingSpaceState extends BaseStateValue<Mode.MovingSpace> {}
 
+function movingSpaceState(): MovingSpaceState {
     return {
         type: Mode.MovingSpace,
-        space(e) {
-            e.preventDefault()
-        },
-        spaceUp() {
-            gesture.mode.cleanup()
-            gesture.mode = defaultState(gesture)
-            gesture.onModeChange(gesture.mode.type)
-        },
-        pointerDown(e) {
-            gesture.mode.cleanup()
-            gesture.mode = moveDraggingState(gesture, {
-                from: Mode.MovingSpace,
-                init_ratio: eventToPointRatio(canvas, e),
-                pointer_id: e.pointerId,
-            })
-            gesture.onModeChange(gesture.mode.type)
-        },
         cleanup: Misc.noop,
     }
 }
@@ -576,32 +520,6 @@ function moveDraggingState(
         init_graph_position: Trig.vector(canvas.translate),
         pointer_id: input.pointer_id,
         space_lifted: false,
-        space(e) {
-            e.preventDefault()
-        },
-        spaceUp() {
-            state.space_lifted = true
-        },
-        pointerUp(e) {
-            if (e instanceof PointerEvent && e.pointerId !== input.pointer_id) return
-
-            gesture.mode.cleanup()
-            gesture.mode =
-                state.space_lifted || input.from === Mode.Default
-                    ? defaultState(gesture)
-                    : movingSpaceState(gesture)
-            gesture.onModeChange(gesture.mode.type)
-        },
-        pointerDown(e) {
-            gesture.mode.cleanup()
-            gesture.mode = moveMultiTouchState(gesture, {
-                e,
-                from: input.from,
-                pointer_id_0: input.pointer_id,
-                init_ratio_0: state.last_ratio,
-            })
-            gesture.onModeChange(gesture.mode.type)
-        },
         cleanup() {
             removeListener()
         },
@@ -612,6 +530,7 @@ function moveDraggingState(
 
 interface MovingMultiTouchState extends BaseStateValue<Mode.MovingMultiTouch> {
     canvas: CanvasState
+    from: Mode.Default | Mode.MovingSpace
     pointer_id_0: number
     pointer_id_1: number
     init_ratio_0: T.Position
@@ -623,11 +542,7 @@ interface MovingMultiTouchState extends BaseStateValue<Mode.MovingMultiTouch> {
     init_graph_position: T.Position
 }
 
-function handleMultiTouchEvent(
-    state: MovingMultiTouchState,
-
-    e: PointerEvent,
-): boolean {
+function handleMultiTouchEvent(state: MovingMultiTouchState, e: PointerEvent): boolean {
     if (e.pointerId !== state.pointer_id_0 && e.pointerId !== state.pointer_id_1) return false
 
     e.preventDefault()
@@ -687,6 +602,7 @@ function moveMultiTouchState(
     const state: MovingMultiTouchState = {
         type: Mode.MovingMultiTouch,
         canvas,
+        from: input.from,
         pointer_id_0: input.pointer_id_0,
         pointer_id_1: input.e.pointerId,
         init_ratio_0,
@@ -696,7 +612,118 @@ function moveMultiTouchState(
         init_scale: canvas.scale,
         init_dist: Trig.distance(init_ratio_0, init_ratio_1),
         init_graph_position: Trig.vector(canvas.translate),
-        pointerUp(e) {
+        cleanup() {
+            removeListener()
+        },
+    }
+
+    return state
+}
+
+function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void {
+    const {canvas} = gesture
+
+    switch (gesture.mode.type) {
+        case Mode.Default: {
+            const point_ratio = eventToPointRatio(canvas, e),
+                point_graph = pointRatioToGraph(canvas, point_ratio)
+
+            const pointer_node_radius = pointerNodeRadius(
+                canvas.max_size,
+                canvas.options.graph.grid.size,
+            )
+
+            const node = Graph.findClosestNodeLinear(
+                canvas.options.graph.nodes,
+                point_graph,
+                pointer_node_radius,
+            )
+
+            gesture.mode.cleanup()
+            gesture.mode = node
+                ? draggingNodeState(gesture, {
+                      node,
+                      e,
+                      point_graph,
+                      point_ratio,
+                  })
+                : moveDraggingState(gesture, {
+                      from: Mode.Default,
+                      init_ratio: point_ratio,
+                      pointer_id: e.pointerId,
+                  })
+            gesture.onModeChange(gesture.mode.type)
+
+            break
+        }
+        case Mode.DraggingNode: {
+            gesture.mode.cleanup()
+            gesture.mode = moveMultiTouchState(gesture, {
+                e,
+                from: Mode.Default,
+                pointer_id_0: gesture.mode.pointer_id,
+                init_ratio_0: gesture.mode.goal_point_ratio,
+            })
+            gesture.onModeChange(gesture.mode.type)
+
+            break
+        }
+        case Mode.MovingSpace: {
+            gesture.mode.cleanup()
+            gesture.mode = moveDraggingState(gesture, {
+                from: Mode.MovingSpace,
+                init_ratio: eventToPointRatio(canvas, e),
+                pointer_id: e.pointerId,
+            })
+            gesture.onModeChange(gesture.mode.type)
+
+            break
+        }
+        case Mode.MovingDragging: {
+            gesture.mode.cleanup()
+            gesture.mode = moveMultiTouchState(gesture, {
+                e,
+                from: gesture.mode.from,
+                pointer_id_0: gesture.mode.pointer_id,
+                init_ratio_0: gesture.mode.last_ratio,
+            })
+            gesture.onModeChange(gesture.mode.type)
+
+            break
+        }
+    }
+}
+
+function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): void {
+    const {mode} = gesture
+
+    switch (mode.type) {
+        case Mode.DraggingNode: {
+            if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
+
+            if (!mode.click_prevented) {
+                gesture.onNodeClick(mode.node)
+            }
+
+            mode.cleanup()
+            gesture.mode = defaultState(gesture)
+            gesture.onModeChange(gesture.mode.type)
+
+            break
+        }
+        case Mode.MovingDragging: {
+            if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
+
+            mode.cleanup()
+            gesture.mode =
+                mode.space_lifted || mode.from === Mode.Default
+                    ? defaultState(gesture)
+                    : movingSpaceState()
+            gesture.onModeChange(gesture.mode.type)
+
+            break
+        }
+        case Mode.MovingMultiTouch: {
             if (e == null) {
                 gesture.mode.cleanup()
                 gesture.mode = defaultState(gesture)
@@ -707,30 +734,71 @@ function moveMultiTouchState(
             let pointer_id: number
             let ratio: T.Position
 
-            if (e.pointerId === state.pointer_id_0) {
-                pointer_id = state.pointer_id_1
-                ratio = state.last_ratio_1
-            } else if (e.pointerId === state.pointer_id_1) {
-                pointer_id = state.pointer_id_0
-                ratio = state.last_ratio_0
+            if (e.pointerId === mode.pointer_id_0) {
+                pointer_id = mode.pointer_id_1
+                ratio = mode.last_ratio_1
+            } else if (e.pointerId === mode.pointer_id_1) {
+                pointer_id = mode.pointer_id_0
+                ratio = mode.last_ratio_0
             } else {
                 return
             }
 
             gesture.mode.cleanup()
             gesture.mode = moveDraggingState(gesture, {
-                from: input.from,
+                from: mode.from,
                 init_ratio: ratio,
                 pointer_id,
             })
             gesture.onModeChange(gesture.mode.type)
-        },
-        cleanup() {
-            removeListener()
-        },
-    }
 
-    return state
+            break
+        }
+    }
+}
+
+function handleKeyDownEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
+    if (Ev.shouldIgnoreKeydown(e)) return
+
+    // TODO handle escape too
+    if (e.key !== 'Control') return
+
+    switch (gesture.mode.type) {
+        case Mode.Default: {
+            e.preventDefault()
+            gesture.mode.cleanup()
+            gesture.mode = movingSpaceState()
+            gesture.onModeChange(gesture.mode.type)
+            break
+        }
+        case Mode.MovingSpace: {
+            e.preventDefault() // ? are those neccesary? only if we allow changing the "space" key
+            break
+        }
+        case Mode.MovingDragging: {
+            e.preventDefault()
+            break
+        }
+    }
+}
+
+function handleKeyUpEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
+    if (Ev.shouldIgnoreKeydown(e)) return
+
+    if (e.key !== 'Control') return
+
+    switch (gesture.mode.type) {
+        case Mode.MovingSpace: {
+            gesture.mode.cleanup()
+            gesture.mode = defaultState(gesture)
+            gesture.onModeChange(gesture.mode.type)
+            break
+        }
+        case Mode.MovingDragging: {
+            gesture.mode.space_lifted = true
+            break
+        }
+    }
 }
 
 function handleWheelEvent(canvas: CanvasState, e: WheelEvent): void {
@@ -767,25 +835,6 @@ function handleWheelEvent(canvas: CanvasState, e: WheelEvent): void {
     )
 }
 
-export function getCanvasSize(el: HTMLCanvasElement): T.Size {
-    const pixel_ratio = window.devicePixelRatio
-    const rect = el.getBoundingClientRect()
-
-    return {
-        width: rect.width * pixel_ratio,
-        height: rect.height * pixel_ratio,
-    }
-}
-
-export function resizeObserver(
-    el: HTMLCanvasElement,
-    callback: (size: T.Size) => void,
-): ResizeObserver {
-    const ro = new ResizeObserver(() => callback(getCanvasSize(el)))
-    ro.observe(el)
-    return ro
-}
-
 export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
     const gesture: CanvasGestures = {
         canvas: options.canvas,
@@ -802,7 +851,7 @@ export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
 
     gesture.cleanup1 = Ev.listenerMap(options.canvas.options.el, {
         pointerdown(e) {
-            gesture.mode.pointerDown?.(e)
+            handlePointerDownEvent(gesture, e)
         },
         wheel(e) {
             handleWheelEvent(options.canvas, e)
@@ -812,34 +861,19 @@ export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
 
     gesture.cleanup2 = Ev.listenerMap(document, {
         pointerup(e) {
-            gesture.mode.pointerUp?.(e)
+            handlePointerUpEvent(gesture, e)
         },
         pointercancel(e) {
-            gesture.mode.pointerUp?.(e)
+            handlePointerUpEvent(gesture, e)
         },
         contextmenu() {
-            gesture.mode.pointerUp?.(null)
+            handlePointerUpEvent(gesture, null)
         },
         keydown(e) {
-            if (Ev.shouldIgnoreKeydown(e)) return
-
-            switch (e.key) {
-                case 'Escape': {
-                    gesture.mode.escape?.(e)
-                    break
-                }
-                case 'Control': {
-                    gesture.mode.space?.(e)
-                    break
-                }
-            }
+            handleKeyDownEvent(gesture, e)
         },
         keyup(e) {
-            if (Ev.shouldIgnoreKeydown(e)) return
-
-            if (e.key === 'Control') {
-                gesture.mode.spaceUp?.(e)
-            }
+            handleKeyUpEvent(gesture, e)
         },
     })
 
