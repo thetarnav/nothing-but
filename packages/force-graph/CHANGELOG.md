@@ -1,5 +1,18 @@
 # @nothing-but/force-graph
 
+## 0.2.0
+
+### Minor Changes
+
+-   eca569b: Remove solid dependency, change API by separating canvas state, animation, interaction and resizing from each other.
+
+### Patch Changes
+
+-   Updated dependencies [e8b226d]
+-   Updated dependencies [39a7fb4]
+    -   @nothing-but/utils@0.8.0
+    -   @nothing-but/dom@0.1.0
+
 ## 0.1.1
 
 ### Patch Changes
