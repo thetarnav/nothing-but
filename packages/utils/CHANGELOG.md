@@ -1,5 +1,12 @@
 # @nothing-but/utils
 
+## 0.8.0
+
+### Minor Changes
+
+-   e8b226d: Move event module to new dom package
+-   39a7fb4: TitleCase exported namespaces
+
 ## 0.7.2
 
 ### Patch Changes
