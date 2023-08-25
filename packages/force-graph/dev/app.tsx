@@ -44,9 +44,6 @@ export const App: Component = () => {
         ctx,
         graph,
         init_scale: 2,
-        onNodeClick: node => {
-            console.log('click', node)
-        },
     })
 
     const animation = Anim.frameAnimation({
@@ -58,8 +55,8 @@ export const App: Component = () => {
             Canvas.drawCanvas(canvas)
         },
     })
-
-    Anim.start(animation)
+    Anim.bump(animation)
+    onCleanup(() => Anim.cleanup(animation))
 
     const ro = Canvas.resizeObserver(el, size => {
         Canvas.updateCanvasSize(canvas, size)
@@ -67,8 +64,30 @@ export const App: Component = () => {
     })
     onCleanup(() => ro.disconnect())
 
-    const interaction = Canvas.canvasInteractivity(canvas)
-    onCleanup(() => Canvas.cleanupCanvasInteractivity(interaction))
+    const gestures = Canvas.canvasGestures({
+        canvas,
+        onTranslate() {
+            Anim.requestFrame(animation)
+        },
+        onNodeClick(node) {
+            console.log('click', node)
+        },
+        onNodeHover(node) {
+            canvas.hovered_node = node
+        },
+        onNodeDrag(node, pos) {
+            Graph.changeNodePosition(canvas.options.graph.grid, node, pos.x, pos.y)
+            Anim.requestFrame(animation)
+        },
+        onModeChange(mode) {
+            if (mode === Canvas.Mode.DraggingNode) {
+                Anim.start(animation)
+            } else {
+                Anim.pause(animation)
+            }
+        },
+    })
+    onCleanup(() => Canvas.cleanupCanvasGestures(gestures))
 
     return <Shell>{el}</Shell>
 }
