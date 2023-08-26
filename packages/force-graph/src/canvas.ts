@@ -678,8 +678,9 @@ export function cleanupModeState(gesture: CanvasGestures): void {
 
 function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void {
     const {canvas} = gesture
+    const {mode} = gesture
 
-    switch (gesture.mode.type) {
+    switch (mode.type) {
         case Mode.Default: {
             const point_ratio = eventToPointRatio(canvas, e),
                 point_graph = pointRatioToGraph(canvas, point_ratio)
@@ -703,19 +704,21 @@ function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void 
                     point_ratio,
                 })
             } else {
-                changeModeState(gesture, Mode.MovingSpace)
+                changeModeState(gesture, Mode.MovingDragging, {
+                    from: Mode.Default,
+                    init_ratio: point_ratio,
+                    pointer_id: e.pointerId,
+                })
             }
-
             break
         }
         case Mode.DraggingNode: {
             changeModeState(gesture, Mode.MovingMultiTouch, {
                 e,
                 from: Mode.Default,
-                pointer_id_0: gesture.mode.pointer_id,
-                init_ratio_0: gesture.mode.goal_point_ratio,
+                pointer_id_0: mode.pointer_id,
+                init_ratio_0: mode.goal_point_ratio,
             })
-
             break
         }
         case Mode.MovingSpace: {
@@ -724,17 +727,15 @@ function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void 
                 init_ratio: eventToPointRatio(canvas, e),
                 pointer_id: e.pointerId,
             })
-
             break
         }
         case Mode.MovingDragging: {
             changeModeState(gesture, Mode.MovingMultiTouch, {
                 e,
-                from: gesture.mode.from,
-                pointer_id_0: gesture.mode.pointer_id,
-                init_ratio_0: gesture.mode.last_ratio,
+                from: mode.from,
+                pointer_id_0: mode.pointer_id,
+                init_ratio_0: mode.last_ratio,
             })
-
             break
         }
     }
@@ -790,7 +791,7 @@ function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): 
 }
 
 function handleKeyDownEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
-    if (Ev.shouldIgnoreKeydown(e)) return
+    if (Ev.shouldIgnoreKeydown(e) || e.repeat) return
 
     const {mode} = gesture
 
@@ -816,13 +817,15 @@ function handleKeyUpEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
 
     if (e.key !== 'Control') return
 
-    switch (gesture.mode.type) {
+    const {mode} = gesture
+
+    switch (mode.type) {
         case Mode.MovingSpace: {
             changeModeState(gesture, Mode.Default)
             break
         }
         case Mode.MovingDragging: {
-            gesture.mode.from = Mode.Default
+            mode.from = Mode.Default
             break
         }
     }
