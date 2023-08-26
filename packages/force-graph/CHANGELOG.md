@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.2.1
+
+### Patch Changes
+
+-   411ebde: Fixes, code cleanup and escape key
+
 ## 0.2.0
 
 ### Minor Changes
