@@ -40,5 +40,5 @@ TODO:
         -   [ ] separate from canvas
         -   [ ] standard interfaces? (strategy pattern)
     -   [ ] classes (has internal lifecycle)
-    -   [ ] escape key to reset
+    -   [x] escape key to reset
 -   [ ] frame animation class

@@ -792,13 +792,20 @@ function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): 
 function handleKeyDownEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
     if (Ev.shouldIgnoreKeydown(e)) return
 
-    // TODO handle escape too
-    if (e.key !== 'Control') return
+    const {mode} = gesture
 
-    switch (gesture.mode.type) {
-        case Mode.Default: {
+    switch (e.key) {
+        case 'Control': {
+            if (mode.type !== Mode.Default) return
             e.preventDefault()
             changeModeState(gesture, Mode.MovingSpace)
+            break
+        }
+
+        case 'Escape': {
+            if (mode.type === Mode.Default) return
+            e.preventDefault()
+            changeModeState(gesture, Mode.Default)
             break
         }
     }
