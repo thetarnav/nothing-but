@@ -317,39 +317,39 @@ export enum Mode {
     MovingMultiTouch,
 }
 
-interface BaseStateValue<TMode extends Mode> {
-    type: TMode
-}
-
-interface DefaultState extends BaseStateValue<Mode.Default> {
+interface DefaultState {
+    readonly type: Mode.Default
     hover_node: Graph.Node | null
     removeListener(): void
+}
+
+function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: MouseEvent): void {
+    if (e.buttons !== 0) return
+
+    const {canvas} = gesture
+
+    const point_graph = eventToPointGraph(canvas, e)
+    const pointer_node_radius = pointerNodeRadius(canvas.max_size, canvas.options.graph.grid.size)
+
+    const node = Graph.findClosestNodeLinear(
+        canvas.options.graph.nodes,
+        point_graph,
+        pointer_node_radius,
+    )
+
+    const prev_hover_node = state.hover_node
+    if (prev_hover_node === node) return
+
+    state.hover_node = node ?? null
+
+    gesture.onNodeHover(state.hover_node)
 }
 
 function defaultState(gesture: CanvasGestures): DefaultState {
     const {canvas} = gesture
 
     const removeListener = Ev.listener(canvas.options.el, 'mousemove', e => {
-        if (e.buttons !== 0) return
-
-        const point_graph = eventToPointGraph(canvas, e)
-        const pointer_node_radius = pointerNodeRadius(
-            canvas.max_size,
-            canvas.options.graph.grid.size,
-        )
-
-        const node = Graph.findClosestNodeLinear(
-            canvas.options.graph.nodes,
-            point_graph,
-            pointer_node_radius,
-        )
-
-        const prev_hover_node = state.hover_node
-        if (prev_hover_node === node) return
-
-        state.hover_node = node ?? null
-
-        gesture.onNodeHover(state.hover_node)
+        handleMouseMoveEvent(gesture, state, e)
     })
 
     const state: DefaultState = {
@@ -361,7 +361,8 @@ function defaultState(gesture: CanvasGestures): DefaultState {
     return state
 }
 
-interface DraggingNodeState extends BaseStateValue<Mode.DraggingNode> {
+interface DraggingNodeState {
+    readonly type: Mode.DraggingNode
     node: Graph.Node
     pointer_id: number
     goal_point_ratio: T.Position
@@ -438,7 +439,9 @@ function draggingNodeState(
     return state
 }
 
-interface MovingSpaceState extends BaseStateValue<Mode.MovingSpace> {}
+interface MovingSpaceState {
+    readonly type: Mode.MovingSpace
+}
 
 function movingSpaceState(): MovingSpaceState {
     return {
@@ -446,7 +449,8 @@ function movingSpaceState(): MovingSpaceState {
     }
 }
 
-interface MovingDraggingState extends BaseStateValue<Mode.MovingDragging> {
+interface MovingDraggingState {
+    readonly type: Mode.MovingDragging
     canvas: CanvasState
     from: Mode.Default | Mode.MovingSpace
     init_ratio: T.Position
@@ -512,7 +516,8 @@ function moveDraggingState(
     return state
 }
 
-interface MovingMultiTouchState extends BaseStateValue<Mode.MovingMultiTouch> {
+interface MovingMultiTouchState {
+    readonly type: Mode.MovingMultiTouch
     canvas: CanvasState
     from: Mode.Default | Mode.MovingSpace
     pointer_id_0: number
