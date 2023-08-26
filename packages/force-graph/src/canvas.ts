@@ -457,7 +457,6 @@ interface MovingDraggingState {
     last_ratio: T.Position
     init_graph_position: T.Position
     pointer_id: number
-    space_lifted: boolean
     removeListener(): void
 }
 
@@ -509,7 +508,6 @@ function moveDraggingState(
         last_ratio: input.init_ratio,
         init_graph_position: Trig.vector(canvas.translate),
         pointer_id: input.pointer_id,
-        space_lifted: false,
         removeListener,
     }
 
@@ -616,7 +614,36 @@ export interface ModeStateMap {
     [Mode.MovingMultiTouch]: MovingMultiTouchState
 }
 
+const mode_state_setup_map = {
+    [Mode.Default]: defaultState,
+    [Mode.DraggingNode]: draggingNodeState,
+    [Mode.MovingSpace]: movingSpaceState,
+    [Mode.MovingDragging]: moveDraggingState,
+    [Mode.MovingMultiTouch]: moveMultiTouchState,
+}
+
 export type ModeState = ModeStateMap[Mode]
+
+export type ModeStateInput<T extends Mode> = Parameters<(typeof mode_state_setup_map)[T]> extends [
+    CanvasGestures,
+    ...infer U,
+]
+    ? U
+    : []
+
+export function changeModeState<T extends Mode>(
+    gesture: CanvasGestures,
+    type: T,
+    ...args: ModeStateInput<T>
+): void {
+    cleanupModeState(gesture)
+    gesture.mode = mode_state_setup_map[type](
+        gesture,
+        // @ts-ignore
+        ...args,
+    )
+    gesture.onModeChange(type)
+}
 
 export function cleanupModeState(gesture: CanvasGestures): void {
     const {mode} = gesture
@@ -668,55 +695,45 @@ function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void 
                 pointer_node_radius,
             )
 
-            cleanupModeState(gesture)
-            gesture.mode = node
-                ? draggingNodeState(gesture, {
-                      node,
-                      e,
-                      point_graph,
-                      point_ratio,
-                  })
-                : moveDraggingState(gesture, {
-                      from: Mode.Default,
-                      init_ratio: point_ratio,
-                      pointer_id: e.pointerId,
-                  })
-            gesture.onModeChange(gesture.mode.type)
+            if (node) {
+                changeModeState(gesture, Mode.DraggingNode, {
+                    node,
+                    e,
+                    point_graph,
+                    point_ratio,
+                })
+            } else {
+                changeModeState(gesture, Mode.MovingSpace)
+            }
 
             break
         }
         case Mode.DraggingNode: {
-            cleanupModeState(gesture)
-            gesture.mode = moveMultiTouchState(gesture, {
+            changeModeState(gesture, Mode.MovingMultiTouch, {
                 e,
                 from: Mode.Default,
                 pointer_id_0: gesture.mode.pointer_id,
                 init_ratio_0: gesture.mode.goal_point_ratio,
             })
-            gesture.onModeChange(gesture.mode.type)
 
             break
         }
         case Mode.MovingSpace: {
-            cleanupModeState(gesture)
-            gesture.mode = moveDraggingState(gesture, {
+            changeModeState(gesture, Mode.MovingDragging, {
                 from: Mode.MovingSpace,
                 init_ratio: eventToPointRatio(canvas, e),
                 pointer_id: e.pointerId,
             })
-            gesture.onModeChange(gesture.mode.type)
 
             break
         }
         case Mode.MovingDragging: {
-            cleanupModeState(gesture)
-            gesture.mode = moveMultiTouchState(gesture, {
+            changeModeState(gesture, Mode.MovingMultiTouch, {
                 e,
                 from: gesture.mode.from,
                 pointer_id_0: gesture.mode.pointer_id,
                 init_ratio_0: gesture.mode.last_ratio,
             })
-            gesture.onModeChange(gesture.mode.type)
 
             break
         }
@@ -734,29 +751,18 @@ function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): 
                 gesture.onNodeClick(mode.node)
             }
 
-            cleanupModeState(gesture)
-            gesture.mode = defaultState(gesture)
-            gesture.onModeChange(gesture.mode.type)
-
+            changeModeState(gesture, Mode.Default)
             break
         }
         case Mode.MovingDragging: {
             if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
 
-            cleanupModeState(gesture)
-            gesture.mode =
-                mode.space_lifted || mode.from === Mode.Default
-                    ? defaultState(gesture)
-                    : movingSpaceState()
-            gesture.onModeChange(gesture.mode.type)
-
+            changeModeState(gesture, mode.from)
             break
         }
         case Mode.MovingMultiTouch: {
             if (e == null) {
-                cleanupModeState(gesture)
-                gesture.mode = defaultState(gesture)
-                gesture.onModeChange(gesture.mode.type)
+                changeModeState(gesture, Mode.Default)
                 return
             }
 
@@ -773,14 +779,11 @@ function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): 
                 return
             }
 
-            cleanupModeState(gesture)
-            gesture.mode = moveDraggingState(gesture, {
+            changeModeState(gesture, Mode.MovingDragging, {
                 from: mode.from,
                 init_ratio: ratio,
                 pointer_id,
             })
-            gesture.onModeChange(gesture.mode.type)
-
             break
         }
     }
@@ -795,17 +798,7 @@ function handleKeyDownEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
     switch (gesture.mode.type) {
         case Mode.Default: {
             e.preventDefault()
-            cleanupModeState(gesture)
-            gesture.mode = movingSpaceState()
-            gesture.onModeChange(gesture.mode.type)
-            break
-        }
-        case Mode.MovingSpace: {
-            e.preventDefault() // ? are those neccesary? only if we allow changing the "space" key
-            break
-        }
-        case Mode.MovingDragging: {
-            e.preventDefault()
+            changeModeState(gesture, Mode.MovingSpace)
             break
         }
     }
@@ -818,13 +811,11 @@ function handleKeyUpEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
 
     switch (gesture.mode.type) {
         case Mode.MovingSpace: {
-            cleanupModeState(gesture)
-            gesture.mode = defaultState(gesture)
-            gesture.onModeChange(gesture.mode.type)
+            changeModeState(gesture, Mode.Default)
             break
         }
         case Mode.MovingDragging: {
-            gesture.mode.space_lifted = true
+            gesture.mode.from = Mode.Default
             break
         }
     }
