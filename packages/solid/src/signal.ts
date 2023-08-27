@@ -74,7 +74,7 @@ export function effect<T>(
     solid.createEffect(() => {
         const value = source.value
         const cleanup = solid.untrack(() => fn(value))
-        if (cleanup) solid.onCleanup(cleanup)
+        cleanup && solid.onCleanup(cleanup)
     })
 }
 
@@ -130,16 +130,19 @@ export function set_nested<T, K extends keyof T>(sig: Signal<T>, key: K, value: 
     if (old !== value) {
         const copy: any = Array.isArray(obj) ? [...obj] : {...obj}
         copy[key] = value as any
+        // eslint-disable-next-line @nothing-but/no-ignored-return
         sig.setter(copy)
     }
 }
 
 export function update<T>(sig: Signal<T>, fn: (value: T) => T): void {
+    // eslint-disable-next-line @nothing-but/no-ignored-return
     sig.setter(fn)
 }
 
 export function mutate<T>(sig: Signal<T>, fn: (value: T) => void): void {
     sig.mutating = true
+    // eslint-disable-next-line @nothing-but/no-ignored-return
     sig.setter(value => {
         fn(value)
         return value
@@ -148,6 +151,7 @@ export function mutate<T>(sig: Signal<T>, fn: (value: T) => void): void {
 
 export function trigger(sig: Signal<any>): void {
     sig.mutating = true
+    // eslint-disable-next-line @nothing-but/no-ignored-return
     sig.setter(value => value)
 }
 

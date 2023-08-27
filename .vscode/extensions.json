@@ -1,3 +1,8 @@
 {
-    "recommendations": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint", "antfu.unocss"]
+    "recommendations": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "antfu.unocss",
+        "zjcompt.es6-string-javascript"
+    ]
 }

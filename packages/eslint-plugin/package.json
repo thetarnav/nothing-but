@@ -14,7 +14,7 @@
     },
     "scripts": {
         "build": "pnpm tsc -p ./tsconfig.build.json",
-        "test": "vitest -c ../../configs/vitest.config.js",
+        "test": "vitest -c ../../configs/vitest.config.ts",
         "typecheck": "echo \"Built with TSC\""
     },
     "private": false,
@@ -29,10 +29,10 @@
     },
     "devDependencies": {
         "@typescript-eslint/rule-tester": "^6.4.1",
-        "@typescript-eslint/parser": "^6.4.1",
-        "eslint": "^8.48.0"
+        "@typescript-eslint/parser": "^6.4.1"
     },
     "peerDependencies": {
-        "eslint": "^6.0.0 || ^7.0.0 || ^8.0.0"
+        "eslint": "^6.0.0 || ^7.0.0 || ^8.0.0",
+        "typescript": "~5.2.0"
     }
 }

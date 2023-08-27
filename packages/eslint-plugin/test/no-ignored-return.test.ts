@@ -14,7 +14,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
     valid: [
         {
             name: 'captured',
-            code: `
+            code: /*javascript*/ `
                 declare function func(): boolean
 
                 const res = func()
@@ -22,7 +22,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
         },
         {
             name: 'void',
-            code: `
+            code: /*javascript*/ `
                 declare function func(): void
 
                 func()
@@ -30,7 +30,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
         },
         {
             name: 'overload',
-            code: `
+            code: /*javascript*/ `
                 declare function func(a: string, b: string): void
                 declare function func(a: number): void
 
@@ -39,7 +39,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
         },
         {
             name: 'arrow captured',
-            code: `
+            code: /*javascript*/ `
                 const func = () => true
 
                 const res = func()
@@ -47,47 +47,121 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
         },
         {
             name: 'arrow void',
-            code: `
+            code: /*javascript*/ `
                 const func = () => {}
 
                 func()
+            `,
+        },
+        {
+            name: 'object declaration',
+            code: /*javascript*/ `
+                declare function func(): boolean
+
+                const obj = {
+                    prop: func()
+                }
+            `,
+        },
+        {
+            name: 'property assignment',
+            code: /*javascript*/ `
+                declare function func(): boolean
+
+                obj.prop = func()
+            `,
+        },
+        {
+            name: 'if',
+            code: /*javascript*/ `
+                declare function func(): boolean
+
+                if (func()) {}
+            `,
+        },
+        {
+            name: 'parameter',
+            code: /*javascript*/ `
+                declare function func(): boolean
+
+                function foo(a = func()) {}
+            `,
+        },
+        {
+            name: 'call as parameter',
+            code: /*javascript*/ `
+                declare function funcA(a: boolean): void
+                declare function funcB(): boolean
+
+                funcA(funcB())
+            `,
+        },
+        {
+            name: 'no function type',
+            code: /*javascript*/ `
+                func(123)
+            `,
+        },
+        {
+            name: 'array methods',
+            code: /*javascript*/ `
+                const arr = []
+                arr.push(4);
+                arr.pop();
+                arr.shift();
+                arr.unshift(4);
+                [].splice(0, 1);
+                [].sort();
+                [].reverse();
+            `,
+        },
+        {
+            name: 'map methods',
+            code: /*javascript*/ `
+                const map = new Map()
+                map.set(1, 2)
+                map.delete(1)
+            `,
+        },
+        {
+            name: 'set methods',
+            code: /*javascript*/ `
+                const set = new Set()
+                set.add(1)
+                set.delete(1)
             `,
         },
     ],
     invalid: [
         {
             name: 'not captured',
-            code: `
+            code: /*javascript*/ `
                 declare function func(): boolean
-
                 func()
             `,
             errors: [{messageId: 'use_return_value'}],
         },
         {
             name: 'returns union',
-            code: `
+            code: /*javascript*/ `
                 declare function func(): boolean | void
-
                 func()
             `,
             errors: [{messageId: 'use_return_value'}],
         },
         {
             name: 'overload',
-            code: `
+            code: /*javascript*/ `
                 declare function func(): void
                 declare function func(a: number): boolean
-
                 func()
             `,
             errors: [{messageId: 'use_return_value'}],
         },
         {
             name: 'arrow',
-            code: `
+            code: /*javascript*/ `
                 const func = () => true
-
                 func()
             `,
             errors: [{messageId: 'use_return_value'}],

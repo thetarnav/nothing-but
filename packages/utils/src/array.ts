@@ -60,6 +60,7 @@ export function mutate_filter<T>(
 ): void {
     const temp = array.filter(predicate)
     array.length = 0
+    // eslint-disable-next-line @nothing-but/no-ignored-return
     array.push.apply(array, temp)
 }
 
