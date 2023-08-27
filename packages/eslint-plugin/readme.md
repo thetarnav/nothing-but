@@ -9,7 +9,7 @@ TODO:
 -   [ ] `fn.apply()` and `fn.call()` methods
 -   [ ] `bool && returningFunc()` expressions
 
-References:
+Resources:
 
 -   [solidjs-community/eslint-plugin-solid](https://github.com/solidjs-community/eslint-plugin-solid)
 -   [SonarSource/eslint-plugin-sonarjs](https://github.com/SonarSource/eslint-plugin-sonarjs/blob/master/package.json)
