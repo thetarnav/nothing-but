@@ -3,8 +3,6 @@ import * as TS from 'typescript'
 
 const createRule = Eslint.ESLintUtils.RuleCreator.withoutDocs
 
-export const use_return_value_message_id = 'use_return_value'
-
 function isVoidReturnType(type: TS.Type) {
     const call_signatures = type.getCallSignatures()
     if (call_signatures.length === 0) return false
@@ -18,12 +16,12 @@ function isVoidReturnType(type: TS.Type) {
     return true
 }
 
-export const use_return_value = createRule({
+export const no_ignored_return = createRule({
     meta: {
         type: 'problem',
         schema: [],
         messages: {
-            [use_return_value_message_id]:
+            use_return_value:
                 'Return value from function with non-void return type should be used.',
         },
     },
@@ -48,7 +46,7 @@ export const use_return_value = createRule({
                 if (node.parent.type !== 'VariableDeclarator') {
                     context.report({
                         node,
-                        messageId: use_return_value_message_id,
+                        messageId: 'use_return_value',
                     })
                 }
             },

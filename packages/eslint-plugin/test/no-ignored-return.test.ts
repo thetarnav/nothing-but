@@ -1,6 +1,6 @@
 import {RuleTester} from '@typescript-eslint/rule-tester'
 import path from 'node:path'
-import * as rule from '../src/use-return-value.js'
+import * as rule from '../src/no-ignored-return.js'
 
 const ruleTester = new RuleTester({
     parser: '@typescript-eslint/parser',
@@ -10,7 +10,7 @@ const ruleTester = new RuleTester({
     },
 })
 
-ruleTester.run('use-return-values', rule.use_return_value, {
+ruleTester.run('no-ignored-return', rule.no_ignored_return, {
     valid: [
         {
             name: 'captured',
@@ -62,7 +62,7 @@ ruleTester.run('use-return-values', rule.use_return_value, {
 
                 func()
             `,
-            errors: [{messageId: rule.use_return_value_message_id}],
+            errors: [{messageId: 'use_return_value'}],
         },
         {
             name: 'returns union',
@@ -71,7 +71,7 @@ ruleTester.run('use-return-values', rule.use_return_value, {
 
                 func()
             `,
-            errors: [{messageId: rule.use_return_value_message_id}],
+            errors: [{messageId: 'use_return_value'}],
         },
         {
             name: 'overload',
@@ -81,7 +81,7 @@ ruleTester.run('use-return-values', rule.use_return_value, {
 
                 func()
             `,
-            errors: [{messageId: rule.use_return_value_message_id}],
+            errors: [{messageId: 'use_return_value'}],
         },
         {
             name: 'arrow',
@@ -90,7 +90,7 @@ ruleTester.run('use-return-values', rule.use_return_value, {
 
                 func()
             `,
-            errors: [{messageId: rule.use_return_value_message_id}],
+            errors: [{messageId: 'use_return_value'}],
         },
     ],
 })

@@ -1,7 +1,13 @@
 {
     "root": true,
     "parser": "@typescript-eslint/parser",
-    "plugins": ["@typescript-eslint", "no-only-tests", "eslint-comments", "functional"],
+    "plugins": [
+        "@typescript-eslint",
+        "no-only-tests",
+        "eslint-comments",
+        "functional",
+        "@nothing-but"
+    ],
     "ignorePatterns": ["node_modules", "dist", "packages/*/dev"],
     "parserOptions": {
         "project": "./tsconfig.json",
@@ -43,6 +49,7 @@
         */
         "@typescript-eslint/ban-types": "warn",
         "no-fallthrough": ["warn", {"allowEmptyCase": true}],
+        "@nothing-but/no-ignored-return": "warn",
         /*
             stylistic
         */
