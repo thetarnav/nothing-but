@@ -36,8 +36,12 @@
         "@typescript-eslint/no-unnecessary-type-assertion": "warn",
         "@typescript-eslint/no-unnecessary-type-constraint": "warn",
         "@typescript-eslint/no-useless-empty-export": "warn",
-        "no-empty": "warn",
         "@typescript-eslint/no-empty-function": "warn",
+        "no-empty": "warn",
+        "@typescript-eslint/no-unused-expressions": [
+            "warn",
+            {"allowShortCircuit": true, "allowTernary": true}
+        ],
         "eslint-comments/no-unused-disable": "warn",
         /*
             no throwing errors
@@ -48,6 +52,7 @@
             prevent unexpected behavior
         */
         "@typescript-eslint/ban-types": "warn",
+        "@typescript-eslint/switch-exhaustiveness-check": "warn",
         "no-fallthrough": ["warn", {"allowEmptyCase": true}],
         "@nothing-but/no-ignored-return": "warn",
         /*
