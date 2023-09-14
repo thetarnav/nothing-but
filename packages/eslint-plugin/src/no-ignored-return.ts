@@ -64,7 +64,12 @@ export const no_ignored_return = ESLint.ESLintUtils.RuleCreator.withoutDocs({
                     callee.property.type === ESLint.AST_NODE_TYPES.Identifier
                 ) {
                     const obj_type = getType(callee.object, checker, services)
-                    if (mutating_methods[obj_type.symbol.name]?.has(callee.property.name)) return
+                    if (
+                        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                        !obj_type.symbol ||
+                        mutating_methods[obj_type.symbol.name]?.has(callee.property.name)
+                    )
+                        return
                 }
 
                 context.report({node, messageId: 'use_return_value'})
