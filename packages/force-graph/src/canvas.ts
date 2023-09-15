@@ -648,6 +648,7 @@ export function changeModeState<T extends Mode>(
 export function cleanupModeState(gesture: CanvasGestures): void {
     const {mode} = gesture
 
+    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (mode.type) {
         case Mode.Default: {
             mode.removeListener()
@@ -680,6 +681,7 @@ function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void 
     const {canvas} = gesture
     const {mode} = gesture
 
+    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (mode.type) {
         case Mode.Default: {
             const point_ratio = eventToPointRatio(canvas, e),
@@ -744,6 +746,7 @@ function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void 
 function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): void {
     const {mode} = gesture
 
+    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (mode.type) {
         case Mode.DraggingNode: {
             if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
@@ -819,6 +822,7 @@ function handleKeyUpEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
 
     const {mode} = gesture
 
+    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (mode.type) {
         case Mode.MovingSpace: {
             changeModeState(gesture, Mode.Default)
