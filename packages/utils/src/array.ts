@@ -12,6 +12,25 @@ export function wrap<T>(arr: readonly T[], index: number): T | undefined {
 }
 
 /**
+ * Map an array, but only keep non-nullish values.
+ *
+ * Useful for combining `map` and `filter` into one operation.
+ */
+export function map_non_nullable<T, U>(array: readonly T[], fn: (item: T) => U): NonNullable<U>[] {
+    const result: NonNullable<U>[] = Array(array.length)
+    let i = 0
+    for (const item of array) {
+        const mapped = fn(item)
+        if (mapped != null) {
+            result[i] = mapped
+            i += 1
+        }
+    }
+    result.length = i
+    return result
+}
+
+/**
  * Checks if both arrays contain the same values.
  * Order doesn't matter.
  * Arrays must not contain duplicates. (be the same lengths)

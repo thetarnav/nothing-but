@@ -21,6 +21,11 @@ export const entries = Object.entries as <T extends object>(obj: T) => [keyof T,
 export const keys = Object.keys as <T extends object>(object: T) => (keyof T)[]
 
 /**
+ * Converts any value to an Error.
+ */
+export const toError = (e: unknown): Error => (e instanceof Error ? e : new Error(String(e)))
+
+/**
  * Check if a value is a PlainObject. A PlainObject is an object with no prototype.
  */
 export const is_plain_object = (value: unknown): value is Record<string, unknown> =>
