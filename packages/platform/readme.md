@@ -15,13 +15,13 @@ yarn add @nothing-but/platform
 ## How to use it
 
 ```ts
-import {isWebKit, isFirefox} from '@nothing-but/platform'
+import {is_webkit, is_firefox} from '@nothing-but/platform'
 
-if (!isFirefox) {
+if (!is_firefox) {
     // won't run on the Mozilla Firefox Browser
 }
 
-if (isWebKit) {
+if (is_webkit) {
     // run WebKit Engine specific code
 }
 ```
@@ -34,55 +34,55 @@ if (isWebKit) {
 
 ### Devices
 
--   `isAndroid` — Is Android Device
+-   `is_android` — Is Android Device
 
--   `isWindows` — Is Windows Device
+-   `is_windows` — Is Windows Device
 
--   `isMac` — Is Mac Device
+-   `is_mac` — Is Mac Device
 
--   `isIPhone` — Is IPhone Device
+-   `is_iphone` — Is IPhone Device
 
--   `isIPad` — Is IPad Device
+-   `is_ipad` — Is IPad Device
 
--   `isIPod` — Is IPod Device
+-   `is_ipod` — Is IPod Device
 
--   `isIOS` — Is IOS Device
+-   `is_ios` — Is IOS Device
 
--   `isAppleDevice` — Is Apple Device
+-   `is_apple_device` — Is Apple Device
 
--   `isMobile` — is a Mobile Browser
+-   `is_mobile` — is a Mobile Browser
 
 ### Browsers
 
--   `isFirefox` — Browser is Mozilla Firefox
+-   `is_firefox` — Browser is Mozilla Firefox
 
--   `isOpera` — Browser is Opera
+-   `is_opera` — Browser is Opera
 
--   `isSafari` — Browser is Safari
+-   `is_safari` — Browser is Safari
 
--   `isIE` — Browser is Internet Explorer
+-   `is_ie` — Browser is Internet Explorer
 
--   `isChromium` — is Chromium-based browser
+-   `is_chromium` — is Chromium-based browser
 
--   `isEdge` — Browser is Edge
+-   `is_edge` — Browser is Edge
 
--   `isChrome` — Browser is Chrome
+-   `is_chrome` — Browser is Chrome
 
--   `isBrave` — Browser is Brave
+-   `is_brave` — Browser is Brave
 
 ### Rendering Engines
 
--   `isGecko` — Browser using Gecko Rendering Engine
+-   `is_gecko` — Browser using Gecko Rendering Engine
 
--   `isBlink` — Browser using Blink Rendering Engine
+-   `is_blink` — Browser using Blink Rendering Engine
 
--   `isWebKit` — Browser using WebKit Rendering Engine
+-   `is_webkit` — Browser using WebKit Rendering Engine
 
--   `isPresto` — Browser using Presto Rendering Engine
+-   `is_presto` — Browser using Presto Rendering Engine
 
--   `isTrident` — Browser using Trident Rendering Engine
+-   `is_trident` — Browser using Trident Rendering Engine
 
--   `isEdgeHTML` — Browser using EdgeHTML Rendering Engine
+-   `is_edge_html` — Browser using EdgeHTML Rendering Engine
 
 ## Changelog
 
