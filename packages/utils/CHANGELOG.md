@@ -1,5 +1,15 @@
 # @nothing-but/utils
 
+## 0.9.0
+
+### Minor Changes
+
+-   fa0ccd8: Add `map_non_nullable` and `toError`
+
+### Patch Changes
+
+-   8c69205: Add "files" filed to package.json
+
 ## 0.8.0
 
 ### Minor Changes

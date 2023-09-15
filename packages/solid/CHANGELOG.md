@@ -1,5 +1,14 @@
 # @nothing-but/utils
 
+## 0.1.4
+
+### Patch Changes
+
+-   8c69205: Add "files" filed to package.json
+-   Updated dependencies [fa0ccd8]
+-   Updated dependencies [8c69205]
+    -   @nothing-but/utils@0.9.0
+
 ## 0.1.3
 
 ### Patch Changes
