@@ -1,5 +1,15 @@
 # @nothing-but/force-graph
 
+## 0.2.2
+
+### Patch Changes
+
+-   8c69205: Add "files" filed to package.json
+-   Updated dependencies [fa0ccd8]
+-   Updated dependencies [8c69205]
+    -   @nothing-but/utils@0.9.0
+    -   @nothing-but/dom@0.1.1
+
 ## 0.2.1
 
 ### Patch Changes
