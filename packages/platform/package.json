@@ -1,0 +1,24 @@
+{
+    "name": "@nothing-but/platform",
+    "version": "0.0.0",
+    "license": "MIT",
+    "author": "Damian Tarnawski <gthetarnav@gmail.com>",
+    "contributors": [],
+    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/platform#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/thetarnav/nothing-but.git"
+    },
+    "bugs": {
+        "url": "https://github.com/thetarnav/nothing-but/issues"
+    },
+    "scripts": {},
+    "private": false,
+    "sideEffects": false,
+    "publishConfig": {
+        "access": "public"
+    },
+    "type": "module",
+    "main": "./index.js",
+    "module": "./index.js"
+}
