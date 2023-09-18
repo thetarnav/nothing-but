@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.10.1
+
+### Patch Changes
+
+-   8fb37d2: Fix set.difference types
+
 ## 0.10.0
 
 ### Minor Changes

@@ -1,5 +1,12 @@
 # @nothing-but/utils
 
+## 0.1.6
+
+### Patch Changes
+
+-   Updated dependencies [8fb37d2]
+    -   @nothing-but/utils@0.10.1
+
 ## 0.1.5
 
 ### Patch Changes
