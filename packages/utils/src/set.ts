@@ -6,10 +6,10 @@ export function intersection<T, U>(a: Set<T>, b: Set<U>): Set<T & U> {
     return result
 }
 
-export function difference<T, U>(a: Set<T>, b: Set<U>): Set<Exclude<T, U>> {
-    const result = new Set<any>()
+export function difference<T>(a: Set<T>, b: Set<any>): Set<T> {
+    const result = new Set<T>()
     for (const item of a) {
-        if (!b.has(item as any)) result.add(item)
+        if (!b.has(item)) result.add(item)
     }
     return result
 }
