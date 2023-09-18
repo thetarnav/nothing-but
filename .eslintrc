@@ -56,10 +56,6 @@
         "no-fallthrough": ["warn", {"allowEmptyCase": true}],
         "@nothing-but/no-ignored-return": "warn",
         /*
-            stylistic
-        */
-        "@typescript-eslint/no-shadow": "warn",
-        /*
             tests
         */
         "no-only-tests/no-only-tests": "warn"
