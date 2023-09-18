@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.10.0
+
+### Minor Changes
+
+-   50e5aea: Add `set` package
+
 ## 0.9.0
 
 ### Minor Changes
