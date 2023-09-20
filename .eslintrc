@@ -55,6 +55,7 @@
         "@typescript-eslint/switch-exhaustiveness-check": "warn",
         "no-fallthrough": ["warn", {"allowEmptyCase": true}],
         "@nothing-but/no-ignored-return": "warn",
+        "@nothing-but/no-return-to-void": "warn",
         /*
             tests
         */

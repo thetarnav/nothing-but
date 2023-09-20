@@ -1,6 +1,6 @@
 # @nothing-but/eslint-plugin
 
--   `no-ignored-return`
+## `no-ignored-return`
 
 If a function returns a value, then that value must be used.
 
@@ -8,6 +8,17 @@ TODO:
 
 -   [ ] `fn.apply()` and `fn.call()` methods
 -   [ ] `bool && returningFunc()` expressions
+
+## `no-return-to-void`
+
+If a callback should return `void`, then it should not return anything.
+
+TODO:
+
+-   [x] Arrow functions
+-   [ ] Function declarations
+-   [ ] Anonymous functions
+-   [ ] Overloads (not sure how to know which one is the active one)
 
 Resources:
 
