@@ -1,5 +1,15 @@
 # @nothing-but/utils
 
+## 0.1.0
+
+### Minor Changes
+
+-   f0dd7a6: Add `toBeInRange`
+
+### Patch Changes
+
+-   feac775: Add vitest to peer deps
+
 ## 0.10.1
 
 ### Patch Changes
