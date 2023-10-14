@@ -60,5 +60,11 @@
                 "./dist/in_range.d.ts"
             ]
         }
+    },
+    "peerDependencies": {
+        "vitest": "^0.34.0"
+    },
+    "devDependencies": {
+        "vitest": "^0.34.3"
     }
 }

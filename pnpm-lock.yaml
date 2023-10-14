@@ -154,7 +154,11 @@ importers:
 
   packages/utils: {}
 
-  packages/vitest: {}
+  packages/vitest:
+    devDependencies:
+      vitest:
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@22.1.0)
 
 packages:
 
