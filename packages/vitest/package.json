@@ -43,12 +43,21 @@
                 "types": "./dist/include_same_members.d.ts",
                 "default": "./dist/include_same_members.js"
             }
+        },
+        "./in_range": {
+            "import": {
+                "types": "./dist/in_range.d.ts",
+                "default": "./dist/in_range.js"
+            }
         }
     },
     "typesVersions": {
         "*": {
             "include_same_members": [
                 "./dist/include_same_members.d.ts"
+            ],
+            "in_range": [
+                "./dist/in_range.d.ts"
             ]
         }
     }

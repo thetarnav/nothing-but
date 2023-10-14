@@ -59,3 +59,6 @@ declare module 'vitest' {
     interface Assertion<T = any> extends CustomMatchers<T> {}
     interface AsymmetricMatchersContaining extends CustomMatchers {}
 }
+
+// keeps "vitest" import
+export type Assertion = v.Assertion
