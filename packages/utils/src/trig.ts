@@ -43,7 +43,7 @@ export class Vector {
         this.y = y ?? x
     }
 
-    *[Symbol.iterator]() {
+    *[Symbol.iterator](): Generator<number> {
         yield this.x
         yield this.y
     }
@@ -73,7 +73,7 @@ export const ZERO = vector(0, 0)
  * Creates a new vector instance representing the zero vector.
  * @returns A vector instance representing the zero vector.
  */
-export const zero = () => vector(0, 0)
+export const zero = (): Vector => vector(0, 0)
 
 /**
  * Checks if two vectors are equal.
@@ -266,7 +266,7 @@ export class Force {
         }
     }
 
-    *[Symbol.iterator]() {
+    *[Symbol.iterator](): Generator<number> {
         yield this.distance
         yield this.angle
     }

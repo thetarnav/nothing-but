@@ -2,7 +2,7 @@ import * as solid from 'solid-js'
 
 export class Reactive<T> {
     read: solid.Accessor<T>
-    get value() {
+    get value(): T {
         return this.read()
     }
 
@@ -10,13 +10,13 @@ export class Reactive<T> {
         this.read = read
     }
 
-    toString() {
+    toString(): string {
         return `Reactive(${this.value})`
     }
-    toJSON() {
+    toJSON(): T {
         return this.value
     }
-    valueOf() {
+    valueOf(): T {
         return this.value
     }
 }

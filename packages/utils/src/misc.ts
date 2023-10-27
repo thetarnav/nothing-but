@@ -8,7 +8,7 @@ export const false_fn: () => boolean = () => false
 /**
  * `a ^ b`
  */
-export const xor = (a: boolean, b: boolean) => (a ? !b : b)
+export const xor = (a: boolean, b: boolean): boolean => (a ? !b : b)
 
 /**
  * Get entries of an object

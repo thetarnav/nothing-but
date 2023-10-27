@@ -35,7 +35,7 @@ export function map_non_nullable<T, U>(array: readonly T[], fn: (item: T) => U):
  * Order doesn't matter.
  * Arrays must not contain duplicates. (be the same lengths)
  */
-export function includes_same_members(a: readonly unknown[], b: readonly unknown[]) {
+export function includes_same_members(a: readonly unknown[], b: readonly unknown[]): boolean {
     if (a === b) return true
     if (a.length !== b.length) return false
 
@@ -101,11 +101,11 @@ export function pick_random_excliding_one<T>(arr: readonly T[], excluding: T): T
     return pick
 }
 
-export function* random_iterate<T>(arr: readonly T[]) {
+export function* random_iterate<T>(arr: readonly T[]): Generator<T> {
     const copy = arr.slice()
     while (copy.length) {
         const index = Num.random_int(copy.length)
-        yield copy.splice(index, 1)[0]
+        yield copy.splice(index, 1)[0]!
     }
 }
 

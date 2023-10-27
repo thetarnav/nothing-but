@@ -1,8 +1,10 @@
-import {bench, describe} from 'vitest'
-import * as FG from '../src/index.js'
+/*
+
+import * as vi from 'vitest'
+import * as fg from '../src/index.js'
 // import * as graph2 from '../src/index2'
 
-function generateExampleGraph(mod: typeof FG, length: number): FG.Graph {
+function generateExampleGraph(mod: typeof fg.graph, length: number): FG.Graph {
     const nodes: FG.Node[] = Array.from({length}, FG.makeNode)
 
     const edges: FG.Edge[] = []
@@ -89,3 +91,5 @@ const fns = {
 //         })
 //     }
 // })
+
+*/
