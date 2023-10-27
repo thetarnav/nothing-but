@@ -1,5 +1,18 @@
 # @nothing-but/force-graph
 
+## 0.3.0
+
+### Minor Changes
+
+-   0a0ab0d: Rename default_options to DEFAULT-OPTIONS
+
+    use node.label when rendering nodes as text
+
+-   479881d: BREAKING CHANGES
+
+    -   Remove `makeNode` in favor of `zeroNode`.
+    -   Rename exported submodules using snake_case.
+
 ## 0.2.4
 
 ### Patch Changes
