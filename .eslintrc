@@ -21,6 +21,7 @@
         "no-console": "warn",
         "no-debugger": "warn",
         "prefer-const": "warn",
+        "require-await": "warn",
         "@typescript-eslint/no-unused-vars": [
             "warn",
             {
@@ -43,6 +44,20 @@
             {"allowShortCircuit": true, "allowTernary": true}
         ],
         "eslint-comments/no-unused-disable": "warn",
+        /*
+            code style | readability
+        */
+        "@typescript-eslint/explicit-function-return-type": [
+            "warn",
+            {
+                "allowExpressions": true,
+                "allowTypedFunctionExpressions": true,
+                "allowHigherOrderFunctions": true,
+                "allowDirectConstAssertionInArrowFunctions": true,
+                "allowConciseArrowFunctionExpressionsStartingWithVoid": true,
+                "allowIIFEs": true
+            }
+        ],
         /*
             no throwing errors
         */
