@@ -1,3 +1,3 @@
-export * as Anim from './animation.js'
-export * as Canvas from './canvas.js'
-export * as Graph from './graph.js'
+export * as anim from './animation.js'
+export * as canvas from './canvas.js'
+export * as graph from './graph.js'

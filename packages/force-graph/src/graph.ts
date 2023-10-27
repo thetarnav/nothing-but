@@ -144,7 +144,7 @@ export function makeGraph(options: Options, nodes: Node[] = [], edges: Edge[] = 
     return {nodes, edges, grid, options}
 }
 
-export interface Node {
+export type Node = {
     /**
      * User data key
      *
@@ -155,7 +155,17 @@ export interface Node {
      * Otherwise, you can use object references to match nodes.
      */
     key: string | number | undefined
+    /**
+     * Label to display on the node when rendering. Set it to an empty string to hide the label.
+     */
+    label: string
+    /**
+     * Current position of the node.
+     */
     position: T.Position
+    /**
+     * Current node velocity, will be added to the position each frame.
+     */
     velocity: T.Position
     edges: Edge[]
     /**
@@ -171,9 +181,19 @@ export interface Node {
     mass: number
 }
 
-export function makeNode(key?: string | number | undefined): Node {
+/**
+ * get a zero initialized node
+ * @example
+ * ```ts
+ * const node = zeroNode()
+ * node.label = 'hello'
+ * node.key = 1
+ * ```
+ */
+export const zeroNode = (): Node => {
     return {
-        key,
+        key: undefined,
+        label: '',
         position: {x: 0, y: 0},
         velocity: {x: 0, y: 0},
         edges: [],
@@ -183,13 +203,13 @@ export function makeNode(key?: string | number | undefined): Node {
     }
 }
 
-export interface Edge {
+export type Edge = {
     a: Node
     b: Node
     strength: number
 }
 
-export function getEdge(a: Node, b: Node): Edge | undefined {
+export const getEdge = (a: Node, b: Node): Edge | undefined => {
     for (const edge of a.edges) {
         if (edge.a === b || edge.b === b) return edge
     }
@@ -224,7 +244,7 @@ export function disconnect(a: Node, b: Node): void {
 }
 
 export function nodeMassFromEdges(edges_length: number): number {
-    return Math.log2(edges_length + 1)
+    return Math.log2(edges_length + 2)
 }
 
 /**

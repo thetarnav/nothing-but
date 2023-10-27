@@ -1,22 +1,22 @@
 import {Ev} from '@nothing-but/dom'
 import {Num, T, Trig} from '@nothing-but/utils'
-import {Graph} from './index.js'
+import {graph} from './index.js'
 
 interface Options {
     readonly el: HTMLCanvasElement
     readonly ctx: CanvasRenderingContext2D
-    readonly graph: Graph.Graph
+    readonly graph: graph.Graph
     readonly max_scale: number
     readonly init_scale: number
     readonly init_grid_pos: T.Position
-    readonly nodeLabel: (node: Graph.Node) => string
+    readonly nodeLabel: (node: graph.Node) => string
 }
 
 export const default_options = {
     max_scale: 7,
     init_scale: 1,
     init_grid_pos: Trig.ZERO,
-    nodeLabel: (node: Graph.Node) => String(node.key),
+    nodeLabel: (node: graph.Node) => String(node.key),
 } as const satisfies Partial<Options>
 
 interface CanvasState {
@@ -32,7 +32,7 @@ interface CanvasState {
      * from 1 to max_scale
      */
     scale: number
-    hovered_node: Graph.Node | null
+    hovered_node: graph.Node | null
 }
 
 export function canvasState(options: Options): CanvasState {
@@ -297,9 +297,9 @@ export function drawCanvas(canvas: CanvasState): void {
 export interface CanvasGesturesOptions {
     readonly canvas: CanvasState
     readonly onTranslate: () => void
-    readonly onNodeClick: (node: Graph.Node) => void
-    readonly onNodeHover: (node: Graph.Node | null) => void
-    readonly onNodeDrag: (node: Graph.Node, new_pos: T.Position) => void
+    readonly onNodeClick: (node: graph.Node) => void
+    readonly onNodeHover: (node: graph.Node | null) => void
+    readonly onNodeDrag: (node: graph.Node, new_pos: T.Position) => void
     readonly onModeChange: (mode: Mode) => void
 }
 
@@ -319,7 +319,7 @@ export enum Mode {
 
 interface DefaultState {
     readonly type: Mode.Default
-    hover_node: Graph.Node | null
+    hover_node: graph.Node | null
     removeListener(): void
 }
 
@@ -331,7 +331,7 @@ function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: M
     const point_graph = eventToPointGraph(canvas, e)
     const pointer_node_radius = pointerNodeRadius(canvas.max_size, canvas.options.graph.grid.size)
 
-    const node = Graph.findClosestNodeLinear(
+    const node = graph.findClosestNodeLinear(
         canvas.options.graph.nodes,
         point_graph,
         pointer_node_radius,
@@ -363,7 +363,7 @@ function defaultState(gesture: CanvasGestures): DefaultState {
 
 interface DraggingNodeState {
     readonly type: Mode.DraggingNode
-    node: Graph.Node
+    node: graph.Node
     pointer_id: number
     goal_point_ratio: T.Position
     click_prevented: boolean
@@ -374,7 +374,7 @@ interface DraggingNodeState {
 function draggingNodeState(
     gesture: CanvasGestures,
     input: {
-        node: Graph.Node
+        node: graph.Node
         e: PointerEvent
         point_graph: T.Position
         point_ratio: T.Position
@@ -692,7 +692,7 @@ function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void 
                 canvas.options.graph.grid.size,
             )
 
-            const node = Graph.findClosestNodeLinear(
+            const node = graph.findClosestNodeLinear(
                 canvas.options.graph.nodes,
                 point_graph,
                 pointer_node_radius,

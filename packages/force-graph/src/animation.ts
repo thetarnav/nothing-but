@@ -34,7 +34,7 @@ export function frameAnimation(options: Options): FrameAnimation {
     }
 }
 
-export function frame(a: FrameAnimation, timestamp: DOMHighResTimeStamp) {
+export function frame(a: FrameAnimation, timestamp: DOMHighResTimeStamp): void {
     const {options} = a
     const target_ms = 1000 / options.target_fps
 
