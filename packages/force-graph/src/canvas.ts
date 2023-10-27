@@ -9,14 +9,12 @@ interface Options {
     readonly max_scale: number
     readonly init_scale: number
     readonly init_grid_pos: T.Position
-    readonly nodeLabel: (node: graph.Node) => string
 }
 
-export const default_options = {
+export const DEFAULT_OPTIONS = {
     max_scale: 7,
     init_scale: 1,
     init_grid_pos: Trig.ZERO,
-    nodeLabel: (node: graph.Node) => String(node.key),
 } as const satisfies Partial<Options>
 
 interface CanvasState {
@@ -227,7 +225,7 @@ export function drawDotNodes(canvas: CanvasState): void {
 }
 
 export function drawTextNodes(canvas: CanvasState): void {
-    const {ctx, graph, nodeLabel} = canvas.options
+    const {ctx, graph} = canvas.options
 
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
@@ -245,7 +243,7 @@ export function drawTextNodes(canvas: CanvasState): void {
                 : `rgba(248, 113, 113, ${opacity})`
 
         ctx.fillText(
-            nodeLabel(node),
+            node.label,
             (x / graph.grid.size) * canvas.max_size,
             (y / graph.grid.size) * canvas.max_size,
         )

@@ -8,7 +8,7 @@ export interface Options {
     readonly bump_timeout: number
 }
 
-export const default_options = {
+export const DEFAULT_OPTIONS = {
     target_fps: 44,
     max_iterations_per_frame: 2,
     bump_timeout: 2000,

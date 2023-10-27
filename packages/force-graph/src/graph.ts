@@ -51,7 +51,7 @@ export interface Options {
     readonly grid_size: number
 }
 
-export const default_options = {
+export const DEFAULT_OPTIONS = {
     inertia_strength: 0.7,
     repel_strength: 0.4,
     repel_distance: 20,
@@ -62,7 +62,7 @@ export const default_options = {
 } as const satisfies Options
 
 export function graphOptions(options?: Partial<Options>): Options {
-    return {...default_options, ...options}
+    return {...DEFAULT_OPTIONS, ...options}
 }
 
 /**

@@ -39,7 +39,7 @@ export const App: solid.Component = () => {
     if (!ctx) throw new Error('no context')
 
     const canvas_state = fg.canvas.canvasState({
-        ...fg.canvas.default_options,
+        ...fg.canvas.DEFAULT_OPTIONS,
         el: el,
         ctx: ctx,
         graph: force_graph,
@@ -47,7 +47,7 @@ export const App: solid.Component = () => {
     })
 
     const animation = fg.anim.frameAnimation({
-        ...fg.anim.default_options,
+        ...fg.anim.DEFAULT_OPTIONS,
         onIteration(alpha) {
             fg.graph.simulate(force_graph, alpha)
         },
