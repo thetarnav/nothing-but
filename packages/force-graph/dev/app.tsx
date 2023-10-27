@@ -1,10 +1,10 @@
 import {Ev} from '@nothing-but/dom'
 import * as S from '@nothing-but/solid/signal'
-import {onCleanup, type Component, type JSX} from 'solid-js'
-import {Anim, Canvas, Graph} from '../src/index.js'
-import {getLAGraph} from './init.js'
+import * as solid from 'solid-js'
+import * as fg from '../src/index.js'
+import * as init from './init.js'
 
-function Shell(props: {children: JSX.Element}): JSX.Element {
+function Shell(props: {children: solid.JSX.Element}): solid.JSX.Element {
     return (
         <div class="min-h-110vh min-w-110vw">
             <div class="w-screen h-screen center-child flex-col">
@@ -19,17 +19,17 @@ function Shell(props: {children: JSX.Element}): JSX.Element {
     )
 }
 
-export const graph_options = Graph.graphOptions({
+export const graph_options = fg.graph.graphOptions({
     inertia_strength: 0.3,
     origin_strength: 0.01,
     repel_distance: 22,
     repel_strength: 0.5,
 })
 
-export const App: Component = () => {
+export const App: solid.Component = () => {
     // const initialGraph = getInitialGraph()
     // const force_graph = generateInitialGraph(1024)
-    const graph = getLAGraph()
+    const force_graph = init.getLA2Graph()
 
     const change_signal = S.signal()
 
@@ -38,56 +38,56 @@ export const App: Component = () => {
     const ctx = el.getContext('2d')
     if (!ctx) throw new Error('no context')
 
-    const canvas = Canvas.canvasState({
-        ...Canvas.default_options,
-        el,
-        ctx,
-        graph,
+    const canvas_state = fg.canvas.canvasState({
+        ...fg.canvas.default_options,
+        el: el,
+        ctx: ctx,
+        graph: force_graph,
         init_scale: 2,
     })
 
-    const animation = Anim.frameAnimation({
-        ...Anim.default_options,
+    const animation = fg.anim.frameAnimation({
+        ...fg.anim.default_options,
         onIteration(alpha) {
-            Graph.simulate(graph, alpha)
+            fg.graph.simulate(force_graph, alpha)
         },
         onFrame() {
-            Canvas.drawCanvas(canvas)
+            fg.canvas.drawCanvas(canvas_state)
         },
     })
-    Anim.bump(animation)
-    onCleanup(() => Anim.cleanup(animation))
+    fg.anim.bump(animation)
+    solid.onCleanup(() => fg.anim.cleanup(animation))
 
-    const ro = Canvas.resizeObserver(el, size => {
-        Canvas.updateCanvasSize(canvas, size)
-        Anim.requestFrame(animation)
+    const ro = fg.canvas.resizeObserver(el, size => {
+        fg.canvas.updateCanvasSize(canvas_state, size)
+        fg.anim.requestFrame(animation)
     })
-    onCleanup(() => ro.disconnect())
+    solid.onCleanup(() => ro.disconnect())
 
-    const gestures = Canvas.canvasGestures({
-        canvas,
+    const gestures = fg.canvas.canvasGestures({
+        canvas: canvas_state,
         onTranslate() {
-            Anim.requestFrame(animation)
+            fg.anim.requestFrame(animation)
         },
         onNodeClick(node) {
             console.log('click', node)
         },
         onNodeHover(node) {
-            canvas.hovered_node = node
+            canvas_state.hovered_node = node
         },
         onNodeDrag(node, pos) {
-            Graph.changeNodePosition(canvas.options.graph.grid, node, pos.x, pos.y)
-            Anim.requestFrame(animation)
+            fg.graph.changeNodePosition(canvas_state.options.graph.grid, node, pos.x, pos.y)
+            fg.anim.requestFrame(animation)
         },
         onModeChange(mode) {
-            if (mode === Canvas.Mode.DraggingNode) {
-                Anim.start(animation)
+            if (mode === fg.canvas.Mode.DraggingNode) {
+                fg.anim.start(animation)
             } else {
-                Anim.pause(animation)
+                fg.anim.pause(animation)
             }
         },
     })
-    onCleanup(() => Canvas.cleanupCanvasGestures(gestures))
+    solid.onCleanup(() => fg.canvas.cleanupCanvasGestures(gestures))
 
     return <Shell>{el}</Shell>
 }
