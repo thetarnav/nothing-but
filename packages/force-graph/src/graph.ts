@@ -118,7 +118,7 @@ export function addNodesToGrid(grid: Grid, nodes: readonly Node[]): void {
     }
 }
 
-export function resetGraphGrid(grid: Grid, nodes: readonly []): void {
+export function resetGraphGrid(grid: Grid, nodes: readonly Node[]): void {
     for (const order of grid.cells) {
         order.length = 0
     }
