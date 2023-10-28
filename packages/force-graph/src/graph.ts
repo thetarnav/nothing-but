@@ -61,10 +61,6 @@ export const DEFAULT_OPTIONS = {
     grid_size: 200,
 } as const satisfies Options
 
-export function graphOptions(options?: Partial<Options>): Options {
-    return {...DEFAULT_OPTIONS, ...options}
-}
-
 /**
  * Spatial grid for looking up surrounding nodes by their position.
  *

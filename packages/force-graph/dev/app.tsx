@@ -19,12 +19,13 @@ function Shell(props: {children: solid.JSX.Element}): solid.JSX.Element {
     )
 }
 
-export const graph_options = fg.graph.graphOptions({
+export const graph_options: fg.graph.Options = {
+    ...fg.graph.DEFAULT_OPTIONS,
     inertia_strength: 0.3,
     origin_strength: 0.01,
     repel_distance: 22,
     repel_strength: 0.5,
-})
+}
 
 export const App: solid.Component = () => {
     // const initialGraph = getInitialGraph()

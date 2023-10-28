@@ -250,7 +250,7 @@ export function drawTextNodes(canvas: CanvasState): void {
     }
 }
 
-export function drawCanvas(canvas: CanvasState): void {
+export const resetFrame = (canvas: CanvasState): void => {
     const {ctx, graph} = canvas.options,
         {scale, translate: grid_pos} = canvas
 
@@ -280,15 +280,11 @@ export function drawCanvas(canvas: CanvasState): void {
     translate_y += -arMargin(canvas.size.height / canvas.size.width) * canvas.max_size
 
     ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
+}
 
-    /*
-        edges
-    */
+export const drawCanvas = (canvas: CanvasState): void => {
+    resetFrame(canvas)
     drawEdges(canvas)
-
-    /*
-        nodes
-    */
     drawTextNodes(canvas)
 }
 
