@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.4.0
+
+### Minor Changes
+
+-   0fefeda: Add `resetFrame` fn, remove `graphOptions` fn
+
 ## 0.3.0
 
 ### Minor Changes
