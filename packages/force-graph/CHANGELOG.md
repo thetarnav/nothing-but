@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.4.1
+
+### Patch Changes
+
+-   3c2d46d: Add missing type. Include `src` dir in npm package
+
 ## 0.4.0
 
 ### Minor Changes
