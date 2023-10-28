@@ -2,7 +2,7 @@ import {Ev} from '@nothing-but/dom'
 import {Num, T, Trig} from '@nothing-but/utils'
 import {graph} from './index.js'
 
-interface Options {
+export type Options = {
     readonly el: HTMLCanvasElement
     readonly ctx: CanvasRenderingContext2D
     readonly graph: graph.Graph
@@ -17,7 +17,7 @@ export const DEFAULT_OPTIONS = {
     init_grid_pos: Trig.ZERO,
 } as const satisfies Partial<Options>
 
-interface CanvasState {
+export type CanvasState = {
     readonly options: Options
     max_size: number
     size: T.Size
