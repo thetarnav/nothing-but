@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.4.2
+
+### Patch Changes
+
+-   1aa1b87: Export Options and CanvasState types
+
 ## 0.4.1
 
 ### Patch Changes
