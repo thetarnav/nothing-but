@@ -1,5 +1,13 @@
 # @nothing-but/force-graph
 
+## 0.4.4
+
+### Patch Changes
+
+-   Updated dependencies [c492402]
+    -   @nothing-but/utils@0.11.1
+    -   @nothing-but/dom@0.1.5
+
 ## 0.4.3
 
 ### Patch Changes
