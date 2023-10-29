@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.11.0
+
+### Minor Changes
+
+-   bac8863: Add `top_n_with` fn
+
 ## 0.10.1
 
 ### Patch Changes

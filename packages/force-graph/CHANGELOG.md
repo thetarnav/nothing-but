@@ -1,5 +1,14 @@
 # @nothing-but/force-graph
 
+## 0.4.3
+
+### Patch Changes
+
+-   45f7b52: Don't fire onNodeHover if node didn't change
+-   Updated dependencies [bac8863]
+    -   @nothing-but/utils@0.11.0
+    -   @nothing-but/dom@0.1.4
+
 ## 0.4.2
 
 ### Patch Changes
