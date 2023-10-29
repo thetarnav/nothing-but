@@ -1,5 +1,12 @@
 # @nothing-but/dom
 
+## 0.1.5
+
+### Patch Changes
+
+-   Updated dependencies [c492402]
+    -   @nothing-but/utils@0.11.1
+
 ## 0.1.4
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.11.1
+
+### Patch Changes
+
+-   c492402: Correct `top_n_with` and test it
+
 ## 0.11.0
 
 ### Minor Changes
