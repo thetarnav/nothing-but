@@ -122,8 +122,8 @@ export const top_n_with = <T>(
     if (top_n <= 0) return []
 
     /* highest to lowest */
-    const top_items: T[] = new Array(top_n)
-    const top_scores: number[] = new Array(top_n).fill(-Infinity)
+    const top_items = new Array<T>(top_n)
+    const top_scores = new Array<number>(top_n).fill(-Infinity)
 
     for (let i = 0; i < arr.length; i++) {
         const item = arr[i]!
@@ -153,7 +153,7 @@ export function binary_search<T>(arr: readonly T[], item: T): number | undefined
         guess: T
 
     while (low <= high) {
-        mid = Math.floor((low + high) / 2)
+        mid = (low + high) >> 1
         guess = arr[mid]!
 
         if (guess === item) {
@@ -216,7 +216,7 @@ export function binary_insert_unique<T>(arr: T[], item: T): void {
         guess: T
 
     while (low <= high) {
-        mid = Math.floor((low + high) / 2)
+        mid = (low + high) >> 1
         guess = arr[mid]!
 
         if (guess === item) {
@@ -238,7 +238,7 @@ export function binary_insert<T>(arr: T[], item: T): void {
         guess: T
 
     while (low <= high) {
-        mid = Math.floor((low + high) / 2)
+        mid = (low + high) >> 1
         guess = arr[mid]!
 
         if (guess === item) {
@@ -268,7 +268,7 @@ export function binary_insert_with<T>(
         guess_for: number
 
     while (low <= high) {
-        mid = Math.floor((low + high) / 2)
+        mid = (low + high) >> 1
         guess_item = arr[mid]!
         guess_for = get_comparable(guess_item)
 
