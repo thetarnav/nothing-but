@@ -1,5 +1,12 @@
 # @nothing-but/dom
 
+## 0.1.4
+
+### Patch Changes
+
+-   Updated dependencies [bac8863]
+    -   @nothing-but/utils@0.11.0
+
 ## 0.1.3
 
 ### Patch Changes
