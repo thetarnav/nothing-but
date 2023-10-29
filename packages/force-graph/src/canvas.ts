@@ -325,18 +325,14 @@ function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: M
     const point_graph = eventToPointGraph(canvas, e)
     const pointer_node_radius = pointerNodeRadius(canvas.max_size, canvas.options.graph.grid.size)
 
-    const node = graph.findClosestNodeLinear(
-        canvas.options.graph.nodes,
-        point_graph,
-        pointer_node_radius,
-    )
+    const node =
+        graph.findClosestNodeLinear(canvas.options.graph.nodes, point_graph, pointer_node_radius) ??
+        null
 
-    const prev_hover_node = state.hover_node
-    if (prev_hover_node === node) return
-
-    state.hover_node = node ?? null
-
-    gesture.onNodeHover(state.hover_node)
+    if (state.hover_node !== node) {
+        state.hover_node = node
+        gesture.onNodeHover(state.hover_node)
+    }
 }
 
 function defaultState(gesture: CanvasGestures): DefaultState {
