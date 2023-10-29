@@ -109,33 +109,39 @@ export function* random_iterate<T>(arr: readonly T[]): Generator<T> {
     }
 }
 
+/**
+ * Returns a new array with {@link top_n} top items from the given {@link arr}.
+ * The score is determined by the {@link getScore} function.
+ * The returned array is sorted from highest to lowest score.
+ */
 export const top_n_with = <T>(
     arr: readonly T[],
     top_n: number,
-    getVal: (item: T) => number,
+    getScore: (item: T) => number,
 ): T[] => {
-    if (arr.length <= top_n) return arr.slice()
+    if (top_n <= 0) return []
 
-    /* lowest to highest */
+    /* highest to lowest */
     const top_items: T[] = new Array(top_n)
-    const top_vals: number[] = new Array(top_n).fill(0)
+    const top_scores: number[] = new Array(top_n).fill(-Infinity)
 
-    for (let i = top_n; i < arr.length; i++) {
+    for (let i = 0; i < arr.length; i++) {
         const item = arr[i]!
-        const val = getVal(item)
+        const score = getScore(item)
 
-        if (val < top_vals[0]!) continue
+        if (score < top_scores[top_n - 1]!) continue
 
-        let j = 1
-        while (j < top_n && top_vals[j]! < val) {
-            top_items[j - 1] = top_items[j]!
-            top_vals[j - 1] = top_vals[j]!
-            j++
+        let j = top_n - 2
+        while (j >= 0 && top_scores[j]! < score) {
+            top_items[j + 1] = top_items[j]!
+            top_scores[j + 1] = top_scores[j]!
+            j--
         }
 
-        top_items[j - 1] = item
-        top_vals[j - 1] = val
+        top_items[j + 1] = item
+        top_scores[j + 1] = score
     }
+    top_items.length = Math.min(top_n, arr.length)
 
     return top_items
 }
