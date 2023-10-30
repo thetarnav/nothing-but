@@ -1,4 +1,13 @@
 import * as solid from 'solid-js'
+import * as solid_web from 'solid-js/web'
+
+export * from 'solid-js'
+
+const warn = (msg: string): void => {
+    if (solid_web.isDev && 'console' in globalThis) {
+        ;(globalThis as any).console.warn(msg)
+    }
+}
 
 export class Reactive<T> {
     read: solid.Accessor<T>
@@ -160,4 +169,35 @@ export function trigger(sig: Signal<any>): void {
  */
 export function readonly<T>(sig: Signal<T>): Reactive<T> {
     return new Reactive(() => sig.value)
+}
+
+declare module 'solid-js' {
+    interface Owner {
+        _cl_fn?: ((data: any) => void)[]
+        _cl_d?: any[]
+    }
+}
+
+export const _dataCleanup = (owner: solid.Owner): void => {
+    for (let i = 0; i < owner._cl_fn!.length; i++) owner._cl_fn![i]!(owner._cl_d![i])
+    owner._cl_fn = undefined
+    owner._cl_d = undefined
+}
+
+export const addCleanup = <T>(data: T, cleanup: (data: T) => void): void => {
+    const owner = solid.getOwner()
+    if (!owner) {
+        warn('Cannot register a cleanup outside a reactive owner.')
+        return
+    }
+
+    if (owner._cl_fn === undefined) {
+        owner._cl_fn = [cleanup]
+        owner._cl_d = [data]
+    } else {
+        owner._cl_fn.push(cleanup)
+        owner._cl_d!.push(data)
+        if (owner.cleanups) owner.cleanups.push(_dataCleanup.bind(null, owner))
+        else owner.cleanups = [_dataCleanup.bind(null, owner)]
+    }
 }

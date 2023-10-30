@@ -1,10 +1,10 @@
 import {Ev} from '@nothing-but/dom'
-import * as S from '@nothing-but/solid/signal'
+import * as s from '@nothing-but/solid/signal'
 import * as solid from 'solid-js'
 import * as fg from '../src/index.js'
 import * as init from './init.js'
 
-function Shell(props: {children: solid.JSX.Element}): solid.JSX.Element {
+const Shell: solid.FlowComponent = props => {
     return (
         <div class="min-h-110vh min-w-110vw">
             <div class="w-screen h-screen center-child flex-col">
@@ -32,8 +32,6 @@ export const App: solid.Component = () => {
     // const force_graph = generateInitialGraph(1024)
     const force_graph = init.getLA2Graph()
 
-    const change_signal = S.signal()
-
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
     const ctx = el.getContext('2d')
@@ -47,6 +45,25 @@ export const App: solid.Component = () => {
         init_scale: 2,
     })
 
+    const frame_iter_limit = fg.anim.frameIterationsLimit()
+
+    const loop = fg.anim.animationLoop(time => {
+        fg.nextFrame(frame_data, time)
+
+        let iterations = fg.anim.calcIterations(frame_iter_limit, time)
+        if (iterations === 0) return
+
+        for (let i = Math.min(iterations, 2); i >= 0; i--) {
+            const alpha = fg.getFrameAlpha(frame_data)
+            fg.graph.simulate(force_graph, alpha)
+        }
+
+        if (alpha < 0.001) return
+
+        fg.canvas.drawCanvas(canvas_state)
+    })
+    s.addCleanup(loop, fg.anim.loopStop)
+
     const animation = fg.anim.frameAnimation({
         ...fg.anim.DEFAULT_OPTIONS,
         onIteration(alpha) {
@@ -57,13 +74,13 @@ export const App: solid.Component = () => {
         },
     })
     fg.anim.bump(animation)
-    solid.onCleanup(() => fg.anim.cleanup(animation))
+    s.addCleanup(animation, fg.anim.cleanup)
 
     const ro = fg.canvas.resizeObserver(el, size => {
         fg.canvas.updateCanvasSize(canvas_state, size)
         fg.anim.requestFrame(animation)
     })
-    solid.onCleanup(() => ro.disconnect())
+    s.onCleanup(() => ro.disconnect())
 
     const gestures = fg.canvas.canvasGestures({
         canvas: canvas_state,
@@ -88,7 +105,7 @@ export const App: solid.Component = () => {
             }
         },
     })
-    solid.onCleanup(() => fg.canvas.cleanupCanvasGestures(gestures))
+    s.addCleanup(gestures, fg.canvas.cleanupCanvasGestures)
 
     return <Shell>{el}</Shell>
 }

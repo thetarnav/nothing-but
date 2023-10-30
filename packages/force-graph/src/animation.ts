@@ -1,31 +1,80 @@
 import {Num} from '@nothing-but/utils'
 
-export interface Options {
-    readonly onIteration: (alpha: number) => void
-    readonly onFrame: () => void
-    readonly target_fps: number
-    readonly max_iterations_per_frame: number
-    readonly bump_timeout: number
+export type AnimationLoop = {
+    /**
+     * User callback to be called on each animation frame.
+     */
+    callback: FrameRequestCallback
+    /**
+     * {@link loopFrame} bound to this loop.
+     */
+    frame: FrameRequestCallback
+    /**
+     * The current frame id returned by {@link requestAnimationFrame}.
+     */
+    frame_id: number
+}
+
+export const animationLoop = (callback: FrameRequestCallback): AnimationLoop => {
+    const loop: AnimationLoop = {
+        callback: callback,
+        frame: t => loopFrame(loop, t),
+        frame_id: 0,
+    }
+    return loop
+}
+export const loopFrame = (loop: AnimationLoop, time: number): void => {
+    loop.frame_id = requestAnimationFrame(loop.frame)
+    loop.callback(time)
+}
+export const loopStart = (loop: AnimationLoop): void => {
+    loop.frame_id ||= requestAnimationFrame(loop.frame)
+}
+export const loopStop = (loop: AnimationLoop): void => {
+    cancelAnimationFrame(loop.frame_id)
+    loop.frame_id = 0
+}
+
+export const DEFAULT_TARGET_FPS = 44
+
+export type FrameIterationsLimit = {
+    target_fps: number
+    last_timestamp: number
+}
+
+export const frameIterationsLimit = (
+    target_fps: number = DEFAULT_TARGET_FPS,
+): FrameIterationsLimit => ({
+    target_fps,
+    last_timestamp: performance.now(),
+})
+export const calcIterations = (limit: FrameIterationsLimit, current_time: number): number => {
+    const target_ms = 1000 / limit.target_fps
+    const delta_time = current_time - limit.last_timestamp
+    const times = Math.floor(delta_time / target_ms)
+    limit.last_timestamp += times * target_ms
+    return times
 }
 
 export const DEFAULT_OPTIONS = {
     target_fps: 44,
-    max_iterations_per_frame: 2,
     bump_timeout: 2000,
 } as const satisfies Partial<Options>
 
 export interface FrameAnimation {
-    options: Options
+    callback: FrameRequestCallback
+    target_fps: number
+    bump_timeout: number
     alpha: number
     active: boolean
     frame_id: number
     last_timestamp: number
-    bump_timeout: undefined | ReturnType<typeof setTimeout>
+    bump_timeout_id: undefined | ReturnType<typeof setTimeout>
 }
 
-export function frameAnimation(options: Options): FrameAnimation {
+export function frameAnimation(callback: FrameRequestCallback): FrameAnimation {
     return {
-        options,
+        callback,
         last_timestamp: performance.now(),
         alpha: 0,
         active: false,
