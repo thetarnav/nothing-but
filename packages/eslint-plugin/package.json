@@ -28,11 +28,11 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "dependencies": {
-        "@typescript-eslint/utils": "^6.4.1"
+        "@typescript-eslint/utils": "^6.9.0"
     },
     "devDependencies": {
-        "@typescript-eslint/rule-tester": "^6.4.1",
-        "@typescript-eslint/parser": "^6.4.1"
+        "@typescript-eslint/parser": "^6.9.0",
+        "@typescript-eslint/rule-tester": "^6.9.0"
     },
     "peerDependencies": {
         "eslint": "^6.0.0 || ^7.0.0 || ^8.0.0",
