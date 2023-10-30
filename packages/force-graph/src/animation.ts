@@ -30,7 +30,7 @@ export const loopFrame = (loop: AnimationLoop, time: number): void => {
 export const loopStart = (loop: AnimationLoop): void => {
     loop.frame_id ||= requestAnimationFrame(loop.frame)
 }
-export const loopStop = (loop: AnimationLoop): void => {
+export const loopClear = (loop: AnimationLoop): void => {
     cancelAnimationFrame(loop.frame_id)
     loop.frame_id = 0
 }
@@ -56,108 +56,31 @@ export const calcIterations = (limit: FrameIterationsLimit, current_time: number
     return times
 }
 
-export const DEFAULT_OPTIONS = {
-    target_fps: 44,
-    bump_timeout: 2000,
-} as const satisfies Partial<Options>
-
-export interface FrameAnimation {
-    callback: FrameRequestCallback
-    target_fps: number
-    bump_timeout: number
-    alpha: number
-    active: boolean
-    frame_id: number
-    last_timestamp: number
-    bump_timeout_id: undefined | ReturnType<typeof setTimeout>
+export type AlphaUpdateSteps = {
+    increment: number
+    decrement: number
+}
+export const DEFAULT_ALPHA_UPDATE_STEPS: AlphaUpdateSteps = {
+    increment: 0.03,
+    decrement: 0.005,
+}
+export const updateAlpha = (
+    alpha: number,
+    is_playing: boolean,
+    update_steps = DEFAULT_ALPHA_UPDATE_STEPS,
+): number => {
+    return is_playing
+        ? Num.lerp(alpha, 1, update_steps.increment)
+        : Num.lerp(alpha, 0, update_steps.decrement)
 }
 
-export function frameAnimation(callback: FrameRequestCallback): FrameAnimation {
-    return {
-        callback,
-        last_timestamp: performance.now(),
-        alpha: 0,
-        active: false,
-        frame_id: 0,
-        bump_timeout: undefined,
-    }
-}
+export const DEFAULT_BUMP_TIMEOUT_DURATION = 2000
 
-export function frame(a: FrameAnimation, timestamp: DOMHighResTimeStamp): void {
-    const {options} = a
-    const target_ms = 1000 / options.target_fps
-
-    const delta_time = timestamp - a.last_timestamp
-    const times = Math.floor(delta_time / target_ms)
-    a.last_timestamp += times * target_ms
-
-    if (times === 0) {
-        a.frame_id = requestAnimationFrame(t => frame(a, t))
-        return
-    }
-
-    const is_playing = isPlaying(a)
-
-    for (let i = Math.min(times, options.max_iterations_per_frame); i > 0; i--) {
-        a.alpha = Num.lerp(
-            a.alpha,
-            is_playing ? 1 : 0,
-            is_playing ? 0.03 : 0.005, // TODO: configurable
-        )
-
-        if (a.alpha < 0.001) {
-            cleanup(a)
-            return
-        }
-
-        options.onIteration(a.alpha)
-    }
-
-    options.onFrame()
-
-    a.frame_id = requestAnimationFrame(t => frame(a, t))
-}
-
-export function start(a: FrameAnimation): void {
-    if (a.active) return
-
-    a.active = true
-    a.last_timestamp = performance.now()
-    a.frame_id = requestAnimationFrame(t => frame(a, t))
-}
-
-export function pause(a: FrameAnimation): void {
-    a.active = false
-}
-
-export function cleanup(a: FrameAnimation): void {
-    cancelAnimationFrame(a.frame_id)
-    clearTimeout(a.bump_timeout)
-    a.alpha = 0
-    a.active = false
-    a.bump_timeout = undefined
-}
-
-export function bump(a: FrameAnimation): void {
-    if (a.bump_timeout) {
-        clearTimeout(a.bump_timeout)
-    } else {
-        a.last_timestamp = performance.now()
-        a.frame_id = requestAnimationFrame(t => frame(a, t))
-    }
-
-    a.bump_timeout = setTimeout(() => {
-        a.bump_timeout = undefined
-    }, a.options.bump_timeout)
-}
-
-export function isPlaying(a: FrameAnimation): boolean {
-    return a.active || !!a.bump_timeout
-}
-
-export function requestFrame(a: FrameAnimation): void {
-    if (isPlaying(a)) return
-
-    a.last_timestamp = performance.now()
-    a.frame_id = requestAnimationFrame(() => a.options.onFrame())
+export const bump = (
+    bump_end: number,
+    duration: number = DEFAULT_BUMP_TIMEOUT_DURATION,
+): number => {
+    const start = performance.now()
+    const end = start + duration
+    return end > bump_end ? end : bump_end
 }

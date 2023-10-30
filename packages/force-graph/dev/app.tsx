@@ -47,47 +47,35 @@ export const App: solid.Component = () => {
 
     const frame_iter_limit = fg.anim.frameIterationsLimit()
 
-    const loop = fg.anim.animationLoop(time => {
-        fg.nextFrame(frame_data, time)
+    let is_active = false
+    let alpha = 0 // 0 - 1
+    let bump_end = fg.anim.bump(0)
 
-        let iterations = fg.anim.calcIterations(frame_iter_limit, time)
-        if (iterations === 0) return
+    const loop = fg.anim.animationLoop(time => {
+        const iterations = fg.anim.calcIterations(frame_iter_limit, time)
 
         for (let i = Math.min(iterations, 2); i >= 0; i--) {
-            const alpha = fg.getFrameAlpha(frame_data)
+            alpha = fg.anim.updateAlpha(alpha, is_active || time < bump_end)
             fg.graph.simulate(force_graph, alpha)
         }
 
-        if (alpha < 0.001) return
-
         fg.canvas.drawCanvas(canvas_state)
     })
-    s.addCleanup(loop, fg.anim.loopStop)
-
-    const animation = fg.anim.frameAnimation({
-        ...fg.anim.DEFAULT_OPTIONS,
-        onIteration(alpha) {
-            fg.graph.simulate(force_graph, alpha)
-        },
-        onFrame() {
-            fg.canvas.drawCanvas(canvas_state)
-        },
-    })
-    fg.anim.bump(animation)
-    s.addCleanup(animation, fg.anim.cleanup)
+    fg.anim.loopStart(loop)
+    s.addCleanup(loop, fg.anim.loopClear)
 
     const ro = fg.canvas.resizeObserver(el, size => {
         fg.canvas.updateCanvasSize(canvas_state, size)
-        fg.anim.requestFrame(animation)
     })
-    s.onCleanup(() => ro.disconnect())
+    void s.onCleanup(() => ro.disconnect())
 
     const gestures = fg.canvas.canvasGestures({
         canvas: canvas_state,
         onTranslate() {
-            fg.anim.requestFrame(animation)
+            /**/
         },
         onNodeClick(node) {
+            // eslint-disable-next-line no-console
             console.log('click', node)
         },
         onNodeHover(node) {
@@ -95,14 +83,10 @@ export const App: solid.Component = () => {
         },
         onNodeDrag(node, pos) {
             fg.graph.changeNodePosition(canvas_state.options.graph.grid, node, pos.x, pos.y)
-            fg.anim.requestFrame(animation)
+            bump_end = fg.anim.bump(bump_end)
         },
         onModeChange(mode) {
-            if (mode === fg.canvas.Mode.DraggingNode) {
-                fg.anim.start(animation)
-            } else {
-                fg.anim.pause(animation)
-            }
+            is_active = mode === fg.canvas.Mode.DraggingNode
         },
     })
     s.addCleanup(gestures, fg.canvas.cleanupCanvasGestures)
