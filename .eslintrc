@@ -5,10 +5,9 @@
         "@typescript-eslint",
         "no-only-tests",
         "eslint-comments",
-        "functional",
         "@nothing-but"
     ],
-    "ignorePatterns": ["node_modules", "dist", "packages/*/dev"],
+    "ignorePatterns": ["node_modules", "dist"],
     "parserOptions": {
         "project": "./tsconfig.json",
         "tsconfigRootDir": ".",
@@ -59,11 +58,6 @@
             }
         ],
         /*
-            no throwing errors
-        */
-        "functional/no-throw-statements": "warn",
-        "functional/no-promise-reject": "warn",
-        /*
             prevent unexpected behavior
         */
         "@typescript-eslint/ban-types": "warn",
@@ -77,3 +71,4 @@
         "no-only-tests/no-only-tests": "warn"
     }
 }
+
