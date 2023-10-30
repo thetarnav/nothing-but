@@ -1,10 +1,10 @@
 import {Ev} from '@nothing-but/dom'
-import * as S from '@nothing-but/solid/signal'
+import * as s from '@nothing-but/solid/signal'
 import * as solid from 'solid-js'
 import * as fg from '../src/index.js'
 import * as init from './init.js'
 
-function Shell(props: {children: solid.JSX.Element}): solid.JSX.Element {
+const Shell: solid.FlowComponent = props => {
     return (
         <div class="min-h-110vh min-w-110vw">
             <div class="w-screen h-screen center-child flex-col">
@@ -32,8 +32,6 @@ export const App: solid.Component = () => {
     // const force_graph = generateInitialGraph(1024)
     const force_graph = init.getLA2Graph()
 
-    const change_signal = S.signal()
-
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
     const ctx = el.getContext('2d')
@@ -47,30 +45,37 @@ export const App: solid.Component = () => {
         init_scale: 2,
     })
 
-    const animation = fg.anim.frameAnimation({
-        ...fg.anim.DEFAULT_OPTIONS,
-        onIteration(alpha) {
+    const frame_iter_limit = fg.anim.frameIterationsLimit()
+
+    let is_active = false
+    let alpha = 0 // 0 - 1
+    let bump_end = fg.anim.bump(0)
+
+    const loop = fg.anim.animationLoop(time => {
+        const iterations = fg.anim.calcIterations(frame_iter_limit, time)
+
+        for (let i = Math.min(iterations, 2); i >= 0; i--) {
+            alpha = fg.anim.updateAlpha(alpha, is_active || time < bump_end)
             fg.graph.simulate(force_graph, alpha)
-        },
-        onFrame() {
-            fg.canvas.drawCanvas(canvas_state)
-        },
+        }
+
+        fg.canvas.drawCanvas(canvas_state)
     })
-    fg.anim.bump(animation)
-    solid.onCleanup(() => fg.anim.cleanup(animation))
+    fg.anim.loopStart(loop)
+    s.addCleanup(loop, fg.anim.loopClear)
 
     const ro = fg.canvas.resizeObserver(el, size => {
         fg.canvas.updateCanvasSize(canvas_state, size)
-        fg.anim.requestFrame(animation)
     })
-    solid.onCleanup(() => ro.disconnect())
+    void s.onCleanup(() => ro.disconnect())
 
     const gestures = fg.canvas.canvasGestures({
         canvas: canvas_state,
         onTranslate() {
-            fg.anim.requestFrame(animation)
+            /**/
         },
         onNodeClick(node) {
+            // eslint-disable-next-line no-console
             console.log('click', node)
         },
         onNodeHover(node) {
@@ -78,17 +83,13 @@ export const App: solid.Component = () => {
         },
         onNodeDrag(node, pos) {
             fg.graph.changeNodePosition(canvas_state.options.graph.grid, node, pos.x, pos.y)
-            fg.anim.requestFrame(animation)
+            bump_end = fg.anim.bump(bump_end)
         },
         onModeChange(mode) {
-            if (mode === fg.canvas.Mode.DraggingNode) {
-                fg.anim.start(animation)
-            } else {
-                fg.anim.pause(animation)
-            }
+            is_active = mode === fg.canvas.Mode.DraggingNode
         },
     })
-    solid.onCleanup(() => fg.canvas.cleanupCanvasGestures(gestures))
+    s.addCleanup(gestures, fg.canvas.cleanupCanvasGestures)
 
     return <Shell>{el}</Shell>
 }

@@ -79,7 +79,7 @@
     },
     "devDependencies": {
         "@nothing-but/solid": "workspace:^",
-        "@solid-primitives/event-listener": "^2.2.14",
+        "@solid-primitives/event-listener": "^2.3.0",
         "@solid-primitives/keyed": "^1.2.0",
         "@solid-primitives/refs": "^1.0.5",
         "@solid-primitives/rootless": "^1.4.2",

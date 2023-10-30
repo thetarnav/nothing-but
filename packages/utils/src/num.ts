@@ -22,8 +22,15 @@ export const bounce = (value: number, min: number, max: number): number => {
 
 /**
  * Linear interpolation
+ * @param start Start value
+ * @param end End value
+ * @param t Interpolation factor
+ *
+ * ```ts
+ * start + (end - start) * t
+ * ```
  */
-export const lerp = (a: number, b: number, t: number): number => a + (b - a) * t
+export const lerp = (start: number, end: number, t: number): number => start + (end - start) * t
 
 export const map_range = (
     value: number,
