@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.5.0
+
+### Minor Changes
+
+-   eca4417: Change animation API to immediate-mode-like
+
 ## 0.4.4
 
 ### Patch Changes
