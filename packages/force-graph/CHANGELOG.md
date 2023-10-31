@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.6.0
+
+### Minor Changes
+
+-   13c5bd2: Single callback for all gesture events
+
 ## 0.5.0
 
 ### Minor Changes
