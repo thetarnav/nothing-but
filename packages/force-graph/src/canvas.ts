@@ -172,6 +172,38 @@ function pointRatioToGraph(canvas: CanvasState, pos: T.Position): T.Position {
     return {x, y}
 }
 
+export const resetFrame = (canvas: CanvasState): void => {
+    const {ctx, graph} = canvas.options,
+        {scale, translate: grid_pos} = canvas
+
+    /*
+        clear
+    */
+    ctx.resetTransform()
+    ctx.clearRect(0, 0, canvas.max_size, canvas.max_size)
+
+    /*
+        origin (top-left corner) gets shifted away from the center
+    */
+    const correct_origin = ((1 - scale) * canvas.max_size) / 2
+    let translate_x = correct_origin
+    let translate_y = correct_origin
+
+    /*
+        subtract user T.Position (to move camera in the opposite direction)
+    */
+    translate_x -= (grid_pos.x / graph.grid.size) * canvas.max_size * scale
+    translate_y -= (grid_pos.y / graph.grid.size) * canvas.max_size * scale
+
+    /*
+        correct for aspect ratio by shifting the shorter side's axis
+    */
+    translate_x += -arMargin(canvas.size.width / canvas.size.height) * canvas.max_size
+    translate_y += -arMargin(canvas.size.height / canvas.size.width) * canvas.max_size
+
+    ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
+}
+
 export function drawEdges(canvas: CanvasState): void {
     const {ctx, graph} = canvas.options
 
@@ -181,7 +213,7 @@ export function drawEdges(canvas: CanvasState): void {
         const opacity = 0.2 + ((a.mass + b.mass - 2) / 100) * 2 * canvas.scale
 
         ctx.strokeStyle =
-            a.anchor || b.anchor
+            a.anchor || b.anchor || canvas.hovered_node === a || canvas.hovered_node === b
                 ? `rgba(129, 140, 248, ${opacity})`
                 : `rgba(150, 150, 150, ${opacity})`
         ctx.lineWidth = edge_width
@@ -207,9 +239,10 @@ export function drawDotNodes(canvas: CanvasState): void {
         const {x, y} = node.position
         const opacity = 0.6 + (node.mass / 10) * 4
 
-        ctx.fillStyle = node.anchor
-            ? `rgba(129, 140, 248, ${opacity})`
-            : `rgba(248, 113, 113, ${opacity})`
+        ctx.fillStyle =
+            node.anchor || canvas.hovered_node === node
+                ? `rgba(129, 140, 248, ${opacity})`
+                : `rgba(248, 113, 113, ${opacity})`
         ctx.beginPath()
         ctx.ellipse(
             (x / graph.grid.size) * canvas.max_size,
@@ -250,38 +283,6 @@ export function drawTextNodes(canvas: CanvasState): void {
     }
 }
 
-export const resetFrame = (canvas: CanvasState): void => {
-    const {ctx, graph} = canvas.options,
-        {scale, translate: grid_pos} = canvas
-
-    /*
-        clear
-    */
-    ctx.resetTransform()
-    ctx.clearRect(0, 0, canvas.max_size, canvas.max_size)
-
-    /*
-        origin (top-left corner) gets shifted away from the center
-    */
-    const correct_origin = ((1 - scale) * canvas.max_size) / 2
-    let translate_x = correct_origin
-    let translate_y = correct_origin
-
-    /*
-        subtract user T.Position (to move camera in the opposite direction)
-    */
-    translate_x -= (grid_pos.x / graph.grid.size) * canvas.max_size * scale
-    translate_y -= (grid_pos.y / graph.grid.size) * canvas.max_size * scale
-
-    /*
-        correct for aspect ratio by shifting the shorter side's axis
-    */
-    translate_x += -arMargin(canvas.size.width / canvas.size.height) * canvas.max_size
-    translate_y += -arMargin(canvas.size.height / canvas.size.width) * canvas.max_size
-
-    ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
-}
-
 export const drawCanvas = (canvas: CanvasState): void => {
     resetFrame(canvas)
     drawEdges(canvas)
@@ -290,11 +291,7 @@ export const drawCanvas = (canvas: CanvasState): void => {
 
 export interface CanvasGesturesOptions {
     readonly canvas: CanvasState
-    readonly onTranslate: () => void
-    readonly onNodeClick: (node: graph.Node) => void
-    readonly onNodeHover: (node: graph.Node | null) => void
-    readonly onNodeDrag: (node: graph.Node, new_pos: T.Position) => void
-    readonly onModeChange: (mode: Mode) => void
+    readonly onGesture: (e: GestureEvent) => void
 }
 
 export interface CanvasGestures extends CanvasGesturesOptions {
@@ -302,6 +299,40 @@ export interface CanvasGestures extends CanvasGesturesOptions {
     cleanup1(): void
     cleanup2(): void
 }
+
+export enum GestureEventType {
+    Translate,
+    NodeClick,
+    NodeHover,
+    NodeDrag,
+    ModeChange,
+}
+export type TranslateEvent = {
+    type: GestureEventType.Translate
+}
+export type NodeClickEvent = {
+    type: GestureEventType.NodeClick
+    node: graph.Node
+}
+export type NodeHoverEvent = {
+    type: GestureEventType.NodeHover
+    node: graph.Node | null
+}
+export type NodeDragEvent = {
+    type: GestureEventType.NodeDrag
+    node: graph.Node
+    pos: T.Position
+}
+export type ModeChangeEvent = {
+    type: GestureEventType.ModeChange
+    mode: Mode
+}
+export type GestureEvent =
+    | TranslateEvent
+    | NodeClickEvent
+    | NodeHoverEvent
+    | NodeDragEvent
+    | ModeChangeEvent
 
 export enum Mode {
     Default,
@@ -313,7 +344,6 @@ export enum Mode {
 
 interface DefaultState {
     readonly type: Mode.Default
-    hover_node: graph.Node | null
     removeListener(): void
 }
 
@@ -329,9 +359,9 @@ function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: M
         graph.findClosestNodeLinear(canvas.options.graph.nodes, point_graph, pointer_node_radius) ??
         null
 
-    if (state.hover_node !== node) {
-        state.hover_node = node
-        gesture.onNodeHover(state.hover_node)
+    if (canvas.hovered_node !== node) {
+        canvas.hovered_node = node
+        gesture.onGesture({type: GestureEventType.NodeHover, node})
     }
 }
 
@@ -344,7 +374,6 @@ function defaultState(gesture: CanvasGestures): DefaultState {
 
     const state: DefaultState = {
         type: Mode.Default,
-        hover_node: null,
         removeListener,
     }
 
@@ -386,7 +415,7 @@ function draggingNodeState(
         Trig.multiply(goal_node_pos_delta, 0.95)
 
         const graph_node_pos = Trig.difference(goal_graph_node_pos, goal_node_pos_delta)
-        gesture.onNodeDrag(node, graph_node_pos)
+        gesture.onGesture({type: GestureEventType.NodeDrag, node, pos: graph_node_pos})
 
         const d = Trig.distance(Trig.ZERO, goal_node_pos_delta)
         if (d < 0.1) {
@@ -413,7 +442,7 @@ function draggingNodeState(
             }
         }
 
-        gesture.onNodeDrag(node, graph_node_pos)
+        gesture.onGesture({type: GestureEventType.NodeDrag, node, pos: graph_node_pos})
     })
 
     const state: DraggingNodeState = {
@@ -486,7 +515,7 @@ function moveDraggingState(
     const removeListener = Ev.listener(document, 'pointermove', e => {
         const should_update = handleMoveEvent(state, e)
         if (should_update) {
-            gesture.onTranslate()
+            gesture.onGesture({type: GestureEventType.Translate})
         }
     })
 
@@ -573,7 +602,7 @@ function moveMultiTouchState(
     const removeListener = Ev.listener(document, 'pointermove', e => {
         const should_update = handleMultiTouchEvent(state, e)
         if (should_update) {
-            gesture.onTranslate()
+            gesture.onGesture({type: GestureEventType.Translate})
         }
     })
 
@@ -632,19 +661,19 @@ export function changeModeState<T extends Mode>(
         // @ts-ignore
         ...args,
     )
-    gesture.onModeChange(type)
+    gesture.onGesture({type: GestureEventType.ModeChange, mode: type})
 }
 
 export function cleanupModeState(gesture: CanvasGestures): void {
-    const {mode} = gesture
+    const {mode, canvas} = gesture
 
     // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (mode.type) {
         case Mode.Default: {
             mode.removeListener()
-            if (mode.hover_node) {
-                mode.hover_node = null
-                gesture.onNodeHover(null)
+            if (canvas.hovered_node) {
+                canvas.hovered_node = null
+                gesture.onGesture({type: GestureEventType.NodeHover, node: null})
             }
 
             break
@@ -742,7 +771,7 @@ function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): 
             if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
 
             if (!mode.click_prevented) {
-                gesture.onNodeClick(mode.node)
+                gesture.onGesture({type: GestureEventType.NodeClick, node: mode.node})
             }
 
             changeModeState(gesture, Mode.Default)
@@ -862,11 +891,7 @@ function handleWheelEvent(canvas: CanvasState, e: WheelEvent): void {
 export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
     const gesture: CanvasGestures = {
         canvas: options.canvas,
-        onTranslate: options.onTranslate,
-        onNodeClick: options.onNodeClick,
-        onNodeHover: options.onNodeHover,
-        onNodeDrag: options.onNodeDrag,
-        onModeChange: options.onModeChange,
+        onGesture: options.onGesture,
         mode: null!,
         cleanup1: null!,
         cleanup2: null!,
@@ -879,7 +904,7 @@ export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
         },
         wheel(e) {
             handleWheelEvent(options.canvas, e)
-            options.onTranslate()
+            gesture.onGesture({type: GestureEventType.Translate})
         },
     })
 

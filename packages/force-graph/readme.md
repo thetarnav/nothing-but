@@ -41,5 +41,5 @@ TODO:
         -   [ ] standard interfaces? (strategy pattern)
     -   [ ] classes (has internal lifecycle)
     -   [x] escape key to reset
-    -   [ ] try immediate mode api (instead of callbacks, handle interactions in the next frame)
+    -   [x] try immediate mode api (instead of callbacks, handle interactions in the next frame)
 -   [ ] frame animation class

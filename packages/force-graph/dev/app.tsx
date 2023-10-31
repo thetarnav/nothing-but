@@ -47,15 +47,15 @@ export const App: solid.Component = () => {
 
     const frame_iter_limit = fg.anim.frameIterationsLimit()
 
-    let is_active = false
     let alpha = 0 // 0 - 1
     let bump_end = fg.anim.bump(0)
 
     const loop = fg.anim.animationLoop(time => {
         const iterations = fg.anim.calcIterations(frame_iter_limit, time)
+        const is_active = gestures.mode.type === fg.canvas.Mode.DraggingNode || time < bump_end
 
         for (let i = Math.min(iterations, 2); i >= 0; i--) {
-            alpha = fg.anim.updateAlpha(alpha, is_active || time < bump_end)
+            alpha = fg.anim.updateAlpha(alpha, is_active)
             fg.graph.simulate(force_graph, alpha)
         }
 
@@ -71,25 +71,37 @@ export const App: solid.Component = () => {
 
     const gestures = fg.canvas.canvasGestures({
         canvas: canvas_state,
-        onTranslate() {
-            /**/
-        },
-        onNodeClick(node) {
-            // eslint-disable-next-line no-console
-            console.log('click', node)
-        },
-        onNodeHover(node) {
-            canvas_state.hovered_node = node
-        },
-        onNodeDrag(node, pos) {
-            fg.graph.changeNodePosition(canvas_state.options.graph.grid, node, pos.x, pos.y)
-            bump_end = fg.anim.bump(bump_end)
-        },
-        onModeChange(mode) {
-            is_active = mode === fg.canvas.Mode.DraggingNode
+        onGesture(e) {
+            // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
+            switch (e.type) {
+                case fg.canvas.GestureEventType.NodeDrag: {
+                    fg.graph.changeNodePosition(
+                        canvas_state.options.graph.grid,
+                        e.node,
+                        e.pos.x,
+                        e.pos.y,
+                    )
+                    break
+                }
+                case fg.canvas.GestureEventType.NodeClick: {
+                    // eslint-disable-next-line no-console
+                    console.log('click', e.node)
+                    break
+                }
+            }
         },
     })
     s.addCleanup(gestures, fg.canvas.cleanupCanvasGestures)
 
-    return <Shell>{el}</Shell>
+    return (
+        <>
+            <Shell>{el}</Shell>
+            <button
+                class="absolute top-0 right-0"
+                onClick={() => (bump_end = fg.anim.bump(bump_end))}
+            >
+                bump
+            </button>
+        </>
+    )
 }
