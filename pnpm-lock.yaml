@@ -121,21 +121,34 @@ importers:
       '@solid-primitives/event-listener':
         specifier: ^2.3.0
         version: 2.3.0(solid-js@1.8.4)
-      '@solid-primitives/keyed':
-        specifier: ^1.2.0
-        version: 1.2.0(solid-js@1.8.4)
       '@solid-primitives/refs':
         specifier: ^1.0.5
         version: 1.0.5(solid-js@1.8.4)
       '@solid-primitives/rootless':
         specifier: ^1.4.2
         version: 1.4.2(solid-js@1.8.4)
-      '@solid-primitives/state-machine':
-        specifier: ^0.0.1
-        version: 0.0.1(solid-js@1.8.4)
-      clsx:
-        specifier: ^2.0.0
-        version: 2.0.0
+
+  packages/line-graph:
+    dependencies:
+      '@nothing-but/dom':
+        specifier: workspace:^
+        version: link:../dom
+      '@nothing-but/utils':
+        specifier: workspace:^
+        version: link:../utils
+    devDependencies:
+      '@nothing-but/solid':
+        specifier: workspace:^
+        version: link:../solid
+      '@solid-primitives/event-listener':
+        specifier: ^2.3.0
+        version: 2.3.0(solid-js@1.8.4)
+      '@solid-primitives/refs':
+        specifier: ^1.0.5
+        version: 1.0.5(solid-js@1.8.4)
+      '@solid-primitives/rootless':
+        specifier: ^1.4.2
+        version: 1.4.2(solid-js@1.8.4)
 
   packages/platform: {}
 
@@ -1262,14 +1275,6 @@ packages:
       solid-js: 1.8.4
     dev: true
 
-  /@solid-primitives/keyed@1.2.0(solid-js@1.8.4):
-    resolution: {integrity: sha512-0DuTeJdxWjCTu73XnDZs24JzfXckBnpvCfQ6Mf/kTPKkMZJh7tjkBnZEk48ckrE9xmwat9stIdfrBmZctsepIw==}
-    peerDependencies:
-      solid-js: ^1.6.12
-    dependencies:
-      solid-js: 1.8.4
-    dev: true
-
   /@solid-primitives/refs@1.0.5(solid-js@1.8.4):
     resolution: {integrity: sha512-5hmYmYbm6rs43nMHHozyyUngGA7P7q2WtlaCLJEfmlUJf67GWI1PZmqAiol6m9F37XSMZRuvZLoQ7HA/0q3GYg==}
     peerDependencies:
@@ -1285,14 +1290,6 @@ packages:
       solid-js: ^1.6.12
     dependencies:
       '@solid-primitives/utils': 6.2.1(solid-js@1.8.4)
-      solid-js: 1.8.4
-    dev: true
-
-  /@solid-primitives/state-machine@0.0.1(solid-js@1.8.4):
-    resolution: {integrity: sha512-sO+BEzLsKprl/ZAvtjaomrtnjKCg+Lv0QjdQG+gx/b0Rkf0IKSLUHciBrivrODk58/mzhm49hHwpeu4SFTb+lQ==}
-    peerDependencies:
-      solid-js: ^1.7.0
-    dependencies:
       solid-js: 1.8.4
     dev: true
 
@@ -2102,11 +2099,6 @@ packages:
   /clone@1.0.4:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==}
     engines: {node: '>=0.8'}
-    dev: true
-
-  /clsx@2.0.0:
-    resolution: {integrity: sha512-rQ1+kcj+ttHG0MKVGBUXwayCCF1oh39BF5COIpRzuCEv8Mwjv0XucrI2ExNTOn9IlLifGClWQcU9BrZORvtw6Q==}
-    engines: {node: '>=6'}
     dev: true
 
   /color-convert@1.9.3:

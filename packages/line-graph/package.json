@@ -1,10 +1,10 @@
 {
-    "name": "@nothing-but/force-graph",
-    "version": "0.6.0",
+    "name": "@nothing-but/line-graph",
+    "version": "0.0.0",
     "license": "MIT",
     "author": "Damian Tarnawski <gthetarnav@gmail.com>",
     "contributors": [],
-    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/force-graph#readme",
+    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/line-graph#readme",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/thetarnav/nothing-but.git"
