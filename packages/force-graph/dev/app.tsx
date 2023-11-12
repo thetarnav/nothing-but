@@ -39,7 +39,6 @@ export const App: solid.Component = () => {
 
     const canvas_state = fg.canvas.canvasState({
         ...fg.canvas.DEFAULT_OPTIONS,
-        el: el,
         ctx: ctx,
         graph: force_graph,
         init_scale: 2,

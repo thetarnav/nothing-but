@@ -2,7 +2,6 @@ import {T, event, num, trig} from '@nothing-but/utils'
 import {graph} from './index.js'
 
 export type Options = {
-    readonly el: HTMLCanvasElement
     readonly ctx: CanvasRenderingContext2D
     readonly graph: graph.Graph
     readonly max_scale: number
@@ -48,7 +47,7 @@ function clampCanvasScale(options: Options, new_scale: number): number {
 
 export function updateTranslate(canvas: CanvasState, x: number, y: number): void {
     const grid_size = canvas.graph.grid.size,
-        {width, height} = canvas.el,
+        {width, height} = canvas.ctx.canvas,
         {scale, translate} = canvas,
         radius = grid_size / 2,
         ar_offset_x = arMargin(width / height) * (grid_size / scale),
@@ -91,8 +90,8 @@ export function eventToPointRatio(
     canvas: CanvasState,
     e: PointerEvent | WheelEvent | MouseEvent,
 ): T.Position {
-    const ratio = event.ratioInElement(e, canvas.el)
-    const {width, height} = canvas.el
+    const ratio = event.ratioInElement(e, canvas.ctx.canvas)
+    const {width, height} = canvas.ctx.canvas
 
     /*
         correct for aspect ratio by shifting the shorter side's axis
@@ -138,7 +137,7 @@ function pointRatioToGraph(canvas: CanvasState, pos: T.Position): T.Position {
 export const resetFrame = (canvas: CanvasState): void => {
     const {ctx, graph} = canvas,
         {scale, translate: grid_pos} = canvas,
-        {width, height} = canvas.el,
+        {width, height} = canvas.ctx.canvas,
         max_size = Math.max(width, height)
 
     /*
@@ -171,7 +170,7 @@ export const resetFrame = (canvas: CanvasState): void => {
 
 export function drawEdges(canvas: CanvasState): void {
     const {ctx, graph} = canvas,
-        {width, height} = canvas.el,
+        {width, height} = canvas.ctx.canvas,
         max_size = Math.max(width, height)
 
     const edge_width = edgeWidth(max_size, canvas.scale)
@@ -199,7 +198,7 @@ export function drawEdges(canvas: CanvasState): void {
 
 export function drawDotNodes(canvas: CanvasState): void {
     const {ctx, graph} = canvas,
-        {width, height} = canvas.el,
+        {width, height} = canvas.ctx.canvas,
         max_size = Math.max(width, height)
 
     const node_radius = nodeRadius(max_size)
@@ -228,7 +227,7 @@ export function drawDotNodes(canvas: CanvasState): void {
 
 export function drawTextNodes(canvas: CanvasState): void {
     const {ctx, graph} = canvas,
-        {width, height} = canvas.el,
+        {width, height} = canvas.ctx.canvas,
         max_size = Math.max(width, height)
 
     ctx.textAlign = 'center'
@@ -318,7 +317,7 @@ function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: M
     if (e.buttons !== 0) return
 
     const {canvas} = gesture,
-        {width, height} = canvas.el,
+        {width, height} = canvas.ctx.canvas,
         max_size = Math.max(width, height)
 
     const point_graph = eventToPointGraph(canvas, e)
@@ -336,7 +335,7 @@ function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: M
 function defaultState(gesture: CanvasGestures): DefaultState {
     const {canvas} = gesture
 
-    const removeListener = event.listener(canvas.el, 'mousemove', e => {
+    const removeListener = event.listener(canvas.ctx.canvas, 'mousemove', e => {
         handleMouseMoveEvent(gesture, state, e)
     })
 
@@ -667,7 +666,7 @@ export function cleanupModeState(gesture: CanvasGestures): void {
 function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void {
     const {canvas} = gesture
     const {mode} = gesture
-    const {width, height} = canvas.el
+    const {width, height} = canvas.ctx.canvas
     const max_size = Math.max(width, height)
 
     // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
@@ -865,7 +864,7 @@ export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
     }
     gesture.mode = defaultState(gesture)
 
-    gesture.cleanup1 = event.listenerMap(options.canvas.el, {
+    gesture.cleanup1 = event.listenerMap(options.canvas.ctx.canvas, {
         pointerdown(e) {
             handlePointerDownEvent(gesture, e)
         },
