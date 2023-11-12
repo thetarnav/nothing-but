@@ -1,4 +1,4 @@
-import {Num, T, Trig} from '@nothing-but/utils'
+import {num, T, trig} from '@nothing-but/utils'
 
 export interface Options {
     /**
@@ -259,7 +259,7 @@ export function findClosestNodeLinear(
     let closest_dist = max_dist
 
     for (const node of nodes) {
-        const dist = Trig.distance(node.position, pos)
+        const dist = trig.distance(node.position, pos)
         if (dist < closest_dist) {
             closest = node
             closest_dist = dist
@@ -296,16 +296,16 @@ export function findClosestNode(
     /*
         1 | -1, depending on which side of the cell the position is on
     */
-    const idx_delta = Trig.map(
+    const idx_delta = trig.map(
         pos,
-        n => Math.floor(Num.remainder(n / grid.cell_size, 1) + 0.5) * 2 - 1,
+        n => Math.floor(num.remainder(n / grid.cell_size, 1) + 0.5) * 2 - 1,
     )
 
     /*
         clamp the index to the grid -> 1 | 0 | -1
     */
-    idx_delta.x = Num.clamp(idx_delta.x, -x_axis_idx, grid.axis_cells - 1 - x_axis_idx)
-    idx_delta.y = Num.clamp(idx_delta.y, -y_axis_idx, grid.axis_cells - 1 - y_axis_idx)
+    idx_delta.x = num.clamp(idx_delta.x, -x_axis_idx, grid.axis_cells - 1 - x_axis_idx)
+    idx_delta.y = num.clamp(idx_delta.y, -y_axis_idx, grid.axis_cells - 1 - y_axis_idx)
 
     let closest_dist = max_dist
     let closest: Node | undefined
@@ -329,7 +329,7 @@ export function findClosestNode(
                     const node = order[i]!
                     if (x - node.position.x > closest_dist) break
 
-                    const dist = Trig.distance(pos, node.position)
+                    const dist = trig.distance(pos, node.position)
                     if (dist < closest_dist) {
                         closest_dist = dist
                         closest = node
@@ -343,7 +343,7 @@ export function findClosestNode(
                     if (x - node.position.x > closest_dist) continue
                     if (node.position.x - x > closest_dist) break
 
-                    const dist = Trig.distance(pos, node.position)
+                    const dist = trig.distance(pos, node.position)
                     if (dist < closest_dist) {
                         closest_dist = dist
                         closest = node
@@ -359,8 +359,8 @@ export function findClosestNode(
 export function randomizeNodePositions(nodes: readonly Node[], grid_size: number): void {
     const margin = grid_size / 4
     for (const node of nodes) {
-        node.position.x = Num.random_from(margin, grid_size - margin)
-        node.position.y = Num.random_from(margin, grid_size - margin)
+        node.position.x = num.random_from(margin, grid_size - margin)
+        node.position.y = num.random_from(margin, grid_size - margin)
         node.moved = true
     }
 }
@@ -369,8 +369,8 @@ export function changeNodePosition(grid: Grid, node: Node, x: number, y: number)
     const prev_idx = toGridIdx(grid, node.position)
     const prev_x = node.position.x
 
-    node.position.x = Num.clamp(x, 0, grid.size)
-    node.position.y = Num.clamp(y, 0, grid.size)
+    node.position.x = num.clamp(x, 0, grid.size)
+    node.position.y = num.clamp(y, 0, grid.size)
     node.moved = true
 
     const idx = toGridIdx(grid, node.position)

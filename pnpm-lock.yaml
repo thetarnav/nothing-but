@@ -81,12 +81,6 @@ importers:
         specifier: ^0.34.6
         version: 0.34.6(jsdom@22.1.0)
 
-  packages/dom:
-    dependencies:
-      '@nothing-but/utils':
-        specifier: workspace:^
-        version: link:../utils
-
   packages/eslint-plugin:
     dependencies:
       '@typescript-eslint/utils':
@@ -108,9 +102,6 @@ importers:
 
   packages/force-graph:
     dependencies:
-      '@nothing-but/dom':
-        specifier: workspace:^
-        version: link:../dom
       '@nothing-but/utils':
         specifier: workspace:^
         version: link:../utils
@@ -130,9 +121,6 @@ importers:
 
   packages/line-graph:
     dependencies:
-      '@nothing-but/dom':
-        specifier: workspace:^
-        version: link:../dom
       '@nothing-but/utils':
         specifier: workspace:^
         version: link:../utils

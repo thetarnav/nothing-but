@@ -1,4 +1,9 @@
-function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): boolean {
+/**
+ * Resizes the canvas to match the size it is being displayed.
+ * @param canvas the canvas to resize
+ * @returns `true` if the canvas was resized
+ */
+export function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): boolean {
     // Get the size the browser is displaying the canvas in device pixels.
     const dpr = window.devicePixelRatio
     const {width, height} = canvas.getBoundingClientRect()

@@ -1,4 +1,4 @@
-import {Num} from './index.js'
+import {num} from './index.js'
 
 /**
  * Check shallow array equality
@@ -8,7 +8,7 @@ export function equals(a: readonly unknown[], b: readonly unknown[]): boolean {
 }
 
 export function wrap<T>(arr: readonly T[], index: number): T | undefined {
-    return arr[Num.remainder(index, arr.length)]
+    return arr[num.remainder(index, arr.length)]
 }
 
 /**
@@ -87,10 +87,10 @@ export function remove<T>(array: T[], item: T): void {
     array.splice(array.indexOf(item), 1)
 }
 
-export const pick_random = <T>(arr: readonly T[]): T | undefined => arr[Num.random_int(arr.length)]
+export const pick_random = <T>(arr: readonly T[]): T | undefined => arr[num.random_int(arr.length)]
 
 export function pick_random_excliding_one<T>(arr: readonly T[], excluding: T): T | undefined {
-    let pick_index = Num.random_int(arr.length),
+    let pick_index = num.random_int(arr.length),
         pick = arr[pick_index]
 
     if (pick === excluding) {
@@ -104,7 +104,7 @@ export function pick_random_excliding_one<T>(arr: readonly T[], excluding: T): T
 export function* random_iterate<T>(arr: readonly T[]): Generator<T> {
     const copy = arr.slice()
     while (copy.length) {
-        const index = Num.random_int(copy.length)
+        const index = num.random_int(copy.length)
         yield copy.splice(index, 1)[0]!
     }
 }

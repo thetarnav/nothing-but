@@ -85,6 +85,24 @@
                 "types": "./dist/types.d.ts",
                 "default": "./dist/types.js"
             }
+        },
+        "./canvas": {
+            "import": {
+                "types": "./dist/canvas.d.ts",
+                "default": "./dist/canvas.js"
+            }
+        },
+        "./event": {
+            "import": {
+                "types": "./dist/event.d.ts",
+                "default": "./dist/event.js"
+            }
+        },
+        "./raf": {
+            "import": {
+                "types": "./dist/raf.d.ts",
+                "default": "./dist/raf.js"
+            }
         }
     },
     "typesVersions": {
@@ -112,6 +130,15 @@
             ],
             "types": [
                 "./dist/types.d.ts"
+            ],
+            "canvas": [
+                "./dist/canvas.d.ts"
+            ],
+            "event": [
+                "./dist/event.d.ts"
+            ],
+            "raf": [
+                "./dist/raf.d.ts"
             ]
         }
     }

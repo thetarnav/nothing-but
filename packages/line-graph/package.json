@@ -74,7 +74,6 @@
         }
     },
     "dependencies": {
-        "@nothing-but/dom": "workspace:^",
         "@nothing-but/utils": "workspace:^"
     },
     "devDependencies": {

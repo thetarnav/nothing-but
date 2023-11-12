@@ -1,4 +1,4 @@
-import {T} from '@nothing-but/utils'
+import * as T from './types.js'
 
 export type EventListenerOptions = boolean | AddEventListenerOptions
 

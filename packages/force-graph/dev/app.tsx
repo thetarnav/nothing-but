@@ -1,5 +1,5 @@
-import {Ev} from '@nothing-but/dom'
 import * as s from '@nothing-but/solid/signal'
+import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import * as fg from '../src/index.js'
 import * as init from './init.js'
@@ -9,7 +9,7 @@ const Shell: solid.FlowComponent = props => {
         <div class="min-h-110vh min-w-110vw">
             <div class="w-screen h-screen center-child flex-col">
                 <div
-                    ref={Ev.preventMobileScrolling}
+                    ref={utils.event.preventMobileScrolling}
                     class="relative aspect-3/4 sm:aspect-4/3 w-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
                 >
                     {props.children}
@@ -45,28 +45,36 @@ export const App: solid.Component = () => {
         init_scale: 2,
     })
 
-    const frame_iter_limit = fg.anim.frameIterationsLimit()
+    const frame_iter_limit = utils.raf.frameIterationsLimit()
 
     let alpha = 0 // 0 - 1
-    let bump_end = fg.anim.bump(0)
+    let bump_end = utils.raf.bump(0)
 
-    const loop = fg.anim.animationLoop(time => {
-        const iterations = fg.anim.calcIterations(frame_iter_limit, time)
+    const loop = utils.raf.makeAnimationLoop(time => {
+        const iterations = utils.raf.calcIterations(frame_iter_limit, time)
         const is_active = gestures.mode.type === fg.canvas.Mode.DraggingNode || time < bump_end
 
         for (let i = Math.min(iterations, 2); i >= 0; i--) {
-            alpha = fg.anim.updateAlpha(alpha, is_active)
+            alpha = utils.raf.updateAlpha(alpha, is_active)
             fg.graph.simulate(force_graph, alpha)
         }
 
         fg.canvas.drawCanvas(canvas_state)
     })
-    fg.anim.loopStart(loop)
-    s.addCleanup(loop, fg.anim.loopClear)
+    utils.raf.loopStart(loop)
+    s.addCleanup(loop, utils.raf.loopClear)
 
-    const ro = fg.canvas.resizeObserver(el, size => {
-        fg.canvas.updateCanvasSize(canvas_state, size)
+    const ro = new ResizeObserver(() => {
+        const changed = utils.canvas.resizeCanvasToDisplaySize(el)
+        if (changed) {
+            fg.canvas.updateTranslate(
+                canvas_state,
+                canvas_state.translate.x,
+                canvas_state.translate.y,
+            )
+        }
     })
+    ro.observe(el)
     void s.onCleanup(() => ro.disconnect())
 
     const gestures = fg.canvas.canvasGestures({
@@ -75,12 +83,7 @@ export const App: solid.Component = () => {
             // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
             switch (e.type) {
                 case fg.canvas.GestureEventType.NodeDrag: {
-                    fg.graph.changeNodePosition(
-                        canvas_state.options.graph.grid,
-                        e.node,
-                        e.pos.x,
-                        e.pos.y,
-                    )
+                    fg.graph.changeNodePosition(canvas_state.graph.grid, e.node, e.pos.x, e.pos.y)
                     break
                 }
                 case fg.canvas.GestureEventType.NodeClick: {
@@ -98,7 +101,7 @@ export const App: solid.Component = () => {
             <Shell>{el}</Shell>
             <button
                 class="absolute top-0 right-0"
-                onClick={() => (bump_end = fg.anim.bump(bump_end))}
+                onClick={() => (bump_end = utils.raf.bump(bump_end))}
             >
                 bump
             </button>

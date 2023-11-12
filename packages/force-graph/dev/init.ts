@@ -1,10 +1,10 @@
-import {Num} from '@nothing-but/utils'
+import {num} from '@nothing-but/utils'
 import {graph} from '../src/index.js'
 import {graph_options} from './app.jsx'
 import la_raw from './la.json'
 import la_2_raw from './la_2.json'
 
-export function getLA2Graph() {
+export function getLA2Graph(): graph.Graph {
     const entries = Object.entries(la_2_raw)
     const nodes: graph.Node[] = new Array(entries.length)
     const edges: graph.Edge[] = []
@@ -20,8 +20,8 @@ export function getLA2Graph() {
         node.key = key
         node.label = raw.prettyName
         node.mass = graph.nodeMassFromEdges(raw.connections.length)
-        node.position.x = Num.random_from(0, graph_options.grid_size)
-        node.position.y = Num.random_from(0, graph_options.grid_size)
+        node.position.x = num.random_from(0, graph_options.grid_size)
+        node.position.y = num.random_from(0, graph_options.grid_size)
 
         nodes[i] = node
         node_map.set(key, node)
@@ -45,7 +45,7 @@ export function getLA2Graph() {
     return graph.makeGraph(graph_options, nodes, edges)
 }
 
-export function getLAGraph() {
+export function getLAGraph(): graph.Graph {
     const nodes: graph.Node[] = new Array(la_raw.length)
 
     const edges: graph.Edge[] = []
@@ -74,8 +74,8 @@ export function getLAGraph() {
 
     for (const node of nodes) {
         node.mass = graph.nodeMassFromEdges(node.edges.length)
-        node.position.x = Num.random_from(0, graph_options.grid_size)
-        node.position.y = Num.random_from(0, graph_options.grid_size)
+        node.position.x = num.random_from(0, graph_options.grid_size)
+        node.position.y = num.random_from(0, graph_options.grid_size)
     }
 
     return graph.makeGraph(graph_options, nodes, edges)
@@ -91,7 +91,7 @@ export function generateInitialGraph(length: number = 256): graph.Graph {
 
         if (node.edges.length > 0 && Math.random() < 0.8) continue
 
-        const b_index = Num.random_int(length)
+        const b_index = num.random_int(length)
         let node_b = nodes[b_index]!
 
         if (node_b === node) {

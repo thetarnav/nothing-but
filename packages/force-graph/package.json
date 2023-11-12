@@ -52,12 +52,6 @@
                 "types": "./dist/graph.d.ts",
                 "default": "./dist/graph.js"
             }
-        },
-        "./animation": {
-            "import": {
-                "types": "./dist/animation.d.ts",
-                "default": "./dist/animation.js"
-            }
         }
     },
     "typesVersions": {
@@ -65,16 +59,12 @@
             "canvas": [
                 "./dist/canvas.d.ts"
             ],
-            "animation": [
-                "./dist/animation.d.ts"
-            ],
             "graph": [
                 "./dist/graph.d.ts"
             ]
         }
     },
     "dependencies": {
-        "@nothing-but/dom": "workspace:^",
         "@nothing-but/utils": "workspace:^"
     },
     "devDependencies": {

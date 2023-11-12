@@ -1,4 +1,4 @@
-import {Num} from '@nothing-but/utils'
+import {num} from './index.js'
 
 export type AnimationLoop = {
     /**
@@ -15,7 +15,7 @@ export type AnimationLoop = {
     frame_id: number
 }
 
-export const animationLoop = (callback: FrameRequestCallback): AnimationLoop => {
+export const makeAnimationLoop = (callback: FrameRequestCallback): AnimationLoop => {
     const loop: AnimationLoop = {
         callback: callback,
         frame: t => loopFrame(loop, t),
@@ -70,8 +70,8 @@ export const updateAlpha = (
     update_steps = DEFAULT_ALPHA_UPDATE_STEPS,
 ): number => {
     return is_playing
-        ? Num.lerp(alpha, 1, update_steps.increment)
-        : Num.lerp(alpha, 0, update_steps.decrement)
+        ? num.lerp(alpha, 1, update_steps.increment)
+        : num.lerp(alpha, 0, update_steps.decrement)
 }
 
 export const DEFAULT_BUMP_TIMEOUT_DURATION = 2000
