@@ -1,3 +1,4 @@
+import {signal as s} from '@nothing-but/solid'
 import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import fragment_shader_source from './fragment.glsl?raw'
@@ -68,6 +69,12 @@ export const App: solid.Component = () => {
     if (!gl) throw new Error('webgl2 is not supported')
 
     /*
+    Update the canvas's size to match the size it's displayed.
+    */
+    const ro = utils.canvas.makeCanvasResizeObserver(el)
+    s.addCleanup(ro, utils.canvas.cleanCanvasResizeObserver)
+
+    /*
     setup GLSL program
     */
     const fragment_shader = makeFragmentShader(gl, fragment_shader_source)
@@ -81,33 +88,28 @@ export const App: solid.Component = () => {
 
     gl.useProgram(program)
 
-    /*
-    Update the canvas's size to match the size it's displayed.
-    */
-    const ro = new ResizeObserver(() => {
-        void utils.canvas.resizeCanvasToDisplaySize(el)
-    })
-    ro.observe(el)
-    void solid.onCleanup(() => ro.disconnect())
+    const a_position = gl.getAttribLocation(program, 'a_position')
+    const u_resolution = gl.getUniformLocation(program, 'u_resolution')
+
+    let i = 0
 
     const loop = utils.raf.makeAnimationLoop(() => {
-        const position_attrib_loc = gl.getAttribLocation(program, 'a_position')
-        const resolution_uniform_loc = gl.getUniformLocation(program, 'u_resolution')
-
         // Create a buffer and put three 2d clip space points in it
         const position_buffer = gl.createBuffer()
 
         // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
         gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer)
 
+        const x = i++ % 100
+
         // prettier-ignore
         const positions = [
-            10, 20,
-            80, 20,
-            10, 30,
-            10, 30,
-            80, 20,
-            80, 30
+            10+x, 20+x,
+            80+x, 20+x,
+            10+x, 30+x,
+            10+x, 30+x,
+            80+x, 20+x,
+            80+x, 30+x
         ]
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
@@ -119,11 +121,11 @@ export const App: solid.Component = () => {
         gl.clear(gl.COLOR_BUFFER_BIT)
 
         // Turn on the attribute
-        gl.enableVertexAttribArray(position_attrib_loc)
+        gl.enableVertexAttribArray(a_position)
 
         // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
         gl.vertexAttribPointer(
-            position_attrib_loc,
+            a_position,
             2, // 2 components per iteration, position is a vec2
             gl.FLOAT, // the data is 32bit floats
             false, // don't normalize the data
@@ -132,12 +134,13 @@ export const App: solid.Component = () => {
         )
 
         // set the resolution
-        gl.uniform2f(resolution_uniform_loc, gl.canvas.width, gl.canvas.height)
+        gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
 
         // draw
         gl.drawArrays(gl.TRIANGLES, 0, 6) // 2 triangles, 6 vertices
     })
     utils.raf.loopStart(loop)
+    s.addCleanup(loop, utils.raf.loopClear)
 
     return <Shell>{el}</Shell>
 }
