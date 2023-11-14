@@ -1,5 +1,11 @@
 # @nothing-but/eslint-plugin
 
+## 0.1.2
+
+### Patch Changes
+
+-   e85f355: Support callbacks with function keyword for no-return-to-void
+
 ## 0.1.1
 
 ### Patch Changes
