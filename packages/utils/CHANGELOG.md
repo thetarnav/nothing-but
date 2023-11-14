@@ -1,5 +1,12 @@
 # @nothing-but/utils
 
+## 0.12.0
+
+### Minor Changes
+
+-   a5eeb1c: Add canvas, event, and raf modules. Rename index namespaces to lowercase.
+-   1d8e020: Add CanvasResizeObserver
+
 ## 0.11.1
 
 ### Patch Changes
