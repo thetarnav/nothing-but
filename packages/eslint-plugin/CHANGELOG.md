@@ -1,5 +1,11 @@
 # @nothing-but/eslint-plugin
 
+## 0.1.3
+
+### Patch Changes
+
+-   04fc819: Support overloads in no-return-to-void
+
 ## 0.1.2
 
 ### Patch Changes
