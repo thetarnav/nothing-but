@@ -7,7 +7,7 @@ If a function returns a value, then that value must be used.
 TODO:
 
 -   [x] nested methods `utl.raf.makeAnimationLoop`
--   [ ] `fn.apply()` and `fn.call()` methods
+-   [x] `fn.apply()` and `fn.call()` methods
 -   [ ] `bool && returningFunc()` expressions
 
 ## `no-return-to-void`

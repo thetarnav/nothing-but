@@ -143,6 +143,32 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
                 obj.prop.nested()
             `,
         },
+        {
+            name: '.call() and .apply()',
+            code: /*javascript*/ `
+                function foo(a: number): void {}
+
+                foo.call(null, 123)
+                foo.apply(null, [123])
+            `,
+        },
+        {
+            name: '.call() and .apply() with return value',
+            code: /*javascript*/ `
+                function foo(a: number): number {}
+
+                void foo.call(null, 123)
+                const x = foo.apply(null, [123])
+            `,
+        },
+        {
+            name: '.call() and .apply() with arr.length',
+            code: /*javascript*/ `
+                const array = [1, 2, 3]
+
+                array.push.apply(array, [1, 2])
+            `,
+        },
     ],
     invalid: [
         {
@@ -190,6 +216,16 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
                 obj.prop.nested()
             `,
             errors: [{messageId: 'use_return_value'}],
+        },
+        {
+            name: '.call() and .apply() with return value',
+            code: /*javascript*/ `
+                function foo(a: number): number {}
+
+                foo.call(null, 123)
+                foo.apply(null, [123])
+            `,
+            errors: [{messageId: 'use_return_value'}, {messageId: 'use_return_value'}],
         },
     ],
 })

@@ -24,7 +24,20 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
 
         return {
             CallExpression(node) {
-                const {parent, callee} = node
+                let callee: eslint.TSESTree.Expression = node.callee
+                const parent = node.parent
+
+                /*
+                For <object>.call() and <object>.apply() use the <object> type instead
+                as the return type for callee will be `any` for some reason
+                */
+                if (
+                    callee.type === eslint.AST_NODE_TYPES.MemberExpression &&
+                    callee.property.type === eslint.AST_NODE_TYPES.Identifier &&
+                    (callee.property.name === 'apply' || callee.property.name === 'call')
+                ) {
+                    callee = callee.object
+                }
 
                 if (parent.type !== eslint.AST_NODE_TYPES.ExpressionStatement) return
 
