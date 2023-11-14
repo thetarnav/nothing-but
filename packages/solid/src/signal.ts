@@ -83,7 +83,7 @@ export function effect<T>(
     solid.createEffect(() => {
         const value = source.value
         const cleanup = solid.untrack(() => fn(value))
-        cleanup && solid.onCleanup(cleanup)
+        cleanup && void solid.onCleanup(cleanup)
     })
 }
 

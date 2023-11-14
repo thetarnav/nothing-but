@@ -169,6 +169,26 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
                 array.push.apply(array, [1, 2])
             `,
         },
+        {
+            name: 'logical expression assignment',
+            code: /*javascript*/ `
+                function condition(): boolean {}
+                const some_bool: boolean = true
+
+                const res = condition() && condition()
+                const res = some_bool && condition()
+            `,
+        },
+        {
+            name: 'logical expression void',
+            code: /*javascript*/ `
+                function condition(): boolean {}
+                const some_bool: boolean = true
+
+                void (condition() && condition())
+                void (some_bool && condition())
+            `,
+        },
     ],
     invalid: [
         {
@@ -226,6 +246,25 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
                 foo.apply(null, [123])
             `,
             errors: [{messageId: 'use_return_value'}, {messageId: 'use_return_value'}],
+        },
+        {
+            name: 'logical expression action',
+            code: /*javascript*/ `
+                function condition(): boolean {}
+                function action(): void {}
+
+                condition() && action()
+            `,
+            errors: [{messageId: 'use_return_value'}],
+        },
+        {
+            name: 'multi logical expression',
+            code: /*javascript*/ `
+                function condition(): boolean {}
+
+                condition() && condition() && condition()
+            `,
+            errors: [{messageId: 'use_return_value'}],
         },
     ],
 })

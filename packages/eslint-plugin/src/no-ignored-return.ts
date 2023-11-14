@@ -1,6 +1,6 @@
 import {eslint, getType, isVoidReturnType} from './utils'
 
-const mutating_methods: Record<string, Set<string>> = {
+const MUTATING_METHODS: Record<string, Set<string>> = {
     Array: new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']),
     Map: new Set(['set', 'delete']),
     Set: new Set(['add', 'delete']),
@@ -39,7 +39,15 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
                     callee = callee.object
                 }
 
-                if (parent.type !== eslint.AST_NODE_TYPES.ExpressionStatement) return
+                /* focus only on expresion statements */
+                if (
+                    parent.type !== eslint.AST_NODE_TYPES.ExpressionStatement &&
+                    /* `a() && b()` case */
+                    (parent.type !== eslint.AST_NODE_TYPES.LogicalExpression ||
+                        parent.parent.type !== eslint.AST_NODE_TYPES.ExpressionStatement)
+                ) {
+                    return
+                }
 
                 const type = getType(callee, checker, services)
                 if (isVoidReturnType(type)) return
@@ -55,7 +63,7 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
                     if (
                         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                         !obj_type.symbol ||
-                        mutating_methods[obj_type.symbol.name]?.has(callee.property.name)
+                        MUTATING_METHODS[obj_type.symbol.name]?.has(callee.property.name)
                     )
                         return
                 }
