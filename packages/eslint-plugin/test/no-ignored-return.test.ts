@@ -131,6 +131,18 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
                 set.delete(1)
             `,
         },
+        {
+            name: 'nested object',
+            code: /*javascript*/ `
+                const obj = {
+                    prop: {
+                        nested(): void {}
+                    }
+                }
+
+                obj.prop.nested()
+            `,
+        },
     ],
     invalid: [
         {
@@ -163,6 +175,19 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             code: /*javascript*/ `
                 const func = () => true
                 func()
+            `,
+            errors: [{messageId: 'use_return_value'}],
+        },
+        {
+            name: 'nested object',
+            code: /*javascript*/ `
+                const obj = {
+                    prop: {
+                        nested(): boolean {}
+                    }
+                }
+
+                obj.prop.nested()
             `,
             errors: [{messageId: 'use_return_value'}],
         },
