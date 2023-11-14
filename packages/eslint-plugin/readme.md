@@ -17,8 +17,7 @@ If a callback should return `void`, then it should not return anything.
 TODO:
 
 -   [x] Arrow functions
--   [ ] Function declarations
--   [ ] Anonymous functions
+-   [x] Anonymous functions
 -   [ ] Overloads (not sure how to know which one is the active one)
 
 ## `no-ignored-params`

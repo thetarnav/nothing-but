@@ -13,14 +13,14 @@ const ruleTester = new RuleTester({
 ruleTester.run('no-return-to-void', rule.no_return_to_void, {
     valid: [
         {
-            name: 'empty callback',
+            name: 'arrow: empty callback',
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {})
             `,
         },
         {
-            name: 'return nothing',
+            name: 'arrow: return nothing',
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {
@@ -29,38 +29,83 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             `,
         },
         {
-            name: 'return expected value',
+            name: 'arrow: return expected value',
             code: /*javascript*/ `
                 declare function func(callback: () => number): boolean
                 func(() => 123)
             `,
         },
         {
-            name: 'return expected value (2)',
+            name: 'arrow: return expected value (2)',
             code: /*javascript*/ `
                 declare function func(thing: number, callback: () => number): boolean
                 func(312, () => 123)
             `,
         },
         {
-            name: 'return expected value (3)',
+            name: 'arrow: return expected value (3)',
             code: /*javascript*/ `
                 declare function func(callback: () => number | void): boolean
                 func(() => 123)
             `,
         },
         {
-            name: 'deopt on overloads', // TODO: support overloads
+            name: 'arrow: deopt on overloads', // TODO: support overloads
             code: /*javascript*/ `
                 declare function func(callback: () => void, b: 2): boolean
                 declare function func(callback: () => number, b: 1): boolean
                 func(() => 123, 2)
             `,
         },
+        {
+            name: 'function: empty callback',
+            code: /*javascript*/ `
+                declare function func(callback: () => void): boolean
+                func(function() {})
+            `,
+        },
+        {
+            name: 'function: return nothing',
+            code: /*javascript*/ `
+                declare function func(callback: () => void): boolean
+                func(function()  {
+                    return
+                })
+            `,
+        },
+        {
+            name: 'function: return expected value',
+            code: /*javascript*/ `
+                declare function func(callback: () => number): boolean
+                func(function() {return 123})
+            `,
+        },
+        {
+            name: 'function: return expected value (2)',
+            code: /*javascript*/ `
+                declare function func(thing: number, callback: () => number): boolean
+                func(312, function() {return 123})
+            `,
+        },
+        {
+            name: 'function: return expected value (3)',
+            code: /*javascript*/ `
+                declare function func(callback: () => number | void): boolean
+                func(function() {return 123})
+            `,
+        },
+        {
+            name: 'function: deopt on overloads', // TODO: support overloads
+            code: /*javascript*/ `
+                declare function func(callback: () => void, b: 2): boolean
+                declare function func(callback: () => number, b: 1): boolean
+                func(function() {return 123}, 2)
+            `,
+        },
     ],
     invalid: [
         {
-            name: '=> number',
+            name: 'arrow: => number',
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => 123)
@@ -68,7 +113,7 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             errors: [{messageId: 'no_return_to_void'}],
         },
         {
-            name: 'returns a number',
+            name: 'arrow: returns a number',
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {
@@ -78,7 +123,7 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             errors: [{messageId: 'no_return_to_void'}],
         },
         {
-            name: '=> math.random()',
+            name: 'arrow: => math.random()',
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => Math.random())
@@ -86,10 +131,37 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             errors: [{messageId: 'no_return_to_void'}],
         },
         {
-            name: 'returns a number or void',
+            name: 'arrow: returns a number or void',
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {
+                    if (Math.random() > 0.5) return
+                    return 123
+                })
+            `,
+            errors: [{messageId: 'no_return_to_void'}],
+        },
+        {
+            name: 'function: returns a number',
+            code: /*javascript*/ `
+                declare function func(callback: () => void): boolean
+                func(function() {return 123})
+            `,
+            errors: [{messageId: 'no_return_to_void'}],
+        },
+        {
+            name: 'function: => math.random()',
+            code: /*javascript*/ `
+                declare function func(callback: () => void): boolean
+                func(function() {return Math.random()})
+            `,
+            errors: [{messageId: 'no_return_to_void'}],
+        },
+        {
+            name: 'function: returns a number or void',
+            code: /*javascript*/ `
+                declare function func(callback: () => void): boolean
+                func(function() {
                     if (Math.random() > 0.5) return
                     return 123
                 })
