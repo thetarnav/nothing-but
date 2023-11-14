@@ -1,5 +1,17 @@
 # @nothing-but/force-graph
 
+## 0.7.0
+
+### Minor Changes
+
+-   a5eeb1c: Move animation module, and resize observer utils to the @nothing-but/utils package
+
+### Patch Changes
+
+-   Updated dependencies [a5eeb1c]
+-   Updated dependencies [1d8e020]
+    -   @nothing-but/utils@0.12.0
+
 ## 0.6.0
 
 ### Minor Changes

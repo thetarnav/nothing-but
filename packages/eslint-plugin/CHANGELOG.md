@@ -1,5 +1,12 @@
 # @nothing-but/eslint-plugin
 
+## 0.1.1
+
+### Patch Changes
+
+-   b474e9e: Correct no-ignored-return rule for .apply and .call
+-   5546efc: Handle logical expressions for no-ignored-return
+
 ## 0.1.0
 
 ### Minor Changes
