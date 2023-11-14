@@ -21,6 +21,14 @@ TODO:
 -   [ ] Anonymous functions
 -   [ ] Overloads (not sure how to know which one is the active one)
 
+## `no-ignored-params`
+
+Require that all callback parameters are used.
+
+TODO:
+
+-   [ ] implement
+
 Resources:
 
 -   [solidjs-community/eslint-plugin-solid](https://github.com/solidjs-community/eslint-plugin-solid)
