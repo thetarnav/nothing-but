@@ -6,7 +6,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "format": "prettier --ignore-path .gitignore -w **/*.{ts,tsx,json,html,css}",
+        "format": "prettier --cache --ignore-path .gitignore -w **/*.{ts,tsx,json,html,css}",
         "build": "turbo run build --filter=./packages/*",
         "test": "turbo run test --filter=./packages/*",
         "typecheck": "turbo run typecheck --filter=./packages/*",

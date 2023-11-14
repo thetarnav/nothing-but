@@ -29,6 +29,14 @@ jobs:
           pnpm install --no-frozen-lockfile --ignore-scripts
           git restore .
 
+      - name: Setup prettier cache
+        uses: actions/cache@v3
+        with:
+          path: node_modules/.cache/prettier
+          key: prettier-${{ github.sha }}
+          restore-keys: |
+            prettier-
+
       - name: Format
         run: pnpm run format
 
