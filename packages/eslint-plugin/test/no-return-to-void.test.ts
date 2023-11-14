@@ -50,14 +50,6 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             `,
         },
         {
-            name: 'arrow: deopt on overloads', // TODO: support overloads
-            code: /*javascript*/ `
-                declare function func(callback: () => void, b: 2): boolean
-                declare function func(callback: () => number, b: 1): boolean
-                func(() => 123, 2)
-            `,
-        },
-        {
             name: 'function: empty callback',
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
@@ -95,11 +87,19 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             `,
         },
         {
-            name: 'function: deopt on overloads', // TODO: support overloads
+            name: 'arrow: overloads',
             code: /*javascript*/ `
                 declare function func(callback: () => void, b: 2): boolean
                 declare function func(callback: () => number, b: 1): boolean
-                func(function() {return 123}, 2)
+                func(() => 123, 1)
+            `,
+        },
+        {
+            name: 'function: overloads',
+            code: /*javascript*/ `
+                declare function func(callback: () => void, b: 2): boolean
+                declare function func(callback: () => number, b: 1): boolean
+                func(function() {return 123}, 1)
             `,
         },
     ],
@@ -165,6 +165,24 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
                     if (Math.random() > 0.5) return
                     return 123
                 })
+            `,
+            errors: [{messageId: 'no_return_to_void'}],
+        },
+        {
+            name: 'arrow: overloads',
+            code: /*javascript*/ `
+                declare function func(callback: () => void, b: 2): boolean
+                declare function func(callback: () => number, b: 1): boolean
+                func(() => 123, 2)
+            `,
+            errors: [{messageId: 'no_return_to_void'}],
+        },
+        {
+            name: 'function: overloads',
+            code: /*javascript*/ `
+                declare function func(callback: () => void, b: 2): boolean
+                declare function func(callback: () => number, b: 1): boolean
+                func(function() {return 123}, 2)
             `,
             errors: [{messageId: 'no_return_to_void'}],
         },

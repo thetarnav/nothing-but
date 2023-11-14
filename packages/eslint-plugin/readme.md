@@ -18,7 +18,7 @@ TODO:
 
 -   [x] Arrow functions
 -   [x] Anonymous functions
--   [ ] Overloads (not sure how to know which one is the active one)
+-   [x] Overloads
 
 ## `no-ignored-params`
 

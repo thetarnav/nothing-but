@@ -1,4 +1,4 @@
-import {eslint, getType, isVoidReturnType} from './utils'
+import {eslint, getType, isVoidReturnType, ts} from './utils'
 
 export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
     meta: {
@@ -25,21 +25,21 @@ export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
             const arg_index = parent.arguments.indexOf(node)
             if (arg_index === -1) return
 
-            const parent_type = getType(parent.callee, checker, services)
+            const callee_ts_node = services.esTreeNodeToTSNodeMap.get(parent)
+            if (!ts.isCallLikeExpression(callee_ts_node)) return
 
-            const call_signatures = parent_type.getCallSignatures()
-            if (call_signatures.length === 0) return
+            /* Care only about the active call signature */
+            const call_signature = checker.getResolvedSignature(callee_ts_node)
+            if (!call_signature) return
 
-            for (const call_signature of call_signatures) {
-                const arg = call_signature.getParameters()[arg_index]
-                if (!arg) return
+            const arg = call_signature.getParameters()[arg_index]
+            if (!arg) return
 
-                const arg_type = arg.valueDeclaration
-                if (!arg_type) return
+            const arg_type = arg.valueDeclaration
+            if (!arg_type) return
 
-                const arg_return_type = checker.getTypeAtLocation(arg_type)
-                if (!isVoidReturnType(arg_return_type)) return
-            }
+            const arg_return_type = checker.getTypeAtLocation(arg_type)
+            if (!isVoidReturnType(arg_return_type)) return
 
             const type = getType(node, checker, services)
             if (isVoidReturnType(type)) return
