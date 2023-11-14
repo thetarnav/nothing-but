@@ -1,5 +1,5 @@
 import * as vi from 'vitest'
-import * as array from './array.js'
+import * as array from '../src/array.js'
 
 void vi.describe('top_n_with', () => {
     vi.test('x => x', () => {
