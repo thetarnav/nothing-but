@@ -21,7 +21,7 @@ export function resizeCanvasToDisplaySize(canvas: HTMLCanvasElement): boolean {
     return need_resize
 }
 
-export type CanvasResizeObserver = {
+export interface CanvasResizeObserver {
     /**
      * Canvas was resized since last check.
      * Set it to `false` to reset.

@@ -1,6 +1,6 @@
 import {num} from './index.js'
 
-export type AnimationLoop = {
+export interface AnimationLoop {
     /**
      * User callback to be called on each animation frame.
      */
@@ -37,7 +37,7 @@ export const loopClear = (loop: AnimationLoop): void => {
 
 export const DEFAULT_TARGET_FPS = 44
 
-export type FrameIterationsLimit = {
+export interface FrameIterationsLimit {
     target_fps: number
     last_timestamp: number
 }
@@ -56,7 +56,7 @@ export const calcIterations = (limit: FrameIterationsLimit, current_time: number
     return times
 }
 
-export type AlphaUpdateSteps = {
+export interface AlphaUpdateSteps {
     increment: number
     decrement: number
 }

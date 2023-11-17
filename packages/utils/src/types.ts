@@ -22,12 +22,12 @@ export type Falsy<T> = Extract<T, FalsyValue>
 /**
  * Represents a point in 2D space with x and y coordinates.
  */
-export type Position = {
+export interface Position {
     x: number
     y: number
 }
 
-export type Size = {
+export interface Size {
     width: number
     height: number
 }

@@ -140,7 +140,7 @@ export function makeGraph(options: Options, nodes: Node[] = [], edges: Edge[] = 
     return {nodes, edges, grid, options}
 }
 
-export type Node = {
+export interface Node {
     /**
      * User data key
      *
@@ -199,7 +199,7 @@ export const zeroNode = (): Node => {
     }
 }
 
-export type Edge = {
+export interface Edge {
     a: Node
     b: Node
     strength: number

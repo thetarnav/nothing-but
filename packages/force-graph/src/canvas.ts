@@ -1,7 +1,7 @@
 import {T, event, num, trig} from '@nothing-but/utils'
 import {graph} from './index.js'
 
-export type Options = {
+export interface Options {
     readonly ctx: CanvasRenderingContext2D
     readonly graph: graph.Graph
     readonly max_scale: number
@@ -15,7 +15,7 @@ export const DEFAULT_OPTIONS = {
     init_grid_pos: trig.ZERO,
 } as const satisfies Partial<Options>
 
-export type CanvasState = Options & {
+export interface CanvasState extends Options {
     /**
      * camera translate from the center of the canvas in graph plane
      * Default: `{ x: 0, y: 0 }`
@@ -273,23 +273,23 @@ export enum GestureEventType {
     NodeDrag,
     ModeChange,
 }
-export type TranslateEvent = {
+export interface TranslateEvent {
     type: GestureEventType.Translate
 }
-export type NodeClickEvent = {
+export interface NodeClickEvent {
     type: GestureEventType.NodeClick
     node: graph.Node
 }
-export type NodeHoverEvent = {
+export interface NodeHoverEvent {
     type: GestureEventType.NodeHover
     node: graph.Node | null
 }
-export type NodeDragEvent = {
+export interface NodeDragEvent {
     type: GestureEventType.NodeDrag
     node: graph.Node
     pos: T.Position
 }
-export type ModeChangeEvent = {
+export interface ModeChangeEvent {
     type: GestureEventType.ModeChange
     mode: Mode
 }
