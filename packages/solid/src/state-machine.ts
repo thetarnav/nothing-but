@@ -6,10 +6,10 @@ type EventsUnion<T> = T extends {[key: string]: any}
           [K in keyof T]-?: T[K] extends (...args: any) => infer R
               ? [event: K, args: Parameters<T[K]>, result: R]
               : T[K] extends infer U
-              ? U extends (...args: infer A) => infer R
-                  ? [event: K, args: A, result: R | void]
-                  : never
-              : never
+                ? U extends (...args: infer A) => infer R
+                    ? [event: K, args: A, result: R | void]
+                    : never
+                : never
       }[keyof T]
     : never
 
