@@ -1,5 +1,13 @@
 # @nothing-but/force-graph
 
+## 0.7.1
+
+### Patch Changes
+
+-   0096d37: prefer function and interface keywords
+-   Updated dependencies [0096d37]
+    -   @nothing-but/utils@0.12.1
+
 ## 0.7.0
 
 ### Minor Changes

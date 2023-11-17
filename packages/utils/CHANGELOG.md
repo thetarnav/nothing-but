@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.12.1
+
+### Patch Changes
+
+-   0096d37: prefer function and interface keywords
+
 ## 0.12.0
 
 ### Minor Changes
