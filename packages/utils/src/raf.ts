@@ -15,7 +15,7 @@ export interface AnimationLoop {
     frame_id: number
 }
 
-export const makeAnimationLoop = (callback: FrameRequestCallback): AnimationLoop => {
+export function makeAnimationLoop(callback: FrameRequestCallback): AnimationLoop {
     const loop: AnimationLoop = {
         callback: callback,
         frame: t => loopFrame(loop, t),
@@ -23,14 +23,14 @@ export const makeAnimationLoop = (callback: FrameRequestCallback): AnimationLoop
     }
     return loop
 }
-export const loopFrame = (loop: AnimationLoop, time: number): void => {
+export function loopFrame(loop: AnimationLoop, time: number): void {
     loop.frame_id = requestAnimationFrame(loop.frame)
     loop.callback(time)
 }
-export const loopStart = (loop: AnimationLoop): void => {
+export function loopStart(loop: AnimationLoop): void {
     loop.frame_id ||= requestAnimationFrame(loop.frame)
 }
-export const loopClear = (loop: AnimationLoop): void => {
+export function loopClear(loop: AnimationLoop): void {
     cancelAnimationFrame(loop.frame_id)
     loop.frame_id = 0
 }
@@ -48,7 +48,7 @@ export const frameIterationsLimit = (
     target_fps,
     last_timestamp: performance.now(),
 })
-export const calcIterations = (limit: FrameIterationsLimit, current_time: number): number => {
+export function calcIterations(limit: FrameIterationsLimit, current_time: number): number {
     const target_ms = 1000 / limit.target_fps
     const delta_time = current_time - limit.last_timestamp
     const times = Math.floor(delta_time / target_ms)

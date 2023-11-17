@@ -73,8 +73,9 @@ export const ZERO = vector(0, 0)
  * Creates a new vector instance representing the zero vector.
  * @returns A vector instance representing the zero vector.
  */
-export const zero = (): Vector => vector(0, 0)
-
+export function zero(): Vector {
+    return vector(0, 0)
+}
 /**
  * Checks if two vectors are equal.
  */

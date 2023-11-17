@@ -8,8 +8,9 @@ export const false_fn: () => boolean = () => false
 /**
  * `a ^ b`
  */
-export const xor = (a: boolean, b: boolean): boolean => (a ? !b : b)
-
+export function xor(a: boolean, b: boolean): boolean {
+    return a ? !b : b
+}
 /**
  * Get entries of an object
  */
@@ -23,8 +24,9 @@ export const keys = Object.keys as <T extends object>(object: T) => (keyof T)[]
 /**
  * Converts any value to an Error.
  */
-export const toError = (e: unknown): Error => (e instanceof Error ? e : new Error(String(e)))
-
+export function toError(e: unknown): Error {
+    return e instanceof Error ? e : new Error(String(e))
+}
 /**
  * Check if a value is a PlainObject. A PlainObject is an object with no prototype.
  */

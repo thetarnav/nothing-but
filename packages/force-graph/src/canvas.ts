@@ -134,7 +134,7 @@ function pointRatioToGraph(canvas: CanvasState, pos: T.Position): T.Position {
     return {x, y}
 }
 
-export const resetFrame = (canvas: CanvasState): void => {
+export function resetFrame(canvas: CanvasState): void {
     const {ctx, graph} = canvas,
         {scale, translate: grid_pos} = canvas,
         {width, height} = canvas.ctx.canvas,
@@ -249,7 +249,7 @@ export function drawTextNodes(canvas: CanvasState): void {
     }
 }
 
-export const drawCanvas = (canvas: CanvasState): void => {
+export function drawCanvas(canvas: CanvasState): void {
     resetFrame(canvas)
     drawEdges(canvas)
     drawTextNodes(canvas)

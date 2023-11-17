@@ -178,7 +178,7 @@ declare module 'solid-js' {
     }
 }
 
-export const _dataCleanup = (owner: solid.Owner): void => {
+export function _dataCleanup(owner: solid.Owner): void {
     for (let i = 0; i < owner._cl_fn!.length; i++) owner._cl_fn![i]!(owner._cl_d![i])
     owner._cl_fn = undefined
     owner._cl_d = undefined

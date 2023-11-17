@@ -186,7 +186,7 @@ export interface Node {
  * node.key = 1
  * ```
  */
-export const zeroNode = (): Node => {
+export function zeroNode(): Node {
     return {
         key: undefined,
         label: '',
@@ -205,7 +205,7 @@ export interface Edge {
     strength: number
 }
 
-export const getEdge = (a: Node, b: Node): Edge | undefined => {
+export function getEdge(a: Node, b: Node): Edge | undefined {
     for (const edge of a.edges) {
         if (edge.a === b || edge.b === b) return edge
     }
