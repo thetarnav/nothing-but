@@ -38,70 +38,10 @@
                 "default": "./dist/index.js"
             }
         },
-        "./array": {
+        "./*": {
             "import": {
-                "types": "./dist/array.d.ts",
-                "default": "./dist/array.js"
-            }
-        },
-        "./color": {
-            "import": {
-                "types": "./dist/color.d.ts",
-                "default": "./dist/color.js"
-            }
-        },
-        "./ease": {
-            "import": {
-                "types": "./dist/ease.d.ts",
-                "default": "./dist/ease.js"
-            }
-        },
-        "./num": {
-            "import": {
-                "types": "./dist/num.d.ts",
-                "default": "./dist/num.js"
-            }
-        },
-        "./set": {
-            "import": {
-                "types": "./dist/set.d.ts",
-                "default": "./dist/set.js"
-            }
-        },
-        "./misc": {
-            "import": {
-                "types": "./dist/misc.d.ts",
-                "default": "./dist/misc.js"
-            }
-        },
-        "./trig": {
-            "import": {
-                "types": "./dist/trig.d.ts",
-                "default": "./dist/trig.js"
-            }
-        },
-        "./types": {
-            "import": {
-                "types": "./dist/types.d.ts",
-                "default": "./dist/types.js"
-            }
-        },
-        "./canvas": {
-            "import": {
-                "types": "./dist/canvas.d.ts",
-                "default": "./dist/canvas.js"
-            }
-        },
-        "./event": {
-            "import": {
-                "types": "./dist/event.d.ts",
-                "default": "./dist/event.js"
-            }
-        },
-        "./raf": {
-            "import": {
-                "types": "./dist/raf.d.ts",
-                "default": "./dist/raf.js"
+                "types": "./dist/*.d.ts",
+                "default": "./dist/*.js"
             }
         }
     },
