@@ -138,6 +138,12 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2(solid-js@1.8.5)
 
+  packages/matrix:
+    dependencies:
+      '@nothing-but/utils':
+        specifier: workspace:^
+        version: link:../utils
+
   packages/platform: {}
 
   packages/solid:
