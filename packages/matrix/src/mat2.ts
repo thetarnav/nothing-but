@@ -1,3 +1,13 @@
+/*
+
+Typescript utilities for 2x2 matrices
+
+Copied from the gl-matrix library, with some modifications.
+The original code is licensed under the MIT license, and can be found here:
+https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/LICENSE.md
+
+*/
+
 import {num} from '@nothing-but/utils'
 import {array_constructor} from './array_type.js'
 
