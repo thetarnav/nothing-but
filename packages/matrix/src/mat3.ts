@@ -10,6 +10,7 @@ https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/
 
 import {num} from '@nothing-but/utils'
 import {array_constructor} from './array_type.js'
+import {ReadonlyVec2} from './vec2.js'
 
 /**
  * 3x3 Matrix
