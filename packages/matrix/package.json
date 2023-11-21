@@ -13,7 +13,7 @@
         "url": "https://github.com/thetarnav/nothing-but/issues"
     },
     "scripts": {
-        "build": "pnpm tsc -p ./tsconfig.build.json",
+        "build": "echo \"NOOP; pnpm tsc -p ./tsconfig.build.json\"",
         "prepublish": "pnpm build",
         "test": "vitest -c ../../configs/vitest.config.js",
         "typecheck": "echo \"Built with TSC\""

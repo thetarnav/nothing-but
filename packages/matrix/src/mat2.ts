@@ -1,6 +1,6 @@
 /*
 
-Typescript utilities for 2x2 matrices
+2x2 Matrix
 
 Copied from the gl-matrix library, with some modifications.
 The original code is licensed under the MIT license, and can be found here:
@@ -14,14 +14,23 @@ import {array_constructor} from './array_type.js'
 /**
  * 2x2 Matrix
  */
-export type Mat2 = [number, number, number, number]
+// prettier-ignore
+export type Mat2 = [
+    number, number,
+    number, number
+]
+
 /**
  * Readonly 2x2 Matrix
  */
-export type ReadonlyMat2 = readonly [number, number, number, number]
+// prettier-ignore
+export type ReadonlyMat2 = readonly [
+    number, number,
+    number, number
+]
 
 /**
- * Creates a new **uninitialized** identity Mat2
+ * Creates a new **uninitialized** Mat2
  *
  * @returns a new 2x2 matrix
  */
@@ -70,6 +79,19 @@ export function clone(a: ReadonlyMat2): Mat2 {
     out[2] = a[2]
     out[3] = a[3]
     return out
+}
+
+/**
+ * Copy the values from one Mat2 to another
+ *
+ * @param out the receiving matrix
+ * @param a the source matrix
+ */
+export function copy(out: Mat2, a: ReadonlyMat2): void {
+    out[0] = a[0]
+    out[1] = a[1]
+    out[2] = a[2]
+    out[3] = a[3]
 }
 
 /**
@@ -327,12 +349,12 @@ export function fromRotation(rad: number): Mat2 {
 }
 
 /**
- * Scales the Mat2 by the dimensions in the given vec2
+ * Scales the Mat2 by the dimensions in the given Vec2
  *
  * @param mat the matrix to rotate
- * @param v the vec2 to scale the matrix by
+ * @param v the Vec2 to scale the matrix by
  **/
-export function scale(mat: Mat2, v: ReadonlyMat2): void {
+export function scale(mat: Mat2, v: ReadonlyVec2): void {
     const v0 = v[0],
         v1 = v[1]
     mat[0] *= v0
@@ -342,13 +364,13 @@ export function scale(mat: Mat2, v: ReadonlyMat2): void {
 }
 
 /**
- * Scales the Mat2 by the dimensions in the given vec2
+ * Scales the Mat2 by the dimensions in the given Vec2
  *
  * @param mat the matrix to rotate
- * @param v the vec2 to scale the matrix by
+ * @param v the Vec2 to scale the matrix by
  * @returns a new matrix
  **/
-export function scaled(mat: ReadonlyMat2, v: ReadonlyMat2): Mat2 {
+export function scaled(mat: ReadonlyMat2, v: ReadonlyVec2): Mat2 {
     const copy = clone(mat)
     scale(copy, v)
     return copy
@@ -364,7 +386,7 @@ export function scaled(mat: ReadonlyMat2, v: ReadonlyMat2): Mat2 {
  * @param out Mat2 receiving operation result
  * @param v Scaling vector
  */
-export function setFromScaling(out: Mat2, v: ReadonlyMat2): void {
+export function setFromScaling(out: Mat2, v: ReadonlyVec2): void {
     out[0] = v[0]
     out[1] = 0
     out[2] = 0
@@ -381,7 +403,7 @@ export function setFromScaling(out: Mat2, v: ReadonlyMat2): void {
  * @param v Scaling vector
  * @returns a new matrix
  */
-export function fromScaling(v: ReadonlyMat2): Mat2 {
+export function fromScaling(v: ReadonlyVec2): Mat2 {
     const mat = new array_constructor(4) as Mat2
     setFromScaling(mat, v)
     return mat
