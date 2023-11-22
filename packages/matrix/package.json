@@ -18,7 +18,7 @@
         "test": "vitest -c ../../configs/vitest.config.js",
         "typecheck": "echo \"Built with TSC\""
     },
-    "private": true,
+    "private": false,
     "sideEffects": false,
     "publishConfig": {
         "access": "public"

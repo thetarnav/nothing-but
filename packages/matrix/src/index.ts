@@ -1,11 +1,5 @@
 export {set_matrix_array_constructor} from './array_type.js'
 
 export * as mat2 from './mat2.js'
-export * as mat2d from './mat2d.js'
 export * as mat3 from './mat3.js'
-export * as mat4 from './mat4.js'
-export * as quat from './quat.js'
-export * as quat2 from './quat2.js'
 export * as vec2 from './vec2.js'
-export * as vec3 from './vec3.js'
-export * as vec4 from './vec4.js'
