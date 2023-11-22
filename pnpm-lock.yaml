@@ -121,6 +121,9 @@ importers:
 
   packages/line-graph:
     dependencies:
+      '@nothing-but/matrix':
+        specifier: workspace:^
+        version: link:../matrix
       '@nothing-but/utils':
         specifier: workspace:^
         version: link:../utils

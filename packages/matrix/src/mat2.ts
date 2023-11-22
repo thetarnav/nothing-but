@@ -18,7 +18,7 @@ import {ReadonlyVec2} from './vec2.js'
 // prettier-ignore
 export type Mat2 = [
     number, number,
-    number, number
+    number, number,
 ]
 
 /**
@@ -27,7 +27,7 @@ export type Mat2 = [
 // prettier-ignore
 export type ReadonlyMat2 = readonly [
     number, number,
-    number, number
+    number, number,
 ]
 
 /**

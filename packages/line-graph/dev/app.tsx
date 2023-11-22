@@ -91,6 +91,9 @@ export const App: solid.Component = () => {
     const a_position = gl.getAttribLocation(program, 'a_position')
     const u_resolution = gl.getUniformLocation(program, 'u_resolution')
 
+    // Turn on the attribute
+    gl.enableVertexAttribArray(a_position)
+
     let i = 0
 
     const loop = utils.raf.makeAnimationLoop(() => {
@@ -100,28 +103,19 @@ export const App: solid.Component = () => {
         // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
         gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer)
 
-        const x = i++ % 100
-
+        const h = gl.canvas.height / 2
+        const w = gl.canvas.width / 2
+        const x = (i += 2) % h
         // prettier-ignore
         const positions = [
             10+x, 20+x,
-            80+x, 20+x,
-            10+x, 30+x,
-            10+x, 30+x,
-            80+x, 20+x,
-            80+x, 30+x
+             w+x, 20+x,
+            10+x,  h+x,
+            10+x,  h+x,
+             w+x, 20+x,
+             w+x,  h+x,
         ]
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
-
-        // Tell WebGL how to convert from clip space to pixels
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
-
-        // Clear the canvas
-        gl.clearColor(0, 0, 0, 0)
-        gl.clear(gl.COLOR_BUFFER_BIT)
-
-        // Turn on the attribute
-        gl.enableVertexAttribArray(a_position)
 
         // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
         gl.vertexAttribPointer(
@@ -135,6 +129,13 @@ export const App: solid.Component = () => {
 
         // set the resolution
         gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
+
+        // Tell WebGL how to convert from clip space to pixels
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+
+        // Clear the canvas
+        gl.clearColor(0, 0, 0, 0)
+        gl.clear(gl.COLOR_BUFFER_BIT)
 
         // draw
         gl.drawArrays(gl.TRIANGLES, 0, 6) // 2 triangles, 6 vertices
