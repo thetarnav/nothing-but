@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.13.0
+
+### Minor Changes
+
+-   6a27bfa: Add to_radian to num
+
 ## 0.12.1
 
 ### Patch Changes
