@@ -89,20 +89,30 @@ export const App: solid.Component = () => {
     gl.useProgram(program)
 
     const a_position = gl.getAttribLocation(program, 'a_position')
+    const a_color = gl.getAttribLocation(program, 'a_color')
     const u_resolution = gl.getUniformLocation(program, 'u_resolution')
 
     // Turn on the attribute
     gl.enableVertexAttribArray(a_position)
+    gl.enableVertexAttribArray(a_color)
+
+    function randomColor(): [number, number, number, number] {
+        return [Math.random() * 256, Math.random() * 256, Math.random() * 256, 255]
+    }
+
+    // Make every vertex a different color.
+    const colors = new Uint8Array([
+        ...randomColor(),
+        ...randomColor(),
+        ...randomColor(),
+        ...randomColor(),
+        ...randomColor(),
+        ...randomColor(),
+    ])
 
     let i = 0
 
     const loop = utils.raf.makeAnimationLoop(() => {
-        // Create a buffer and put three 2d clip space points in it
-        const position_buffer = gl.createBuffer()
-
-        // Bind it to ARRAY_BUFFER (think of it as ARRAY_BUFFER = positionBuffer)
-        gl.bindBuffer(gl.ARRAY_BUFFER, position_buffer)
-
         const h = gl.canvas.height / 2
         const w = gl.canvas.width / 2
         const x = (i += 2) % h
@@ -115,6 +125,9 @@ export const App: solid.Component = () => {
              w+x, 20+x,
              w+x,  h+x,
         ]
+
+        // create, bind, and fill position buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
         // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
@@ -126,6 +139,11 @@ export const App: solid.Component = () => {
             0, // 0 = move forward size * sizeof(type) each iteration to get the next position
             0, // start at the beginning of the buffer
         )
+
+        // create, bind, and fill color buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
+        gl.vertexAttribPointer(a_color, 4, gl.UNSIGNED_BYTE, true, 0, 0)
 
         // set the resolution
         gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)

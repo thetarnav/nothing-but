@@ -1,5 +1,6 @@
 // an attribute will receive data from a buffer
 attribute vec2 a_position;
+attribute vec4 a_color;
 uniform vec2 u_resolution;
 // color to pass to the fragment shader
 // value in fragment shader will be interpolated
@@ -14,5 +15,6 @@ void main() {
     // Convert from clip space to color space.
     // Clip space goes -1.0 to +1.0
     // Color space goes from 0.0 to 1.0
-    v_color = gl_Position * 0.5 + 0.5;
+    // v_color = 1.0 - (gl_Position * 0.5 + 0.5);
+    v_color = a_color;
 }
