@@ -96,6 +96,11 @@ export const App: solid.Component = () => {
     gl.enableVertexAttribArray(a_position)
     gl.enableVertexAttribArray(a_color)
 
+    const positions_buffer = gl.createBuffer()
+    const colors_buffer = gl.createBuffer()
+
+    if (!positions_buffer || !colors_buffer) throw new Error('failed to create gl buffers')
+
     function randomColor(): [number, number, number, number] {
         return [Math.random() * 256, Math.random() * 256, Math.random() * 256, 255]
     }
@@ -126,8 +131,8 @@ export const App: solid.Component = () => {
              w+x,  h+x,
         ]
 
-        // create, bind, and fill position buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
+        // bind, and fill position buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, positions_buffer)
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
         // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
@@ -140,8 +145,8 @@ export const App: solid.Component = () => {
             0, // start at the beginning of the buffer
         )
 
-        // create, bind, and fill color buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer())
+        // bind, and fill color buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, colors_buffer)
         gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
         gl.vertexAttribPointer(a_color, 4, gl.UNSIGNED_BYTE, true, 0, 0)
 
