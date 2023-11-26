@@ -21,9 +21,14 @@ const Shell: solid.FlowComponent = props => {
     )
 }
 
-function randomColor(): [number, number, number, number] {
+type Vec4 = [number, number, number, number]
+
+function randomColor(): Vec4 {
     return [Math.random() * 256, Math.random() * 256, Math.random() * 256, 255]
 }
+
+const RED: Vec4 = [255, 0, 0, 255]
+const GREEN: Vec4 = [0, 255, 0, 255]
 
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
@@ -52,10 +57,12 @@ export const App: solid.Component = () => {
     gl.useProgram(program)
 
     const a_position = gl.getAttribLocation(program, 'a_position')
+    const a_color = gl.getAttribLocation(program, 'a_color')
     const u_resolution = gl.getUniformLocation(program, 'u_resolution')
 
     // Turn on the attribute
     gl.enableVertexAttribArray(a_position)
+    gl.enableVertexAttribArray(a_color)
 
     const positions_buffer = gl.createBuffer()
     const colors_buffer = gl.createBuffer()
@@ -63,20 +70,58 @@ export const App: solid.Component = () => {
     if (!positions_buffer || !colors_buffer) throw new Error('failed to create gl buffers')
 
     // prettier-ignore
-    const data_points: number[] = [
-          0,   0,
+    const data_points = new Float32Array([
+          50, 70,
         200, 200,
         400, 300,
         600, 150,
         800, 400,
-    ]
+    ])
     const data_points_count = data_points.length / 2
 
-    const loop = utils.raf.makeAnimationLoop(() => {
-        gl.bindBuffer(gl.ARRAY_BUFFER, positions_buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data_points), gl.STATIC_DRAW)
-        gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0)
+    const EASING_FREQUENCY = 16
 
+    const easing_points = new Float32Array((data_points_count - 1) * EASING_FREQUENCY * 2)
+    for (let i = 0; i < data_points_count - 1; i += 1) {
+        const x1 = data_points[i * 2]!
+        const y1 = data_points[i * 2 + 1]!
+        const x2 = data_points[i * 2 + 2]!
+        const y2 = data_points[i * 2 + 3]!
+
+        for (let j = 0; j < EASING_FREQUENCY; j++) {
+            const ease = utils.ease.in_out_cubic(j / EASING_FREQUENCY)
+            const x = utils.num.lerp(x1, x2, j / EASING_FREQUENCY)
+            const y = utils.num.lerp(y1, y2, ease)
+            const index = i * EASING_FREQUENCY * 2 + j * 2
+            easing_points[index] = x
+            easing_points[index + 1] = y
+        }
+    }
+    const easing_points_count = easing_points.length / 2
+
+    const poisitions_array = new Float32Array([...easing_points, ...data_points])
+    const positions_count = poisitions_array.length / 2
+
+    const colors = new Uint8Array(positions_count * 4)
+    {
+        let i = 0
+        let stop = easing_points_count * 4
+        for (; i < stop; i += 4) {
+            colors[i] = GREEN[0]
+            colors[i + 1] = GREEN[1]
+            colors[i + 2] = GREEN[2]
+            colors[i + 3] = GREEN[3]
+        }
+        stop += data_points_count * 4
+        for (; i < stop; i += 4) {
+            colors[i] = RED[0]
+            colors[i + 1] = RED[1]
+            colors[i + 2] = RED[2]
+            colors[i + 3] = RED[3]
+        }
+    }
+
+    const loop = utils.raf.makeAnimationLoop(() => {
         // set the resolution
         gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
 
@@ -87,8 +132,15 @@ export const App: solid.Component = () => {
         gl.clearColor(0, 0, 0, 0)
         gl.clear(gl.COLOR_BUFFER_BIT)
 
-        // draw
-        gl.drawArrays(gl.POINTS, 0, data_points_count)
+        gl.bindBuffer(gl.ARRAY_BUFFER, positions_buffer)
+        gl.bufferData(gl.ARRAY_BUFFER, poisitions_array, gl.STATIC_DRAW)
+        gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0)
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, colors_buffer)
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
+        gl.vertexAttribPointer(a_color, 4, gl.UNSIGNED_BYTE, true, 0, 0)
+
+        gl.drawArrays(gl.POINTS, 0, positions_count)
     })
     utils.raf.loopStart(loop)
     s.addCleanup(loop, utils.raf.loopClear)
