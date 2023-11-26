@@ -1,6 +1,8 @@
 import {signal as s} from '@nothing-but/solid'
 import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
+import * as sweb from 'solid-js/web'
+import * as lib from '../../src'
 import fragment_shader_source from './fragment.glsl?raw'
 import vertex_shader_source from './vertex.glsl?raw'
 
@@ -19,49 +21,6 @@ const Shell: solid.FlowComponent = props => {
     )
 }
 
-function makeShader(gl: WebGL2RenderingContext, type: number, source: string): WebGLShader | Error {
-    const shader = gl.createShader(type)
-    if (!shader) return new Error('failed to create gl shader')
-
-    gl.shaderSource(shader, source)
-    gl.compileShader(shader)
-
-    const success = gl.getShaderParameter(shader, gl.COMPILE_STATUS)
-    if (!success) {
-        const log = gl.getShaderInfoLog(shader)
-        gl.deleteShader(shader)
-        return new Error(log || 'failed to compile shader')
-    }
-
-    return shader
-}
-
-function makeVertexShader(gl: WebGL2RenderingContext, source: string): WebGLShader | Error {
-    return makeShader(gl, gl.VERTEX_SHADER, source)
-}
-function makeFragmentShader(gl: WebGL2RenderingContext, source: string): WebGLShader | Error {
-    return makeShader(gl, gl.FRAGMENT_SHADER, source)
-}
-
-function makeProgram(gl: WebGL2RenderingContext, shaders: WebGLShader[]): WebGLProgram | Error {
-    const program = gl.createProgram()
-    if (!program) return new Error('failed to create gl program')
-
-    for (const shader of shaders) {
-        gl.attachShader(program, shader)
-    }
-    gl.linkProgram(program)
-
-    const success = gl.getProgramParameter(program, gl.LINK_STATUS)
-    if (!success) {
-        const log = gl.getProgramInfoLog(program)
-        gl.deleteProgram(program)
-        return new Error(log || 'failed to link program')
-    }
-
-    return program
-}
-
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
@@ -77,13 +36,13 @@ export const App: solid.Component = () => {
     /*
     setup GLSL program
     */
-    const fragment_shader = makeFragmentShader(gl, fragment_shader_source)
+    const fragment_shader = lib.makeFragmentShader(gl, fragment_shader_source)
     if (fragment_shader instanceof Error) throw fragment_shader
 
-    const vertex_shader = makeVertexShader(gl, vertex_shader_source)
+    const vertex_shader = lib.makeVertexShader(gl, vertex_shader_source)
     if (vertex_shader instanceof Error) throw vertex_shader
 
-    const program = makeProgram(gl, [fragment_shader, vertex_shader])
+    const program = lib.makeProgram(gl, [fragment_shader, vertex_shader])
     if (program instanceof Error) throw program
 
     gl.useProgram(program)
@@ -168,3 +127,5 @@ export const App: solid.Component = () => {
 
     return <Shell>{el}</Shell>
 }
+
+void sweb.render(() => <App />, document.getElementById('root')!)

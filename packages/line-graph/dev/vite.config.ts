@@ -5,7 +5,7 @@ import uno_config from '../../../uno.config.js'
 
 export default defineConfig({
     server: {port: 3000},
-    plugins: [solid(), unocss(uno_config)],
+    plugins: [solid({hot: false}), unocss(uno_config)],
     build: {
         target: 'esnext',
         minify: false,
