@@ -79,29 +79,73 @@ export const App: solid.Component = () => {
     ])
     const data_points_count = data_points.length / 2
 
-    const EASING_FREQUENCY = 16
+    const EASING_FREQUENCY = 12
 
-    const easing_points = new Float32Array((data_points_count - 1) * EASING_FREQUENCY * 2)
+    // fill in the gaps between data points
+    const easing_points_count = (data_points_count - 1) * EASING_FREQUENCY
+    const easing_points_length = easing_points_count * 2
+    const positions_count = easing_points_count * 2 // add the inset points
+    const positions = new Float32Array(positions_count * 2)
+
+    /*
+    EASING
+    */
     for (let i = 0; i < data_points_count - 1; i += 1) {
-        const x1 = data_points[i * 2]!
-        const y1 = data_points[i * 2 + 1]!
-        const x2 = data_points[i * 2 + 2]!
-        const y2 = data_points[i * 2 + 3]!
+        const data_idx = i << 1
+        const x1 = data_points[data_idx]!
+        const y1 = data_points[data_idx + 1]!
+        const x2 = data_points[data_idx + 2]!
+        const y2 = data_points[data_idx + 3]!
 
-        for (let j = 0; j < EASING_FREQUENCY; j++) {
-            const ease = utils.ease.in_out_cubic(j / EASING_FREQUENCY)
-            const x = utils.num.lerp(x1, x2, j / EASING_FREQUENCY)
+        for (let j = 0; j < EASING_FREQUENCY; j += 1) {
+            const p = j / EASING_FREQUENCY
+            const ease = utils.ease.in_out_cubic(p)
+            const x = utils.num.lerp(x1, x2, p)
             const y = utils.num.lerp(y1, y2, ease)
-            const index = i * EASING_FREQUENCY * 2 + j * 2
-            easing_points[index] = x
-            easing_points[index + 1] = y
+
+            const easing_idx = data_idx * EASING_FREQUENCY + (j << 1)
+            positions[easing_idx] = x
+            positions[easing_idx + 1] = y
         }
     }
-    const easing_points_count = easing_points.length / 2
 
-    const poisitions_array = new Float32Array([...easing_points, ...data_points])
-    const positions_count = poisitions_array.length / 2
+    /*
+    INSET POINTS
+    */
+    const INSET_WIDTH = 12
+    for (let i = 1; i < easing_points_count - 1; i += 1) {
+        const idx = i << 1
+        const x = positions[idx]!
+        const y = positions[idx + 1]!
 
+        const x1 = positions[idx - 2]!
+        const y1 = positions[idx - 1]!
+        const x2 = positions[idx + 2]!
+        const y2 = positions[idx + 3]!
+
+        const angle = Math.atan2(y2 - y1, x2 - x1) - Math.PI / 2
+
+        const inset_x = x + Math.cos(angle) * INSET_WIDTH
+        const inset_y = y + Math.sin(angle) * INSET_WIDTH
+
+        const inset_idx = easing_points_length + idx
+        positions[inset_idx] = inset_x
+        positions[inset_idx + 1] = inset_y
+    }
+
+    /* first inset point */
+    positions[easing_points_length] = positions[0]!
+    positions[easing_points_length + 1] = positions[1]! - INSET_WIDTH
+
+    /* last inset point */
+    positions[easing_points_length + easing_points_length - 2] =
+        positions[easing_points_length - 2]!
+    positions[easing_points_length + easing_points_length - 1] =
+        positions[easing_points_length - 1]! - INSET_WIDTH
+
+    /*
+    COLORS
+    */
     const colors = new Uint8Array(positions_count * 4)
     {
         let i = 0
@@ -112,7 +156,7 @@ export const App: solid.Component = () => {
             colors[i + 2] = GREEN[2]
             colors[i + 3] = GREEN[3]
         }
-        stop += data_points_count * 4
+        stop += easing_points_count * 4
         for (; i < stop; i += 4) {
             colors[i] = RED[0]
             colors[i + 1] = RED[1]
@@ -133,7 +177,7 @@ export const App: solid.Component = () => {
         gl.clear(gl.COLOR_BUFFER_BIT)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, positions_buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, poisitions_array, gl.STATIC_DRAW)
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
         gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, colors_buffer)

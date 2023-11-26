@@ -539,22 +539,63 @@ export function rotate(out: Vec2, rad: number, origin: ReadonlyVec2 = ZERO): Vec
 }
 
 /**
- * Get the angle between two 2D vectors
- * @param a The first operand
- * @param b The second operand
+ * Get the angle between components of two 2D vectors. See {@link angleVec} for the angle between two vectors.
+ * @param x1 The first operand's X component
+ * @param y1 The first operand's Y component
+ * @param x2 The second operand's X component
+ * @param y2 The second operand's Y component
  * @returns The angle in radians
  */
-export function angle(a: ReadonlyVec2, b: ReadonlyVec2): number {
-    const x1 = a[0],
-        y1 = a[1],
-        x2 = b[0],
-        y2 = b[1],
-        // mag is the product of the magnitudes of a and b
-        mag = Math.sqrt((x1 * x1 + y1 * y1) * (x2 * x2 + y2 * y2)),
+export function angle(x1: number, y1: number, x2: number, y2: number): number {
+    // mag is the product of the magnitudes of a and b
+    const mag = Math.sqrt((x1 * x1 + y1 * y1) * (x2 * x2 + y2 * y2)),
         // mag &&.. short circuits if mag == 0
         cosine = mag && (x1 * x2 + y1 * y2) / mag
     // Math.min(Math.max(cosine, -1), 1) clamps the cosine between -1 and 1
     return Math.acos(Math.min(Math.max(cosine, -1), 1))
+}
+/**
+ * Get the angle between two 2D vectors. See {@link angle} for the angle between components of two vectors.
+ * @param a The first operand
+ * @param b The second operand
+ * @returns The angle in radians
+ */
+export function angleVec(a: ReadonlyVec2, b: ReadonlyVec2): number {
+    const x1 = a[0],
+        y1 = a[1],
+        x2 = b[0],
+        y2 = b[1]
+    return angle(x1, y1, x2, y2)
+}
+
+export function relativeAngle(x1: number, y1: number, x2: number, y2: number): number {
+    return Math.atan2(y2 - y1, x2 - x1)
+}
+
+export function relativeAngleVec(a: ReadonlyVec2, b: ReadonlyVec2): number {
+    const x1 = a[0],
+        y1 = a[1],
+        x2 = b[0],
+        y2 = b[1]
+    return relativeAngle(x1, y1, x2, y2)
+}
+
+/**
+ * Move a 2D vector by an angle by a given distance.
+ *
+ * @param out array to mutate
+ * @param vec_idx index of the vector in the array
+ * @param angle angle in radians
+ * @param distance distance to move
+ */
+export function moveByAngle(
+    out: {[n: number]: number},
+    vec_idx: number,
+    angle: number,
+    distance: number,
+): void {
+    out[vec_idx] += Math.cos(angle) * distance
+    out[vec_idx + 1] += Math.sin(angle) * distance
 }
 
 /**

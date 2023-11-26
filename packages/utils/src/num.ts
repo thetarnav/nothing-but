@@ -76,6 +76,15 @@ export function to_radian(a: number): number {
 }
 
 /**
+ * Convert Radian To Degree
+ *
+ * @param a Angle in Radians
+ */
+export function to_degree(a: number): number {
+    return a / DEGREE
+}
+
+/**
  * Tests whether or not the arguments have approximately the same value, within an absolute
  * or relative tolerance of Number.EPSILON (an absolute tolerance is used for values less
  * than or equal to 1.0, and a relative tolerance is used for larger values)
