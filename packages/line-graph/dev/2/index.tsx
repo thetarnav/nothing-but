@@ -3,8 +3,44 @@ import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import * as sweb from 'solid-js/web'
 import * as lib from '../../src'
-import fragment_shader_source from './fragment.glsl?raw'
-import vertex_shader_source from './vertex.glsl?raw'
+
+const vertex_shader_source = /*glsl*/ `
+#define PI 3.1415926535897932384626433832795
+
+uniform vec2 u_resolution;
+uniform float u_thickness;
+
+// an attribute will receive data from a buffer
+attribute vec2 a_position;
+attribute float a_angle;
+attribute vec4 a_color;
+
+varying vec4 v_color;
+
+void main() {
+    // move a_position by thickness in the direction of a_angle
+    vec2 p = a_position + vec2(cos(a_angle), sin(a_angle)) * u_thickness / 2.0;
+
+    // from pixels to 0->1 then to 0->2 then to -1->+1 (clipspace)
+    vec2 clip_space = (p / u_resolution) * 2.0 - 1.0;
+
+    gl_Position = vec4(clip_space * vec2(1, 1), 0, 1);
+    gl_PointSize = u_thickness;
+
+    v_color = a_color;
+}
+`
+
+const fragment_shader_source = /*glsl*/ `
+precision mediump float;
+
+varying vec4 v_color;
+
+void main() {
+    // gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    gl_FragColor = v_color;
+}
+`
 
 const Shell: solid.FlowComponent = props => {
     return (
@@ -158,15 +194,23 @@ export const App: solid.Component = () => {
     */
     for (let i = 0; i < easing_points_count; i += 1) {
         const color = randomColor()
-        const idx = i << 3
-        colors[idx + 0] = color[0]
-        colors[idx + 1] = color[1]
-        colors[idx + 2] = color[2]
-        colors[idx + 3] = color[3]
-        colors[idx + 4] = color[0]
-        colors[idx + 5] = color[1]
-        colors[idx + 6] = color[2]
-        colors[idx + 7] = color[3]
+        const idx = i << 4
+        colors[idx + 0 + 0] = color[0]
+        colors[idx + 0 + 1] = color[1]
+        colors[idx + 0 + 2] = color[2]
+        colors[idx + 0 + 3] = color[3]
+        colors[idx + 0 + 4] = color[0]
+        colors[idx + 0 + 5] = color[1]
+        colors[idx + 0 + 6] = color[2]
+        colors[idx + 0 + 7] = color[3]
+        colors[idx + 8 + 0] = color[0]
+        colors[idx + 8 + 1] = color[1]
+        colors[idx + 8 + 2] = color[2]
+        colors[idx + 8 + 3] = color[3]
+        colors[idx + 8 + 4] = color[0]
+        colors[idx + 8 + 5] = color[1]
+        colors[idx + 8 + 6] = color[2]
+        colors[idx + 8 + 7] = color[3]
     }
 
     const loop = utils.raf.makeAnimationLoop(() => {
