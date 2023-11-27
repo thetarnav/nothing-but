@@ -118,7 +118,7 @@ export const App: solid.Component = () => {
 
         for (let j = 0; j < EASING_FREQUENCY; j += 1) {
             const p = j / EASING_FREQUENCY
-            const ease = utils.ease.in_out_cubic(p)
+            const ease = utils.ease.in_out_quad(p)
             const x = utils.num.lerp(x1, x2, p)
             const y = utils.num.lerp(y1, y2, ease)
 

@@ -57,7 +57,7 @@ export function out_quad(t: number): number {
  * @param t - The current time (between 0 and 1)
  * @returns The eased value
  */
-export function in_qut_quad(t: number): number {
+export function in_out_quad(t: number): number {
     return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
 }
 
