@@ -5,8 +5,6 @@ import * as sweb from 'solid-js/web'
 import * as lib from '../../src'
 
 const vertex_shader_source = /*glsl*/ `
-#define PI 3.1415926535897932384626433832795
-
 uniform vec2 u_resolution;
 uniform float u_thickness;
 
@@ -62,9 +60,6 @@ type Vec4 = [number, number, number, number]
 function randomColor(): Vec4 {
     return [Math.random() * 256, Math.random() * 256, Math.random() * 256, 255]
 }
-
-const RED: Vec4 = [255, 0, 0, 255]
-const GREEN: Vec4 = [0, 255, 0, 255]
 
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
@@ -200,12 +195,17 @@ export const App: solid.Component = () => {
         for (let i = 1; i < easing_points_count - 1; i += 1) {
             const pos_idx = i << 2 // 2 components, 2 points per easing point
 
-            const x1 = positions[pos_idx - 2]!
-            const y1 = positions[pos_idx - 1]!
-            const x2 = positions[pos_idx + 2]!
-            const y2 = positions[pos_idx + 3]!
+            const x_prev = positions[pos_idx - 4]!
+            const y_prev = positions[pos_idx - 3]!
+            const x_curr = positions[pos_idx + 0]!
+            const y_curr = positions[pos_idx + 1]!
+            const x_next = positions[pos_idx + 4]!
+            const y_next = positions[pos_idx + 5]!
 
-            const angle = Math.atan2(y2 - y1, x2 - x1)
+            const angle =
+                (Math.atan2(y_curr - y_prev, x_curr - x_prev) +
+                    Math.atan2(y_next - y_curr, x_next - x_curr)) /
+                2
             const angle_idx = i << 1 // 1 angle per point, 2 points per easing point
             angles[angle_idx + 0] = angle - Math.PI / 2
             angles[angle_idx + 1] = angle + Math.PI / 2
@@ -223,7 +223,6 @@ export const App: solid.Component = () => {
             const angle = Math.atan2(y2 - y1, x2 - x1)
             angles[0] = angle - Math.PI / 2
             angles[1] = angle + Math.PI / 2
-            console.log(angle)
         }
         {
             const x1 = positions[positions.length - 8]!
@@ -234,7 +233,6 @@ export const App: solid.Component = () => {
             const angle = Math.atan2(y2 - y1, x2 - x1)
             angles[positions_count - 2] = angle - Math.PI / 2
             angles[positions_count - 1] = angle + Math.PI / 2
-            console.log(angle)
         }
     }
     updateBuffers()
