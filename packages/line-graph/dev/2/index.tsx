@@ -210,9 +210,32 @@ export const App: solid.Component = () => {
             angles[angle_idx + 0] = angle - Math.PI / 2
             angles[angle_idx + 1] = angle + Math.PI / 2
         }
-        /* end points */
-        angles[0] = angles[positions_count - 2] = -Math.PI / 2
-        angles[1] = angles[positions_count - 1] = Math.PI / 2
+        /* end points - flat down */
+        // angles[0] = angles[positions_count - 2] = -Math.PI / 2
+        // angles[1] = angles[positions_count - 1] = Math.PI / 2
+        /* end points - correct */
+        {
+            const x1 = positions[0]!
+            const y1 = positions[1]!
+            const x2 = positions[3]!
+            const y2 = positions[4]!
+
+            const angle = Math.atan2(y2 - y1, x2 - x1)
+            angles[0] = angle - Math.PI / 2
+            angles[1] = angle + Math.PI / 2
+            console.log(angle)
+        }
+        {
+            const x1 = positions[positions.length - 8]!
+            const y1 = positions[positions.length - 7]!
+            const x2 = positions[positions.length - 4]!
+            const y2 = positions[positions.length - 3]!
+
+            const angle = Math.atan2(y2 - y1, x2 - x1)
+            angles[positions_count - 2] = angle - Math.PI / 2
+            angles[positions_count - 1] = angle + Math.PI / 2
+            console.log(angle)
+        }
     }
     updateBuffers()
 
@@ -239,7 +262,7 @@ export const App: solid.Component = () => {
         gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
 
         // set the thickness
-        gl.uniform1f(u_thickness, 16)
+        gl.uniform1f(u_thickness, 32)
 
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(100 + translate_x, 100, gl.canvas.width, gl.canvas.height)
