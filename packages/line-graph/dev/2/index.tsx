@@ -111,20 +111,15 @@ export const App: solid.Component = () => {
     if (!positions_buffer || !colors_buffer || !angles_buffer)
         throw new Error('failed to create gl buffers')
 
+    const X_SPACING = 100
+
     // prettier-ignore
-    const data_points = new Float32Array([
-          50, 70,
-        200, 200,
-        400, 300,
-        600, 150,
-        800, 400,
-    ])
+    const data_points = new Float32Array(8)
 
     const EASING_FREQUENCY = 32
 
-    const data_points_count = data_points.length / 2
     // fill in the gaps between data points
-    const easing_points_count = (data_points_count - 1) * EASING_FREQUENCY
+    const easing_points_count = (data_points.length - 1) * EASING_FREQUENCY
     const positions_count = easing_points_count * 2 // add the inset points
 
     /*
@@ -141,53 +136,6 @@ export const App: solid.Component = () => {
     const positions = new Float32Array(positions_count * 2)
     const angles = new Float32Array(positions_count)
     const colors = new Uint8Array(positions_count * 4)
-
-    /*
-    EASING
-    */
-    for (let i = 0; i < data_points_count - 1; i += 1) {
-        const data_idx = i << 1
-        const x1 = data_points[data_idx]!
-        const y1 = data_points[data_idx + 1]!
-        const x2 = data_points[data_idx + 2]!
-        const y2 = data_points[data_idx + 3]!
-
-        for (let j = 0; j < EASING_FREQUENCY; j += 1) {
-            const p = j / EASING_FREQUENCY
-            const ease = utils.ease.in_out_quad(p)
-            const x = utils.num.lerp(x1, x2, p)
-            const y = utils.num.lerp(y1, y2, ease)
-
-            const easing_idx = data_idx * (EASING_FREQUENCY << 1) + (j << 2)
-            /*
-            2 points per easing point (for adding thickness)
-            */
-            positions[easing_idx + 0] = x
-            positions[easing_idx + 1] = y
-            positions[easing_idx + 2] = x
-            positions[easing_idx + 3] = y
-        }
-    }
-
-    /*
-    ANGLES (for normals)
-    */
-    for (let i = 1; i < easing_points_count - 1; i += 1) {
-        const pos_idx = i << 2 // 2 components, 2 points per easing point
-
-        const x1 = positions[pos_idx - 2]!
-        const y1 = positions[pos_idx - 1]!
-        const x2 = positions[pos_idx + 2]!
-        const y2 = positions[pos_idx + 3]!
-
-        const angle = Math.atan2(y2 - y1, x2 - x1)
-        const angle_idx = i << 1 // 1 angle per point, 2 points per easing point
-        angles[angle_idx + 0] = angle - Math.PI / 2
-        angles[angle_idx + 1] = angle + Math.PI / 2
-    }
-    /* end points */
-    angles[0] = angles[positions_count - 2] = -Math.PI / 2
-    angles[1] = angles[positions_count - 1] = Math.PI / 2
 
     /*
     COLORS
@@ -213,7 +161,80 @@ export const App: solid.Component = () => {
         colors[idx + 8 + 7] = color[3]
     }
 
-    const loop = utils.raf.makeAnimationLoop(() => {
+    function addDataPoint(): void {
+        for (let i = 0; i < data_points.length; i += 1) {
+            data_points[i] = data_points[i + 1]!
+        }
+        data_points[data_points.length - 1] = Math.random() * 600
+    }
+
+    function updateBuffers(): void {
+        /*
+        EASING
+        */
+        for (let i = 0; i < data_points.length - 1; i += 1) {
+            const x1 = i * X_SPACING
+            const y1 = data_points[i]!
+            const x2 = i * X_SPACING + X_SPACING
+            const y2 = data_points[i + 1]!
+
+            const points_before = (i * EASING_FREQUENCY) << 2
+
+            for (let j = 0; j < EASING_FREQUENCY; j += 1) {
+                const p = j / EASING_FREQUENCY
+                const ease = utils.ease.in_out_quad(p)
+                const x = utils.num.lerp(x1, x2, p)
+                const y = utils.num.lerp(y1, y2, ease)
+
+                const easing_idx = points_before + (j << 2)
+                positions[easing_idx + 0] = x
+                positions[easing_idx + 1] = y
+                positions[easing_idx + 2] = x
+                positions[easing_idx + 3] = y
+            }
+        }
+
+        /*
+        ANGLES (for normals)
+        */
+        for (let i = 1; i < easing_points_count - 1; i += 1) {
+            const pos_idx = i << 2 // 2 components, 2 points per easing point
+
+            const x1 = positions[pos_idx - 2]!
+            const y1 = positions[pos_idx - 1]!
+            const x2 = positions[pos_idx + 2]!
+            const y2 = positions[pos_idx + 3]!
+
+            const angle = Math.atan2(y2 - y1, x2 - x1)
+            const angle_idx = i << 1 // 1 angle per point, 2 points per easing point
+            angles[angle_idx + 0] = angle - Math.PI / 2
+            angles[angle_idx + 1] = angle + Math.PI / 2
+        }
+        /* end points */
+        angles[0] = angles[positions_count - 2] = -Math.PI / 2
+        angles[1] = angles[positions_count - 1] = Math.PI / 2
+    }
+    updateBuffers()
+
+    const ANIM_DURATION = 1000
+    let anim_progress = 0 // 0 -> 1
+
+    const interval = setInterval(() => {
+        addDataPoint()
+        updateBuffers()
+        anim_progress = 0
+    }, ANIM_DURATION)
+    s.addCleanup(interval, clearInterval)
+
+    let last_time = 0
+    const loop = utils.raf.makeAnimationLoop(time => {
+        const delta = time - last_time
+        last_time = time
+
+        anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
+
+        const translate_x = utils.num.lerp(0, -X_SPACING, anim_progress)
+
         // set the resolution
         gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
 
@@ -221,7 +242,7 @@ export const App: solid.Component = () => {
         gl.uniform1f(u_thickness, 16)
 
         // Tell WebGL how to convert from clip space to pixels
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+        gl.viewport(100 + translate_x, 100, gl.canvas.width, gl.canvas.height)
 
         // Clear the canvas
         gl.clearColor(0, 0, 0, 0)
