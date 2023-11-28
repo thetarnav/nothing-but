@@ -39,6 +39,8 @@ const RED: Vec4 = [255, 0, 0, 255]
 const GREEN: Vec4 = [0, 255, 0, 255]
 const BLUE: Vec4 = [0, 0, 255, 255]
 
+const HALF_PI = Math.PI / 2
+
 const Shell: solid.FlowComponent = props => {
     return (
         <div class="min-h-100vh min-w-100vw">
@@ -96,7 +98,7 @@ export const App: solid.Component = () => {
 
     // prettier-ignore
     const data_points = new Float32Array([
-        150, 150,
+        180, 150,
         200, 200,
         200, 250,   
         300, 250,
@@ -128,12 +130,10 @@ export const App: solid.Component = () => {
                 Math.atan2(y_next - y_curr, x_next - x_curr)) /
             2
 
-        const add = Math.abs(1 - angle / (Math.PI / 2))
-        const move_by = INSET_WIDTH + add * INSET_WIDTH
-
-        const perp_angle = angle - Math.PI / 2
-        const move_x = Math.cos(perp_angle) * move_by
-        const move_y = Math.sin(perp_angle) * move_by
+        const d = INSET_WIDTH / Math.sin(angle)
+        const perp_angle = angle - HALF_PI
+        const move_x = Math.cos(perp_angle) * d
+        const move_y = Math.sin(perp_angle) * d
 
         const pos_idx = i * 6
 
@@ -145,8 +145,8 @@ export const App: solid.Component = () => {
         positions[pos_idx + 5] = y_curr - move_y
     }
     /* end points - flat down */
-    // angles[0] = angles[positions_count - 2] = -Math.PI / 2
-    // angles[1] = angles[positions_count - 1] = Math.PI / 2
+    // angles[0] = angles[positions_count - 2] = -HALF_PI
+    // angles[1] = angles[positions_count - 1] = HALF_PI
     /* end points - correct */
     {
         const x_curr = data_points[0]!
@@ -154,7 +154,7 @@ export const App: solid.Component = () => {
         const x_next = data_points[2]!
         const y_next = data_points[3]!
 
-        const angle = Math.atan2(y_next - y_curr, x_next - x_curr) - Math.PI / 2
+        const angle = Math.atan2(y_next - y_curr, x_next - x_curr) - HALF_PI
         positions[0] = x_curr
         positions[1] = y_curr
         positions[2] = x_curr + Math.cos(angle) * INSET_WIDTH
@@ -168,7 +168,7 @@ export const App: solid.Component = () => {
         const x_curr = data_points[data_points.length - 2]!
         const y_curr = data_points[data_points.length - 1]!
 
-        const angle = Math.atan2(y_curr - y_prev, x_curr - x_prev) - Math.PI / 2
+        const angle = Math.atan2(y_curr - y_prev, x_curr - x_prev) - HALF_PI
         positions[positions.length - 6] = x_curr
         positions[positions.length - 5] = y_curr
         positions[positions.length - 4] = x_curr + Math.cos(angle) * INSET_WIDTH
