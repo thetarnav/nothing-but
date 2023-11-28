@@ -102,6 +102,8 @@ export const App: solid.Component = () => {
         200, 200,
         200, 250,   
         300, 250,
+        350, 250,
+        370, 240,
     ])
     const data_points_count = data_points.length / 2
 
@@ -130,7 +132,9 @@ export const App: solid.Component = () => {
                 Math.atan2(y_next - y_curr, x_next - x_curr)) /
             2
 
-        const d = INSET_WIDTH / Math.sin(angle)
+        const p = angle ? Math.sin(angle < 0 ? HALF_PI - angle : angle) : 1
+        const d = INSET_WIDTH / p
+
         const perp_angle = angle - HALF_PI
         const move_x = Math.cos(perp_angle) * d
         const move_y = Math.sin(perp_angle) * d
