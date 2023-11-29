@@ -2,36 +2,6 @@ import {signal as s} from '@nothing-but/solid'
 import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import * as sweb from 'solid-js/web'
-import * as lib from '../../src'
-
-const vertex_shader_source = /*glsl*/ `
-uniform vec2 u_resolution;
-
-attribute vec2 a_position;
-attribute vec3 a_color;
-
-varying vec3 v_color;
-
-void main() {
-    // from pixels to 0->1 then to 0->2 then to -1->+1 (clipspace)
-    vec2 clip_space = (a_position / u_resolution) * 2.0 - 1.0;
-
-    gl_Position = vec4(clip_space * vec2(1, 1), 0, 1);
-    gl_PointSize = 8.0;
-
-    v_color = a_color;
-}
-`
-
-const fragment_shader_source = /*glsl*/ `
-precision mediump float;
-
-varying vec3 v_color;
-
-void main() {
-    gl_FragColor = vec4(v_color, 1.0);
-}
-`
 
 type Vec4 = [number, number, number, number]
 
@@ -59,42 +29,14 @@ const Shell: solid.FlowComponent = props => {
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
-    const gl = el.getContext('webgl2')
-    if (!gl) throw new Error('webgl2 is not supported')
+    const ctx = el.getContext('2d')
+    if (!ctx) throw new Error('2d context is not supported')
 
     /*
     Update the canvas's size to match the size it's displayed.
     */
     const ro = utils.canvas.makeCanvasResizeObserver(el)
     s.addCleanup(ro, utils.canvas.cleanCanvasResizeObserver)
-
-    /*
-    setup GLSL program
-    */
-    const fragment_shader = lib.makeFragmentShader(gl, fragment_shader_source)
-    if (fragment_shader instanceof Error) throw fragment_shader
-
-    const vertex_shader = lib.makeVertexShader(gl, vertex_shader_source)
-    if (vertex_shader instanceof Error) throw vertex_shader
-
-    const program = lib.makeProgram(gl, [fragment_shader, vertex_shader])
-    if (program instanceof Error) throw program
-
-    gl.useProgram(program)
-
-    const u_resolution = gl.getUniformLocation(program, 'u_resolution')
-
-    const a_position = gl.getAttribLocation(program, 'a_position')
-    const a_color = gl.getAttribLocation(program, 'a_color')
-
-    // Turn on the attribute
-    gl.enableVertexAttribArray(a_position)
-    gl.enableVertexAttribArray(a_color)
-
-    const positions_buffer = gl.createBuffer()
-    const colors_buffer = gl.createBuffer()
-
-    if (!positions_buffer || !colors_buffer) throw new Error('failed to create gl buffers')
 
     // prettier-ignore
     const data_points = new Float32Array([
@@ -104,6 +46,10 @@ export const App: solid.Component = () => {
         300, 250,
         350, 250,
         370, 240,
+        400, 240,
+        420, 260,
+        440, 280,
+        460, 300,
     ])
     const data_points_count = data_points.length / 2
 
@@ -127,26 +73,23 @@ export const App: solid.Component = () => {
         const x_next = data_points[data_idx + 2]!
         const y_next = data_points[data_idx + 3]!
 
-        const angle =
-            (Math.atan2(y_curr - y_prev, x_curr - x_prev) +
-                Math.atan2(y_next - y_curr, x_next - x_curr)) /
-            2
+        const prev_angle = Math.atan2(y_curr - y_prev, x_curr - x_prev)
+        const next_angle = Math.atan2(y_next - y_curr, x_next - x_curr)
+        const absolute_angle = (prev_angle + next_angle) / 2
+        const relative_angle = HALF_PI - Math.abs(absolute_angle - prev_angle)
 
-        const p = angle ? Math.sin(angle < 0 ? HALF_PI - angle : angle) : 1
-        const d = INSET_WIDTH / p
-
-        const perp_angle = angle - HALF_PI
-        const move_x = Math.cos(perp_angle) * d
-        const move_y = Math.sin(perp_angle) * d
+        const inset_width = INSET_WIDTH / Math.sin(relative_angle)
+        const normal_x = Math.cos(absolute_angle - HALF_PI) * inset_width
+        const normal_y = Math.sin(absolute_angle - HALF_PI) * inset_width
 
         const pos_idx = i * 6
 
         positions[pos_idx + 0] = x_curr
         positions[pos_idx + 1] = y_curr
-        positions[pos_idx + 2] = x_curr + move_x
-        positions[pos_idx + 3] = y_curr + move_y
-        positions[pos_idx + 4] = x_curr - move_x
-        positions[pos_idx + 5] = y_curr - move_y
+        positions[pos_idx + 2] = x_curr + normal_x
+        positions[pos_idx + 3] = y_curr + normal_y
+        positions[pos_idx + 4] = x_curr - normal_x
+        positions[pos_idx + 5] = y_curr - normal_y
     }
     /* end points - flat down */
     // angles[0] = angles[positions_count - 2] = -HALF_PI
@@ -195,25 +138,63 @@ export const App: solid.Component = () => {
     }
 
     const loop = utils.raf.makeAnimationLoop(() => {
-        // set the resolution
-        gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
+        /*
+            clear
+            flip y
+        */
+        ctx.setTransform(1, 0, 0, -1, 0, el.height)
+        ctx.clearRect(0, 0, el.width, el.height)
 
-        // Tell WebGL how to convert from clip space to pixels
-        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height)
+        /*
+            draw normal lines
+        */
+        ctx.lineWidth = 1
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        ctx.strokeStyle = '#777'
+        ctx.beginPath()
+        for (let i = 0; i < positions_count; i += 3) {
+            const idx = i * 2
+            ctx.moveTo(positions[idx + 2]!, positions[idx + 3]!)
+            ctx.lineTo(positions[idx + 4]!, positions[idx + 5]!)
+        }
+        ctx.stroke()
 
-        // Clear the canvas
-        gl.clearColor(0, 0, 0, 0)
-        gl.clear(gl.COLOR_BUFFER_BIT)
+        /*
+            draw line segments
+        */
+        ctx.lineWidth = 2
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        ctx.strokeStyle = '#e50'
+        ctx.beginPath()
+        ctx.moveTo(positions[2]!, positions[3]!)
+        for (let i = 0; i < positions_count; i += 3) {
+            const idx = i * 2
+            ctx.lineTo(positions[idx + 2]!, positions[idx + 3]!)
+        }
+        ctx.moveTo(positions[4]!, positions[5]!)
+        for (let i = 0; i < positions_count; i += 3) {
+            const idx = i * 2
+            ctx.lineTo(positions[idx + 4]!, positions[idx + 5]!)
+        }
+        ctx.stroke()
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, positions_buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
-        gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0)
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, colors_buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
-        gl.vertexAttribPointer(a_color, 3, gl.UNSIGNED_BYTE, true, 0, 0)
-
-        gl.drawArrays(gl.POINTS, 0, positions_count)
+        /*
+            draw points dots
+        */
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        for (let i = 0; i < positions_count; i += 3) {
+            const idx = i * 2
+            ctx.moveTo(positions[idx + 0]!, positions[idx + 1]!)
+            ctx.arc(positions[idx + 0]!, positions[idx + 1]!, 3, 0, Math.PI * 2)
+            ctx.moveTo(positions[idx + 2]!, positions[idx + 3]!)
+            ctx.arc(positions[idx + 2]!, positions[idx + 3]!, 3, 0, Math.PI * 2)
+            ctx.moveTo(positions[idx + 4]!, positions[idx + 5]!)
+            ctx.arc(positions[idx + 4]!, positions[idx + 5]!, 3, 0, Math.PI * 2)
+        }
+        ctx.fill()
     })
     utils.raf.loopStart(loop)
     s.addCleanup(loop, utils.raf.loopClear)

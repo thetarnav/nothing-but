@@ -6,26 +6,24 @@ import * as lib from '../../src'
 
 const vertex_shader_source = /*glsl*/ `
 uniform vec2 u_resolution;
-uniform float u_thickness;
+uniform vec4 u_color;
 
 // an attribute will receive data from a buffer
 attribute vec2 a_position;
-attribute float a_angle;
-attribute vec4 a_color;
+attribute vec2 a_normal;
 
 varying vec4 v_color;
 
 void main() {
-    // move a_position by thickness in the direction of a_angle
-    vec2 p = a_position + vec2(cos(a_angle), sin(a_angle)) * u_thickness / 2.0;
+    // move a_position by thickness in the direction of a_normal
+    vec2 p = a_position + a_normal;
 
     // from pixels to 0->1 then to 0->2 then to -1->+1 (clipspace)
     vec2 clip_space = (p / u_resolution) * 2.0 - 1.0;
 
     gl_Position = vec4(clip_space * vec2(1, 1), 0, 1);
-    gl_PointSize = u_thickness;
 
-    v_color = a_color;
+    v_color = u_color;
 }
 `
 
@@ -61,6 +59,8 @@ function randomColor(): Vec4 {
     return [Math.random() * 256, Math.random() * 256, Math.random() * 256, 255]
 }
 
+const HALF_PI = Math.PI / 2
+
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
@@ -88,23 +88,19 @@ export const App: solid.Component = () => {
     gl.useProgram(program)
 
     const u_resolution = gl.getUniformLocation(program, 'u_resolution')
-    const u_thickness = gl.getUniformLocation(program, 'u_thickness')
+    const u_color = gl.getUniformLocation(program, 'u_color')
 
     const a_position = gl.getAttribLocation(program, 'a_position')
-    const a_angle = gl.getAttribLocation(program, 'a_angle')
-    const a_color = gl.getAttribLocation(program, 'a_color')
+    const a_normal = gl.getAttribLocation(program, 'a_normal')
 
     // Turn on the attribute
     gl.enableVertexAttribArray(a_position)
-    gl.enableVertexAttribArray(a_angle)
-    gl.enableVertexAttribArray(a_color)
+    gl.enableVertexAttribArray(a_normal)
 
     const positions_buffer = gl.createBuffer()
     const angles_buffer = gl.createBuffer()
-    const colors_buffer = gl.createBuffer()
 
-    if (!positions_buffer || !colors_buffer || !angles_buffer)
-        throw new Error('failed to create gl buffers')
+    if (!positions_buffer || !angles_buffer) throw new Error('failed to create gl buffers')
 
     const X_SPACING = 100
 
@@ -112,6 +108,8 @@ export const App: solid.Component = () => {
     const data_points = new Float32Array(8)
 
     const EASING_FREQUENCY = 32
+
+    const INSET_WIDTH = 8
 
     // fill in the gaps between data points
     const easing_points_count = (data_points.length - 1) * EASING_FREQUENCY
@@ -122,41 +120,17 @@ export const App: solid.Component = () => {
 
     positions: (2 points per easing point for adding thickness)
     [x1, y1]    [x1, y1]...
-    angles: (normals)
-    [rad]       [rad]...
+    normals
+    [x1, y1]    [x1, y1]...
     colors:
     [r, g, b, a][r, g, b, a]...
 
     */
     const positions = new Float32Array(positions_count * 2)
-    const angles = new Float32Array(positions_count)
-    const colors = new Uint8Array(positions_count * 4)
-
-    /*
-    COLORS
-    */
-    for (let i = 0; i < easing_points_count; i += 1) {
-        const color = randomColor()
-        const idx = i << 4
-        colors[idx + 0 + 0] = color[0]
-        colors[idx + 0 + 1] = color[1]
-        colors[idx + 0 + 2] = color[2]
-        colors[idx + 0 + 3] = color[3]
-        colors[idx + 0 + 4] = color[0]
-        colors[idx + 0 + 5] = color[1]
-        colors[idx + 0 + 6] = color[2]
-        colors[idx + 0 + 7] = color[3]
-        colors[idx + 8 + 0] = color[0]
-        colors[idx + 8 + 1] = color[1]
-        colors[idx + 8 + 2] = color[2]
-        colors[idx + 8 + 3] = color[3]
-        colors[idx + 8 + 4] = color[0]
-        colors[idx + 8 + 5] = color[1]
-        colors[idx + 8 + 6] = color[2]
-        colors[idx + 8 + 7] = color[3]
-    }
+    const normals = new Float32Array(positions_count * 2)
 
     function addDataPoint(): void {
+        // shift all the data points left
         for (let i = 0; i < data_points.length; i += 1) {
             data_points[i] = data_points[i + 1]!
         }
@@ -190,7 +164,7 @@ export const App: solid.Component = () => {
         }
 
         /*
-        ANGLES (for normals)
+        NORMALS
         */
         for (let i = 1; i < easing_points_count - 1; i += 1) {
             const pos_idx = i << 2 // 2 components, 2 points per easing point
@@ -202,38 +176,30 @@ export const App: solid.Component = () => {
             const x_next = positions[pos_idx + 4]!
             const y_next = positions[pos_idx + 5]!
 
-            const angle =
-                (Math.atan2(y_curr - y_prev, x_curr - x_prev) +
-                    Math.atan2(y_next - y_curr, x_next - x_curr)) /
-                2
-            const angle_idx = i << 1 // 1 angle per point, 2 points per easing point
-            angles[angle_idx + 0] = angle - Math.PI / 2
-            angles[angle_idx + 1] = angle + Math.PI / 2
-        }
-        /* end points - flat down */
-        // angles[0] = angles[positions_count - 2] = -Math.PI / 2
-        // angles[1] = angles[positions_count - 1] = Math.PI / 2
-        /* end points - correct */
-        {
-            const x1 = positions[0]!
-            const y1 = positions[1]!
-            const x2 = positions[3]!
-            const y2 = positions[4]!
+            const prev_angle = Math.atan2(y_curr - y_prev, x_curr - x_prev)
+            const next_angle = Math.atan2(y_next - y_curr, x_next - x_curr)
+            const absolute_angle = (prev_angle + next_angle) / 2
+            const relative_angle = HALF_PI - Math.abs(absolute_angle - prev_angle)
 
-            const angle = Math.atan2(y2 - y1, x2 - x1)
-            angles[0] = angle - Math.PI / 2
-            angles[1] = angle + Math.PI / 2
-        }
-        {
-            const x1 = positions[positions.length - 8]!
-            const y1 = positions[positions.length - 7]!
-            const x2 = positions[positions.length - 4]!
-            const y2 = positions[positions.length - 3]!
+            const inset_width = INSET_WIDTH / Math.sin(relative_angle)
+            const normal_x = Math.cos(absolute_angle - HALF_PI) * inset_width
+            const normal_y = Math.sin(absolute_angle - HALF_PI) * inset_width
 
-            const angle = Math.atan2(y2 - y1, x2 - x1)
-            angles[positions_count - 2] = angle - Math.PI / 2
-            angles[positions_count - 1] = angle + Math.PI / 2
+            const n_idx = i << 2 // 1 angle per point, 2 points per easing point
+            normals[n_idx + 0] = normal_x
+            normals[n_idx + 1] = normal_y
+            normals[n_idx + 2] = -normal_x
+            normals[n_idx + 3] = -normal_y
         }
+        /* end points */
+        normals[0] = 0
+        normals[1] = -INSET_WIDTH
+        normals[2] = 0
+        normals[3] = INSET_WIDTH
+        normals[normals.length - 4] = 0
+        normals[normals.length - 3] = -INSET_WIDTH
+        normals[normals.length - 2] = 0
+        normals[normals.length - 1] = INSET_WIDTH
     }
     updateBuffers()
 
@@ -256,11 +222,8 @@ export const App: solid.Component = () => {
 
         const translate_x = utils.num.lerp(0, -X_SPACING, anim_progress)
 
-        // set the resolution
         gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
-
-        // set the thickness
-        gl.uniform1f(u_thickness, 32)
+        gl.uniform4f(u_color, 1, 0, 0, 1)
 
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(100 + translate_x, 100, gl.canvas.width, gl.canvas.height)
@@ -274,12 +237,8 @@ export const App: solid.Component = () => {
         gl.vertexAttribPointer(a_position, 2, gl.FLOAT, false, 0, 0)
 
         gl.bindBuffer(gl.ARRAY_BUFFER, angles_buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, angles, gl.STATIC_DRAW)
-        gl.vertexAttribPointer(a_angle, 1, gl.FLOAT, false, 0, 0)
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, colors_buffer)
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
-        gl.vertexAttribPointer(a_color, 4, gl.UNSIGNED_BYTE, true, 0, 0)
+        gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW)
+        gl.vertexAttribPointer(a_normal, 2, gl.FLOAT, false, 0, 0)
 
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, positions_count)
     })

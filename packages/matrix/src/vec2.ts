@@ -313,6 +313,18 @@ export function distance(a: ReadonlyVec2, b: ReadonlyVec2): number {
     return Math.sqrt(x * x + y * y)
 }
 
+export function distanceScalar(x1: number, y1: number, x2: number, y2: number): number {
+    const x = x2 - x1,
+        y = y2 - y1
+    return Math.sqrt(x * x + y * y)
+}
+
+export function squaredDistanceScalar(x1: number, y1: number, x2: number, y2: number): number {
+    const x = x2 - x1,
+        y = y2 - y1
+    return x * x + y * y
+}
+
 /**
  * Calculates the squared euclidian distance between two Vec2's
  *
