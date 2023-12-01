@@ -50,3 +50,29 @@ export function makeProgram(
 
     return program
 }
+
+export type Vec4 = [number, number, number, number]
+export type NumArray = {[n: number]: number; length: number}
+export type ReadonlyNumArray = {readonly [n: number]: number; readonly length: number}
+
+export const HALF_PI = Math.PI / 2
+
+// prettier-ignore
+export function polylineNormal(
+    out: NumArray, out_idx: number,
+    prev_x: number, prev_y: number,
+    curr_x: number, curr_y: number,
+    next_x: number, next_y: number,
+): void {
+    const prev_angle = Math.atan2(curr_y - prev_y, curr_x - prev_x)
+    const next_angle = Math.atan2(next_y - curr_y, next_x - curr_x)
+    const absolute_angle = (prev_angle + next_angle) / 2
+    const relative_angle = HALF_PI - Math.abs(absolute_angle - prev_angle)
+
+    const normal_d = 1 / Math.sin(relative_angle)
+    const normal_x = Math.cos(absolute_angle - HALF_PI) * normal_d
+    const normal_y = Math.sin(absolute_angle - HALF_PI) * normal_d
+
+    out[out_idx    ] = normal_x
+    out[out_idx + 1] = normal_y
+}

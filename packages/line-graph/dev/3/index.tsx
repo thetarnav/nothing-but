@@ -2,14 +2,11 @@ import {signal as s} from '@nothing-but/solid'
 import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import * as sweb from 'solid-js/web'
+import * as lib from '../../src'
 
-type Vec4 = [number, number, number, number]
-
-const RED: Vec4 = [255, 0, 0, 255]
-const GREEN: Vec4 = [0, 255, 0, 255]
-const BLUE: Vec4 = [0, 0, 255, 255]
-
-const HALF_PI = Math.PI / 2
+const RED: lib.Vec4 = [255, 0, 0, 255]
+const GREEN: lib.Vec4 = [0, 255, 0, 255]
+const BLUE: lib.Vec4 = [0, 0, 255, 255]
 
 const Shell: solid.FlowComponent = props => {
     return (
@@ -51,6 +48,7 @@ export const App: solid.Component = () => {
         440, 280,
         460, 300,
     ])
+
     const data_points_count = data_points.length / 2
 
     const positions = new Float32Array(data_points.length * 3)
@@ -63,78 +61,87 @@ export const App: solid.Component = () => {
     /*
     NORMALS
     */
-    for (let i = 1; i < data_points_count - 1; i += 1) {
-        const data_idx = i << 1
-
-        const x_prev = data_points[data_idx - 2]!
-        const y_prev = data_points[data_idx - 1]!
-        const x_curr = data_points[data_idx + 0]!
-        const y_curr = data_points[data_idx + 1]!
-        const x_next = data_points[data_idx + 2]!
-        const y_next = data_points[data_idx + 3]!
-
-        const prev_angle = Math.atan2(y_curr - y_prev, x_curr - x_prev)
-        const next_angle = Math.atan2(y_next - y_curr, x_next - x_curr)
-        const absolute_angle = (prev_angle + next_angle) / 2
-        const relative_angle = HALF_PI - Math.abs(absolute_angle - prev_angle)
-
-        const inset_width = INSET_WIDTH / Math.sin(relative_angle)
-        const normal_x = Math.cos(absolute_angle - HALF_PI) * inset_width
-        const normal_y = Math.sin(absolute_angle - HALF_PI) * inset_width
-
-        const pos_idx = i * 6
-
-        positions[pos_idx + 0] = x_curr
-        positions[pos_idx + 1] = y_curr
-        positions[pos_idx + 2] = x_curr + normal_x
-        positions[pos_idx + 3] = y_curr + normal_y
-        positions[pos_idx + 4] = x_curr - normal_x
-        positions[pos_idx + 5] = y_curr - normal_y
-    }
-    /* end points - flat down */
-    // angles[0] = angles[positions_count - 2] = -HALF_PI
-    // angles[1] = angles[positions_count - 1] = HALF_PI
-    /* end points - correct */
     {
-        const x_curr = data_points[0]!
-        const y_curr = data_points[1]!
-        const x_next = data_points[2]!
-        const y_next = data_points[3]!
+        const normal = new Float32Array(2)
+        for (let i = 1; i < data_points_count - 1; i += 1) {
+            const data_idx = i << 1
 
-        const angle = Math.atan2(y_next - y_curr, x_next - x_curr) - HALF_PI
-        positions[0] = x_curr
-        positions[1] = y_curr
-        positions[2] = x_curr + Math.cos(angle) * INSET_WIDTH
-        positions[3] = y_curr + Math.sin(angle) * INSET_WIDTH
-        positions[4] = x_curr - Math.cos(angle) * INSET_WIDTH
-        positions[5] = y_curr - Math.sin(angle) * INSET_WIDTH
-    }
-    {
-        const x_prev = data_points[data_points.length - 4]!
-        const y_prev = data_points[data_points.length - 3]!
-        const x_curr = data_points[data_points.length - 2]!
-        const y_curr = data_points[data_points.length - 1]!
+            const prev_x = data_points[data_idx - 2]!
+            const prev_y = data_points[data_idx - 1]!
+            const curr_x = data_points[data_idx + 0]!
+            const curr_y = data_points[data_idx + 1]!
+            const next_x = data_points[data_idx + 2]!
+            const next_y = data_points[data_idx + 3]!
 
-        const angle = Math.atan2(y_curr - y_prev, x_curr - x_prev) - HALF_PI
-        positions[positions.length - 6] = x_curr
-        positions[positions.length - 5] = y_curr
-        positions[positions.length - 4] = x_curr + Math.cos(angle) * INSET_WIDTH
-        positions[positions.length - 3] = y_curr + Math.sin(angle) * INSET_WIDTH
-        positions[positions.length - 2] = x_curr - Math.cos(angle) * INSET_WIDTH
-        positions[positions.length - 1] = y_curr - Math.sin(angle) * INSET_WIDTH
-    }
+            lib.polylineNormal(normal, 0, prev_x, prev_y, curr_x, curr_y, next_x, next_y)
 
-    for (let i = 0; i < data_points_count; i += 1) {
-        const color_idx = i * 3 * 3
-        colors[color_idx + 0] = RED[0]
-        colors[color_idx + 1] = RED[1]
-        colors[color_idx + 2] = RED[2]
-        colors[color_idx + 3] = GREEN[0]
-        colors[color_idx + 4] = GREEN[1]
-        colors[color_idx + 5] = GREEN[2]
-        colors[color_idx + 6] = BLUE[0]
-        colors[color_idx + 7] = BLUE[1]
-        colors[color_idx + 8] = BLUE[2]
+            const normal_x = normal[0]! * INSET_WIDTH
+            const normal_y = normal[1]! * INSET_WIDTH
+
+            const pos_idx = i * 6
+
+            positions[pos_idx + 0] = curr_x
+            positions[pos_idx + 1] = curr_y
+            positions[pos_idx + 2] = curr_x + normal_x
+            positions[pos_idx + 3] = curr_y + normal_y
+            positions[pos_idx + 4] = curr_x - normal_x
+            positions[pos_idx + 5] = curr_y - normal_y
+        }
+        /* end points */
+        {
+            const curr_x = data_points[0]!
+            const curr_y = data_points[1]!
+            const next_x = data_points[2]!
+            const next_y = data_points[3]!
+
+            const prev_x = curr_x - (next_x - curr_x)
+            const prev_y = curr_y - (next_y - curr_y)
+
+            lib.polylineNormal(normal, 0, prev_x, prev_y, curr_x, curr_y, next_x, next_y)
+
+            const normal_x = normal[0]! * INSET_WIDTH
+            const normal_y = normal[1]! * INSET_WIDTH
+
+            positions[0] = curr_x
+            positions[1] = curr_y
+            positions[2] = curr_x + normal_x
+            positions[3] = curr_y + normal_y
+            positions[4] = curr_x - normal_x
+            positions[5] = curr_y - normal_y
+        }
+        {
+            const prev_x = data_points[data_points.length - 4]!
+            const prev_y = data_points[data_points.length - 3]!
+            const curr_x = data_points[data_points.length - 2]!
+            const curr_y = data_points[data_points.length - 1]!
+            const next_x = curr_x + (curr_x - prev_x)
+            const next_y = curr_y + (curr_y - prev_y)
+
+            lib.polylineNormal(normal, 0, prev_x, prev_y, curr_x, curr_y, next_x, next_y)
+
+            const normal_x = normal[0]! * INSET_WIDTH
+            const normal_y = normal[1]! * INSET_WIDTH
+
+            positions[positions.length - 6] = curr_x
+            positions[positions.length - 5] = curr_y
+            positions[positions.length - 4] = curr_x + normal_x
+            positions[positions.length - 3] = curr_y + normal_y
+            positions[positions.length - 2] = curr_x - normal_x
+            positions[positions.length - 1] = curr_y - normal_y
+        }
+
+        for (let i = 0; i < data_points_count; i += 1) {
+            const color_idx = i * 3 * 3
+            colors[color_idx + 0] = RED[0]
+            colors[color_idx + 1] = RED[1]
+            colors[color_idx + 2] = RED[2]
+            colors[color_idx + 3] = GREEN[0]
+            colors[color_idx + 4] = GREEN[1]
+            colors[color_idx + 5] = GREEN[2]
+            colors[color_idx + 6] = BLUE[0]
+            colors[color_idx + 7] = BLUE[1]
+            colors[color_idx + 8] = BLUE[2]
+        }
     }
 
     const loop = utils.raf.makeAnimationLoop(() => {

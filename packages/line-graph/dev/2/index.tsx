@@ -7,6 +7,7 @@ import * as lib from '../../src'
 const vertex_shader_source = /*glsl*/ `
 uniform vec2 u_resolution;
 uniform vec4 u_color;
+uniform float u_thickness;
 
 // an attribute will receive data from a buffer
 attribute vec2 a_position;
@@ -16,7 +17,7 @@ varying vec4 v_color;
 
 void main() {
     // move a_position by thickness in the direction of a_normal
-    vec2 p = a_position + a_normal;
+    vec2 p = a_position + a_normal * u_thickness;
 
     // from pixels to 0->1 then to 0->2 then to -1->+1 (clipspace)
     vec2 clip_space = (p / u_resolution) * 2.0 - 1.0;
@@ -53,13 +54,9 @@ const Shell: solid.FlowComponent = props => {
     )
 }
 
-type Vec4 = [number, number, number, number]
-
-function randomColor(): Vec4 {
+function randomColor(): lib.Vec4 {
     return [Math.random() * 256, Math.random() * 256, Math.random() * 256, 255]
 }
-
-const HALF_PI = Math.PI / 2
 
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
@@ -89,6 +86,7 @@ export const App: solid.Component = () => {
 
     const u_resolution = gl.getUniformLocation(program, 'u_resolution')
     const u_color = gl.getUniformLocation(program, 'u_color')
+    const u_thickness = gl.getUniformLocation(program, 'u_thickness')
 
     const a_position = gl.getAttribLocation(program, 'a_position')
     const a_normal = gl.getAttribLocation(program, 'a_normal')
@@ -151,7 +149,7 @@ export const App: solid.Component = () => {
 
             for (let j = 0; j < EASING_FREQUENCY; j += 1) {
                 const p = j / EASING_FREQUENCY
-                const ease = utils.ease.in_out_quad(p)
+                const ease = utils.ease.in_out_cubic(p)
                 const x = utils.num.lerp(x1, x2, p)
                 const y = utils.num.lerp(y1, y2, ease)
 
@@ -168,6 +166,7 @@ export const App: solid.Component = () => {
         */
         for (let i = 1; i < easing_points_count - 1; i += 1) {
             const pos_idx = i << 2 // 2 components, 2 points per easing point
+            const n_idx = i << 2 // 1 angle per point, 2 points per easing point
 
             const x_prev = positions[pos_idx - 4]!
             const y_prev = positions[pos_idx - 3]!
@@ -176,30 +175,37 @@ export const App: solid.Component = () => {
             const x_next = positions[pos_idx + 4]!
             const y_next = positions[pos_idx + 5]!
 
-            const prev_angle = Math.atan2(y_curr - y_prev, x_curr - x_prev)
-            const next_angle = Math.atan2(y_next - y_curr, x_next - x_curr)
-            const absolute_angle = (prev_angle + next_angle) / 2
-            const relative_angle = HALF_PI - Math.abs(absolute_angle - prev_angle)
-
-            const inset_width = INSET_WIDTH / Math.sin(relative_angle)
-            const normal_x = Math.cos(absolute_angle - HALF_PI) * inset_width
-            const normal_y = Math.sin(absolute_angle - HALF_PI) * inset_width
-
-            const n_idx = i << 2 // 1 angle per point, 2 points per easing point
-            normals[n_idx + 0] = normal_x
-            normals[n_idx + 1] = normal_y
-            normals[n_idx + 2] = -normal_x
-            normals[n_idx + 3] = -normal_y
+            lib.polylineNormal(normals, n_idx, x_prev, y_prev, x_curr, y_curr, x_next, y_next)
+            normals[n_idx + 2] = -normals[n_idx + 0]!
+            normals[n_idx + 3] = -normals[n_idx + 1]!
         }
         /* end points */
-        normals[0] = 0
-        normals[1] = -INSET_WIDTH
-        normals[2] = 0
-        normals[3] = INSET_WIDTH
-        normals[normals.length - 4] = 0
-        normals[normals.length - 3] = -INSET_WIDTH
-        normals[normals.length - 2] = 0
-        normals[normals.length - 1] = INSET_WIDTH
+        {
+            const curr_x = positions[0]!
+            const curr_y = positions[1]!
+            const next_x = positions[4]!
+            const next_y = positions[5]!
+            const prev_x = curr_x - (next_x - curr_x)
+            const prev_y = curr_y - (next_y - curr_y)
+
+            lib.polylineNormal(normals, 0, prev_x, prev_y, curr_x, curr_y, next_x, next_y)
+            normals[2] = -normals[0]!
+            normals[3] = -normals[1]!
+        }
+        {
+            const prev_x = positions[positions.length - 8]!
+            const prev_y = positions[positions.length - 7]!
+            const curr_x = positions[positions.length - 4]!
+            const curr_y = positions[positions.length - 3]!
+            const next_x = curr_x + (curr_x - prev_x)
+            const next_y = curr_y + (curr_y - prev_y)
+
+            const idx = normals.length - 4
+
+            lib.polylineNormal(normals, idx, prev_x, prev_y, curr_x, curr_y, next_x, next_y)
+            normals[idx + 2] = -normals[idx + 0]!
+            normals[idx + 3] = -normals[idx + 1]!
+        }
     }
     updateBuffers()
 
@@ -224,6 +230,7 @@ export const App: solid.Component = () => {
 
         gl.uniform2f(u_resolution, gl.canvas.width, gl.canvas.height)
         gl.uniform4f(u_color, 1, 0, 0, 1)
+        gl.uniform1f(u_thickness, INSET_WIDTH)
 
         // Tell WebGL how to convert from clip space to pixels
         gl.viewport(100 + translate_x, 100, gl.canvas.width, gl.canvas.height)
