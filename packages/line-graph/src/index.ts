@@ -76,3 +76,23 @@ export function polylineNormal(
     out[out_idx    ] = normal_x
     out[out_idx + 1] = normal_y
 }
+
+// prettier-ignore
+export function polylineCap(
+    out: NumArray, out_idx: number,
+      cap_x: number,  cap_y: number,
+     next_x: number, next_y: number,
+    dencity: number,  width: number,
+): void {
+    const angle = Math.atan2(next_y - cap_y, next_x - cap_x) // absolute
+
+    for (let i = 0; i < dencity; i += 1) {
+        const p = i / (dencity - 1)
+        const angle_offset = (p - 0.5) * Math.PI + angle + Math.PI
+        const x = cap_x + Math.cos(angle_offset) * width
+        const y = cap_y + Math.sin(angle_offset) * width
+        const idx = out_idx + i * 2
+        out[idx] = x
+        out[idx + 1] = y
+    }
+}

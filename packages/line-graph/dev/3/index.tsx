@@ -46,7 +46,7 @@ export const App: solid.Component = () => {
         400, 240,
         420, 260,
         440, 280,
-        460, 300,
+        463, 298,
     ])
 
     const data_points_count = data_points.length / 2
@@ -144,12 +144,40 @@ export const App: solid.Component = () => {
         }
     }
 
+    /*
+    ROUND CAPS
+    */
+    const cap_points_count = 8
+    const left_cap = new Float32Array(cap_points_count * 2)
+    const right_cap = new Float32Array(cap_points_count * 2)
+
+    lib.polylineCap(
+        left_cap,
+        0,
+        data_points[0]!,
+        data_points[1]!,
+        data_points[2]!,
+        data_points[3]!,
+        cap_points_count,
+        INSET_WIDTH,
+    )
+    lib.polylineCap(
+        right_cap,
+        0,
+        data_points[data_points.length - 2]!,
+        data_points[data_points.length - 1]!,
+        data_points[data_points.length - 4]!,
+        data_points[data_points.length - 3]!,
+        cap_points_count,
+        INSET_WIDTH,
+    )
+
     const loop = utils.raf.makeAnimationLoop(() => {
         /*
             clear
             flip y
         */
-        ctx.setTransform(1, 0, 0, -1, 0, el.height)
+        ctx.setTransform(1, 0, 0, -1, 200, el.height)
         ctx.clearRect(0, 0, el.width, el.height)
 
         /*
@@ -202,6 +230,29 @@ export const App: solid.Component = () => {
             ctx.arc(positions[idx + 4]!, positions[idx + 5]!, 3, 0, Math.PI * 2)
         }
         ctx.fill()
+
+        /*
+            draw cap points
+        */
+        for (const points of [left_cap, right_cap]) {
+            ctx.fillStyle = '#e39'
+            ctx.beginPath()
+            for (let i = 0; i < cap_points_count; i += 1) {
+                const idx = i * 2
+                ctx.moveTo(points[idx + 0]!, points[idx + 1]!)
+                ctx.arc(points[idx + 0]!, points[idx + 1]!, 3, 0, Math.PI * 2)
+            }
+            ctx.fill()
+
+            ctx.strokeStyle = '#ee339990'
+            ctx.beginPath()
+            for (let i = 0; i < cap_points_count; i += 1) {
+                const idx = i * 2
+                ctx.moveTo(points[idx + 0]!, points[idx + 1]!)
+                ctx.lineTo(points[idx + 2]!, points[idx + 3]!)
+            }
+            ctx.stroke()
+        }
     })
     utils.raf.loopStart(loop)
     s.addCleanup(loop, utils.raf.loopClear)
