@@ -181,12 +181,38 @@ export const App: solid.Component = () => {
         ctx.clearRect(0, 0, el.width, el.height)
 
         /*
+            bg
+        */
+
+        ctx.fillStyle = '#0005'
+        ctx.beginPath()
+        ctx.moveTo(left_cap[0]!, left_cap[1]!)
+        for (let i = 0; i < cap_points_count; i += 1) {
+            const idx = i * 2
+            ctx.lineTo(left_cap[idx + 0]!, left_cap[idx + 1]!)
+        }
+        for (let i = 0; i < positions_count; i += 3) {
+            const idx = i * 2
+            ctx.lineTo(positions[idx + 2]!, positions[idx + 3]!)
+        }
+        for (let i = 0; i < cap_points_count; i += 1) {
+            const idx = i * 2
+            ctx.lineTo(right_cap[idx + 0]!, right_cap[idx + 1]!)
+        }
+        for (let i = positions_count; i >= 0; i -= 3) {
+            const idx = i * 2
+            ctx.lineTo(positions[idx + 4]!, positions[idx + 5]!)
+        }
+        ctx.closePath()
+        ctx.fill()
+
+        /*
             draw normal lines
         */
         ctx.lineWidth = 1
         ctx.lineCap = 'round'
         ctx.lineJoin = 'round'
-        ctx.strokeStyle = '#777'
+        ctx.strokeStyle = '#39e9'
         ctx.beginPath()
         for (let i = 0; i < positions_count; i += 3) {
             const idx = i * 2
@@ -216,22 +242,6 @@ export const App: solid.Component = () => {
         ctx.stroke()
 
         /*
-            draw points dots
-        */
-        ctx.fillStyle = '#fff'
-        ctx.beginPath()
-        for (let i = 0; i < positions_count; i += 3) {
-            const idx = i * 2
-            ctx.moveTo(positions[idx + 0]!, positions[idx + 1]!)
-            ctx.arc(positions[idx + 0]!, positions[idx + 1]!, 3, 0, Math.PI * 2)
-            ctx.moveTo(positions[idx + 2]!, positions[idx + 3]!)
-            ctx.arc(positions[idx + 2]!, positions[idx + 3]!, 3, 0, Math.PI * 2)
-            ctx.moveTo(positions[idx + 4]!, positions[idx + 5]!)
-            ctx.arc(positions[idx + 4]!, positions[idx + 5]!, 3, 0, Math.PI * 2)
-        }
-        ctx.fill()
-
-        /*
             draw cap points
         */
         for (const points of [left_cap, right_cap]) {
@@ -253,6 +263,22 @@ export const App: solid.Component = () => {
             }
             ctx.stroke()
         }
+
+        /*
+            draw points dots
+        */
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        for (let i = 0; i < positions_count; i += 3) {
+            const idx = i * 2
+            ctx.moveTo(positions[idx + 0]!, positions[idx + 1]!)
+            ctx.arc(positions[idx + 0]!, positions[idx + 1]!, 3, 0, Math.PI * 2)
+            ctx.moveTo(positions[idx + 2]!, positions[idx + 3]!)
+            ctx.arc(positions[idx + 2]!, positions[idx + 3]!, 3, 0, Math.PI * 2)
+            ctx.moveTo(positions[idx + 4]!, positions[idx + 5]!)
+            ctx.arc(positions[idx + 4]!, positions[idx + 5]!, 3, 0, Math.PI * 2)
+        }
+        ctx.fill()
     })
     utils.raf.loopStart(loop)
     s.addCleanup(loop, utils.raf.loopClear)
