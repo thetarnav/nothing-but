@@ -79,7 +79,7 @@ export function polylineNormal(
 
 // prettier-ignore
 export function polylineCap(
-    out: NumArray, out_idx: number,
+    out: NumArray,  out_idx: number,
       cap_x: number,  cap_y: number,
      next_x: number, next_y: number,
     dencity: number,  width: number,
