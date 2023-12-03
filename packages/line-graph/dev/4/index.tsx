@@ -97,7 +97,19 @@ export const App: solid.Component = () => {
         last_time = time
 
         anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
-        const start_ease = Math.floor(EASE_DENCITY * anim_progress)
+        const ease_progress = Math.floor(EASE_DENCITY * anim_progress)
+
+        let start_ease = 0,
+            end_ease = 0
+
+        const data_ease_points = (source.length - 1) * EASE_DENCITY
+
+        if (data_ease_points < source.ease.length) {
+            end_ease = data_ease_points - EASE_DENCITY + ease_progress
+        } else {
+            start_ease = ease_progress
+            end_ease = source.ease.length - EASE_DENCITY
+        }
 
         /*
             clear
@@ -117,7 +129,7 @@ export const App: solid.Component = () => {
         ctx.strokeStyle = '#e50'
         ctx.beginPath()
         ctx.moveTo(0, source.ease[start_ease]!)
-        for (let i = 1; i < source.ease.length - EASE_DENCITY; i += 1) {
+        for (let i = 1; i < end_ease; i += 1) {
             ctx.lineTo(i * x_spacing, source.ease[start_ease + i]!)
         }
         ctx.stroke()
