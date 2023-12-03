@@ -18,6 +18,31 @@ const Shell: solid.FlowComponent = props => {
     )
 }
 
+type ArrayLike<T> = {
+    readonly length: number
+    [index: number]: T
+}
+type ReadonlyArrayLike<T> = {
+    readonly length: number
+    readonly [index: number]: T
+}
+type NumArray = ArrayLike<number>
+type ReadonlyNumArray = ReadonlyArrayLike<number>
+
+function fixedPushRight<T>(arr: ArrayLike<T>, value: T): void {
+    const end = arr.length - 1
+    for (let i = 0; i < end; i += 1) {
+        arr[i] = arr[i + 1]!
+    }
+    arr[end] = value
+}
+function fixedPushLeft<T>(arr: ArrayLike<T>, value: T): void {
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+        arr[i] = arr[i - 1]!
+    }
+    arr[0] = value
+}
+
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
@@ -32,18 +57,48 @@ export const App: solid.Component = () => {
 
     /* input data */
     const source = {
-        points: new Float32Array(2048),
+        data: new Float32Array(2048),
         length: 1,
+        ease: new Float32Array(1024),
         start: -1, // -1 follow end of array
     }
 
-    const interval = setInterval(() => {
-        source.points[source.length] = Math.random() * 200
-        source.length += 1
-    }, 1000)
-    s.addCleanup(interval, clearInterval)
+    const EASE_DENCITY = 64
 
-    const loop = utils.raf.makeAnimationLoop(() => {
+    updateEase()
+
+    function updateEase(): void {
+        const start =
+            source.start > 0
+                ? source.start
+                : Math.max(
+                      source.length + source.start - Math.ceil(source.ease.length / EASE_DENCITY),
+                      0,
+                  )
+
+        for (let i = 0; i < source.ease.length; i += 1) {
+            const ease_i = i % EASE_DENCITY
+            const data_i = start + Math.floor(i / EASE_DENCITY)
+
+            let p = ease_i / EASE_DENCITY
+            p = p * p * (3 - 2 * p) // ease in out
+            const from = source.data[data_i]!
+            const to = source.data[data_i + 1]!
+
+            source.ease[i] = from + (to - from) * p
+        }
+    }
+    const ANIM_DURATION = 600
+    let anim_progress = 0 // 0 -> 1
+
+    let last_time = 0
+    const loop = utils.raf.makeAnimationLoop(time => {
+        const delta = time - last_time
+        last_time = time
+
+        anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
+        const start_ease = Math.floor(EASE_DENCITY * anim_progress)
+
         /*
             clear
             flip y
@@ -52,33 +107,37 @@ export const App: solid.Component = () => {
         ctx.clearRect(0, 0, el.width, el.height)
         ctx.setTransform(1, 0, 0, -1, 200, el.height - 200)
 
-        const points_count = Math.min(source.length, 64)
-
-        const start = source.start > 0 ? source.start : source.length - points_count
-        const end = start + points_count
-
-        const points = source.points.slice(start, end)
-
-        const x_spacing = 12
+        /*
+            draw data
+        */
+        const x_spacing = 0.2
 
         ctx.lineWidth = 2
         ctx.lineCap = 'round'
         ctx.strokeStyle = '#e50'
         ctx.beginPath()
-        let prev_y = points[0]!
-        ctx.moveTo(0, prev_y)
-        for (let i = 0; i < points_count; i += 1) {
-            const x = (i + 1) * x_spacing
-            const y = points[i]!
-            // prettier-ignore
-            ctx.bezierCurveTo(
-                x - x_spacing * .6, prev_y,
-                x - x_spacing * .4, y,
-                x,                  y,
-            )
-            prev_y = y
+        ctx.moveTo(0, source.ease[start_ease]!)
+        for (let i = 1; i < source.ease.length - EASE_DENCITY; i += 1) {
+            ctx.lineTo(i * x_spacing, source.ease[start_ease + i]!)
         }
         ctx.stroke()
+
+        /*
+            update data
+        */
+        if (anim_progress === 1) {
+            const new_value = Math.random() * 200
+
+            if (source.length === source.data.length) {
+                fixedPushRight(source.data, new_value)
+            } else {
+                source.data[source.length] = new_value
+                source.length += 1
+            }
+
+            updateEase()
+            anim_progress = 0
+        }
     })
     utils.raf.loopStart(loop)
     s.addCleanup(loop, utils.raf.loopClear)
