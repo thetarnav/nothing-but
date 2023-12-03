@@ -65,20 +65,12 @@ export const App: solid.Component = () => {
 
     const EASE_DENCITY = 64
 
-    updateEase()
-
     function updateEase(): void {
-        const start =
-            source.start > 0
-                ? source.start
-                : Math.max(
-                      source.length + source.start - Math.ceil(source.ease.length / EASE_DENCITY),
-                      0,
-                  )
+        source.start = Math.max(source.length - 1 - Math.ceil(source.ease.length / EASE_DENCITY), 0)
 
         for (let i = 0; i < source.ease.length; i += 1) {
             const ease_i = i % EASE_DENCITY
-            const data_i = start + Math.floor(i / EASE_DENCITY)
+            const data_i = source.start + Math.floor(i / EASE_DENCITY)
 
             let p = ease_i / EASE_DENCITY
             p = p * p * (3 - 2 * p) // ease in out
@@ -88,7 +80,7 @@ export const App: solid.Component = () => {
             source.ease[i] = from + (to - from) * p
         }
     }
-    const ANIM_DURATION = 600
+    const ANIM_DURATION = 500
     let anim_progress = 0 // 0 -> 1
 
     let last_time = 0
@@ -120,7 +112,7 @@ export const App: solid.Component = () => {
         ctx.setTransform(1, 0, 0, -1, 200, el.height - 200)
 
         /*
-            draw data
+            draw ease line
         */
         const x_spacing = 0.2
 
@@ -133,6 +125,23 @@ export const App: solid.Component = () => {
             ctx.lineTo(i * x_spacing, source.ease[start_ease + i]!)
         }
         ctx.stroke()
+
+        /*
+            reference points
+        */
+        ctx.lineWidth = 1
+        ctx.fillStyle = '#fff'
+        ctx.beginPath()
+        for (let i = 0; i < source.length; i += 1) {
+            const x =
+                i * x_spacing * EASE_DENCITY -
+                source.start * EASE_DENCITY * x_spacing -
+                start_ease * x_spacing
+            const y = source.data[i]!
+            ctx.moveTo(x, y)
+            ctx.arc(x, y, 2, 0, Math.PI * 2)
+        }
+        ctx.fill()
 
         /*
             update data
