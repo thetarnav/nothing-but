@@ -59,27 +59,20 @@ export const App: solid.Component = () => {
     const source = {
         data: new Float32Array(2048),
         length: 1,
-        ease: new Float32Array(1024),
-        start: -1, // -1 follow end of array
     }
 
+    const EASE_LENGTH = 1024
     const EASE_DENCITY = 64
+    const X_SPACING = 0.2
 
-    function updateEase(): void {
-        source.start = Math.max(source.length - 1 - Math.ceil(source.ease.length / EASE_DENCITY), 0)
-
-        for (let i = 0; i < source.ease.length; i += 1) {
-            const ease_i = i % EASE_DENCITY
-            const data_i = source.start + Math.floor(i / EASE_DENCITY)
-
-            let p = ease_i / EASE_DENCITY
-            p = p * p * (3 - 2 * p) // ease in out
-            const from = source.data[data_i]!
-            const to = source.data[data_i + 1]!
-
-            source.ease[i] = from + (to - from) * p
-        }
+    function yAtEaseIdx(ease_i: number): number {
+        const data_i = Math.floor(ease_i / EASE_DENCITY)
+        const p = utils.ease.in_out_cubic((ease_i % EASE_DENCITY) / EASE_DENCITY)
+        const from = source.data[data_i]!
+        const to = source.data[data_i + 1]!
+        return from + (to - from) * p
     }
+
     const ANIM_DURATION = 500
     let anim_progress = 0 // 0 -> 1
 
@@ -89,19 +82,10 @@ export const App: solid.Component = () => {
         last_time = time
 
         anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
-        const ease_progress = Math.floor(EASE_DENCITY * anim_progress)
 
-        let start_ease = 0,
-            end_ease = 0
-
-        const data_ease_points = (source.length - 1) * EASE_DENCITY
-
-        if (data_ease_points < source.ease.length) {
-            end_ease = data_ease_points - EASE_DENCITY + ease_progress
-        } else {
-            start_ease = ease_progress
-            end_ease = source.ease.length - EASE_DENCITY
-        }
+        const ease_end = (source.length - 2 + anim_progress) * EASE_DENCITY
+        const ease_start = Math.max(ease_end - EASE_LENGTH + EASE_DENCITY, 0)
+        const ease_points = ease_end - ease_start
 
         /*
             clear
@@ -109,20 +93,18 @@ export const App: solid.Component = () => {
         */
         ctx.resetTransform()
         ctx.clearRect(0, 0, el.width, el.height)
-        ctx.setTransform(1, 0, 0, -1, 200, el.height - 200)
+        ctx.setTransform(1, 0, 0, -1, 300, el.height - 200)
 
         /*
             draw ease line
         */
-        const x_spacing = 0.2
-
         ctx.lineWidth = 2
         ctx.lineCap = 'round'
         ctx.strokeStyle = '#e50'
         ctx.beginPath()
-        ctx.moveTo(0, source.ease[start_ease]!)
-        for (let i = 1; i < end_ease; i += 1) {
-            ctx.lineTo(i * x_spacing, source.ease[start_ease + i]!)
+        ctx.moveTo(0, yAtEaseIdx(ease_start))
+        for (let i = 1; i < ease_points; i += 1) {
+            ctx.lineTo(i * X_SPACING, yAtEaseIdx(ease_start + i))
         }
         ctx.stroke()
 
@@ -133,10 +115,7 @@ export const App: solid.Component = () => {
         ctx.fillStyle = '#fff'
         ctx.beginPath()
         for (let i = 0; i < source.length; i += 1) {
-            const x =
-                i * x_spacing * EASE_DENCITY -
-                source.start * EASE_DENCITY * x_spacing -
-                start_ease * x_spacing
+            const x = i * EASE_DENCITY * X_SPACING - ease_start * X_SPACING
             const y = source.data[i]!
             ctx.moveTo(x, y)
             ctx.arc(x, y, 2, 0, Math.PI * 2)
@@ -156,7 +135,6 @@ export const App: solid.Component = () => {
                 source.length += 1
             }
 
-            updateEase()
             anim_progress = 0
         }
     })
