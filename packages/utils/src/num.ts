@@ -19,6 +19,9 @@ export function remainder(a: number, b: number): number {
 export function wrap(value: number, min: number, max: number): number {
     return remainder(value - min, max - min) + min
 }
+export function wrapIndex(index: number, length: number): number {
+    return wrap(index, 0, length)
+}
 export function bounce(value: number, min: number, max: number): number {
     const range = max - min,
         rem = wrap(value - min, 0, 2 * range),

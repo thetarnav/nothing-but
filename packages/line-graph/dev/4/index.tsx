@@ -57,7 +57,7 @@ export const App: solid.Component = () => {
 
     /* input data */
     const source = {
-        data: new Float32Array(2048),
+        data: new Float32Array(50),
         length: 1,
     }
 
@@ -73,8 +73,17 @@ export const App: solid.Component = () => {
         return from + (to - from) * p
     }
 
-    const ANIM_DURATION = 500
+    const ANIM_DURATION = 400
     let anim_progress = 0 // 0 -> 1
+
+    let anchor = -1 // follow the last point
+    let delta_x = 0
+
+    function handleWheel(e: WheelEvent): void {
+        delta_x -= e.deltaY
+    }
+    el.addEventListener('wheel', handleWheel)
+    void s.onCleanup(() => el.removeEventListener('wheel', handleWheel))
 
     let last_time = 0
     const loop = utils.raf.makeAnimationLoop(time => {
@@ -83,9 +92,23 @@ export const App: solid.Component = () => {
 
         anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
 
-        const ease_end = (source.length - 2 + anim_progress) * EASE_DENCITY
-        const ease_start = Math.max(ease_end - EASE_LENGTH + EASE_DENCITY, 0)
-        const ease_points = ease_end - ease_start
+        const available_ease_points = Math.round((source.length - 2 + anim_progress) * EASE_DENCITY)
+        const ease_points = Math.min(EASE_LENGTH, available_ease_points)
+
+        let anchor_index = utils.num.wrapIndex(anchor, available_ease_points)
+
+        if (delta_x !== 0) {
+            anchor_index = utils.num.clamp(
+                anchor_index - delta_x,
+                ease_points,
+                available_ease_points,
+            )
+            anchor = anchor_index === available_ease_points ? -1 : anchor_index
+            delta_x = 0
+        }
+
+        const ease_end = anchor_index
+        const ease_start = ease_end - ease_points
 
         /*
             clear
@@ -130,6 +153,7 @@ export const App: solid.Component = () => {
 
             if (source.length === source.data.length) {
                 fixedPushRight(source.data, new_value)
+                // delta_x += EASE_DENCITY
             } else {
                 source.data[source.length] = new_value
                 source.length += 1
