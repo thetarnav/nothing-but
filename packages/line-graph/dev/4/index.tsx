@@ -61,6 +61,11 @@ export const App: solid.Component = () => {
         length: 1,
     }
 
+    // for (let i = 0; i < source.data.length; i += 1) {
+    //     source.data[i] = Math.random() * 200
+    // }
+    // source.length = source.data.length
+
     const EASE_LENGTH = 1024
     const EASE_DENCITY = 64
     const X_SPACING = 0.2
@@ -79,11 +84,10 @@ export const App: solid.Component = () => {
     let anchor = -1 // follow the last point
     let delta_x = 0
 
-    function handleWheel(e: WheelEvent): void {
+    const unsubWheel = utils.event.listener(el, 'wheel', e => {
         delta_x -= e.deltaY
-    }
-    el.addEventListener('wheel', handleWheel)
-    void s.onCleanup(() => el.removeEventListener('wheel', handleWheel))
+    })
+    void s.onCleanup(unsubWheel)
 
     let last_time = 0
     const loop = utils.raf.makeAnimationLoop(time => {
@@ -92,20 +96,23 @@ export const App: solid.Component = () => {
 
         anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
 
-        const available_ease_points = Math.round((source.length - 2 + anim_progress) * EASE_DENCITY)
+        const is_data_full = source.length === source.data.length
+        const ease_progress = anim_progress * EASE_DENCITY
+        const available_ease_points = Math.max(
+            Math.round((source.length - 2) * EASE_DENCITY + ease_progress),
+            0,
+        )
         const ease_points = Math.min(EASE_LENGTH, available_ease_points)
 
-        let anchor_index = utils.num.wrapIndex(anchor, available_ease_points)
+        let anchor_index = anchor < 0 ? available_ease_points + anchor : anchor
+        anchor_index = utils.num.clamp(
+            anchor_index - delta_x,
+            ease_points + (is_data_full ? ease_progress : 0),
+            available_ease_points,
+        )
 
-        if (delta_x !== 0) {
-            anchor_index = utils.num.clamp(
-                anchor_index - delta_x,
-                ease_points,
-                available_ease_points,
-            )
-            anchor = anchor_index === available_ease_points ? -1 : anchor_index
-            delta_x = 0
-        }
+        delta_x = 0
+        anchor = anchor_index >= available_ease_points - 1 ? -1 : anchor_index
 
         const ease_end = anchor_index
         const ease_start = ease_end - ease_points
@@ -149,17 +156,20 @@ export const App: solid.Component = () => {
             update data
         */
         if (anim_progress === 1) {
+            anim_progress = 0
+
             const new_value = Math.random() * 200
 
-            if (source.length === source.data.length) {
+            if (is_data_full) {
                 fixedPushRight(source.data, new_value)
-                // delta_x += EASE_DENCITY
+
+                if (anchor > 0) {
+                    delta_x += EASE_DENCITY // ? maybe it's better to set anchor directly
+                }
             } else {
                 source.data[source.length] = new_value
                 source.length += 1
             }
-
-            anim_progress = 0
         }
     })
     utils.raf.loopStart(loop)
