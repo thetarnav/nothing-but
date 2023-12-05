@@ -61,10 +61,10 @@ export const App: solid.Component = () => {
         len: 1,
     }
 
-    for (let i = 0; i < source.buf.length; i += 1) {
-        source.buf[i] = Math.random() * 200
-    }
-    source.len = source.buf.length
+    // for (let i = 0; i < source.buf.length; i += 1) {
+    //     source.buf[i] = Math.random() * 200
+    // }
+    // source.len = source.buf.length
 
     const EASE_LENGTH = 1024
     const EASE_DENCITY = 64
@@ -118,8 +118,8 @@ export const App: solid.Component = () => {
 
         const start_progress = Math.max(end_progress - view_progress, min_progress)
 
-        const view_end = end_progress * ease_dencity
-        const view_start = start_progress * ease_dencity
+        const view_end = Math.ceil(end_progress * ease_dencity)
+        const view_start = Math.ceil(start_progress * ease_dencity)
 
         /*
             clear
