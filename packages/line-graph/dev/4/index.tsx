@@ -70,9 +70,9 @@ export const App: solid.Component = () => {
     const EASE_DENCITY = 64
     const X_SPACING = 0.2
 
-    function yAtEaseIdx(ease_i: number, ease_dencity: number): number {
-        const data_i = Math.floor(ease_i / ease_dencity)
-        const p = utils.ease.in_out_cubic((ease_i % ease_dencity) / ease_dencity)
+    function yAtProgress(progress: number): number {
+        const data_i = Math.floor(progress)
+        const p = utils.ease.in_out_cubic(progress - data_i)
         const from = source.buf[data_i]!
         const to = source.buf[data_i + 1]!
         return from + (to - from) * p
@@ -118,8 +118,8 @@ export const App: solid.Component = () => {
 
         const start_progress = Math.max(end_progress - view_progress, min_progress)
 
-        const view_end = Math.ceil(end_progress * ease_dencity)
-        const view_start = Math.ceil(start_progress * ease_dencity)
+        const view_end = Math.floor(end_progress * ease_dencity)
+        const view_start = Math.floor(start_progress * ease_dencity)
 
         /*
             clear
@@ -136,25 +136,25 @@ export const App: solid.Component = () => {
         ctx.lineCap = 'round'
         ctx.strokeStyle = '#e50'
         ctx.beginPath()
-        ctx.moveTo(0, yAtEaseIdx(view_start, ease_dencity))
+        ctx.moveTo(0, yAtProgress(view_start / ease_dencity))
         for (let i = view_start; i < view_end; i += 1) {
-            ctx.lineTo((i - view_start) * X_SPACING, yAtEaseIdx(i, ease_dencity))
+            ctx.lineTo((i - view_start) * X_SPACING, yAtProgress(i / ease_dencity))
         }
         ctx.stroke()
 
-        /*
-            reference points
-        */
-        ctx.lineWidth = 1
-        ctx.fillStyle = '#fff'
-        ctx.beginPath()
-        for (let i = 0; i < source.len; i += 1) {
-            const x = i * ease_dencity * X_SPACING - view_start * X_SPACING
-            const y = source.buf[i]!
-            ctx.moveTo(x, y)
-            ctx.arc(x, y, 2, 0, Math.PI * 2)
-        }
-        ctx.fill()
+        // /*
+        //     reference points
+        // */
+        // ctx.lineWidth = 1
+        // ctx.fillStyle = '#fff'
+        // ctx.beginPath()
+        // for (let i = 0; i < source.len; i += 1) {
+        //     const x = i * ease_dencity * X_SPACING - view_start * X_SPACING
+        //     const y = source.buf[i]!
+        //     ctx.moveTo(x, y)
+        //     ctx.arc(x, y, 2, 0, Math.PI * 2)
+        // }
+        // ctx.fill()
 
         /*
             update data
