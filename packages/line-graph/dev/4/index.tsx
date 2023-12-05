@@ -57,24 +57,24 @@ export const App: solid.Component = () => {
 
     /* input data */
     const source = {
-        data: new Float32Array(50),
-        length: 1,
+        buf: new Float32Array(64),
+        len: 1,
     }
 
-    // for (let i = 0; i < source.data.length; i += 1) {
-    //     source.data[i] = Math.random() * 200
-    // }
-    // source.length = source.data.length
+    for (let i = 0; i < source.buf.length; i += 1) {
+        source.buf[i] = Math.random() * 200
+    }
+    source.len = source.buf.length
 
     const EASE_LENGTH = 1024
     const EASE_DENCITY = 64
     const X_SPACING = 0.2
 
-    function yAtEaseIdx(ease_i: number): number {
-        const data_i = Math.floor(ease_i / EASE_DENCITY)
-        const p = utils.ease.in_out_cubic((ease_i % EASE_DENCITY) / EASE_DENCITY)
-        const from = source.data[data_i]!
-        const to = source.data[data_i + 1]!
+    function yAtEaseIdx(ease_i: number, ease_dencity: number): number {
+        const data_i = Math.floor(ease_i / ease_dencity)
+        const p = utils.ease.in_out_cubic((ease_i % ease_dencity) / ease_dencity)
+        const from = source.buf[data_i]!
+        const to = source.buf[data_i + 1]!
         return from + (to - from) * p
     }
 
@@ -83,39 +83,43 @@ export const App: solid.Component = () => {
 
     let anchor = -1 // follow the last point
     let delta_x = 0
+    let scale = 1
 
     const unsubWheel = utils.event.listener(el, 'wheel', e => {
-        delta_x -= e.deltaY
+        scale = utils.num.clamp(scale + e.deltaY / 500, 0.2, 8)
+        delta_x -= e.deltaX / 100 / scale
     })
     void s.onCleanup(unsubWheel)
 
     let last_time = 0
     const loop = utils.raf.makeAnimationLoop(time => {
+        const is_data_full = source.len === source.buf.length
+
         const delta = time - last_time
         last_time = time
 
         anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
+        const max_progress = source.len - 2 + anim_progress
+        const min_progress = is_data_full ? anim_progress : 0
 
-        const is_data_full = source.length === source.data.length
-        const ease_progress = anim_progress * EASE_DENCITY
-        const available_ease_points = Math.max(
-            Math.round((source.length - 2) * EASE_DENCITY + ease_progress),
-            0,
-        )
-        const ease_points = Math.min(EASE_LENGTH, available_ease_points)
+        const ease_dencity = scale * EASE_DENCITY
+        const view_points = Math.round(utils.num.clamp(max_progress * ease_dencity, 0, EASE_LENGTH))
+        const view_progress = view_points / ease_dencity
 
-        let anchor_index = anchor < 0 ? available_ease_points + anchor : anchor
-        anchor_index = utils.num.clamp(
-            anchor_index - delta_x,
-            ease_points + (is_data_full ? ease_progress : 0),
-            available_ease_points,
+        const anchor_progress = anchor < 0 ? max_progress : anchor
+        const end_progress = utils.num.clamp(
+            anchor_progress - delta_x,
+            view_progress + min_progress,
+            max_progress,
         )
 
         delta_x = 0
-        anchor = anchor_index >= available_ease_points - 1 ? -1 : anchor_index
+        anchor = end_progress >= max_progress ? -1 : end_progress
 
-        const ease_end = anchor_index
-        const ease_start = ease_end - ease_points
+        const start_progress = Math.max(end_progress - view_progress, min_progress)
+
+        const view_end = end_progress * ease_dencity
+        const view_start = start_progress * ease_dencity
 
         /*
             clear
@@ -132,9 +136,9 @@ export const App: solid.Component = () => {
         ctx.lineCap = 'round'
         ctx.strokeStyle = '#e50'
         ctx.beginPath()
-        ctx.moveTo(0, yAtEaseIdx(ease_start))
-        for (let i = 1; i < ease_points; i += 1) {
-            ctx.lineTo(i * X_SPACING, yAtEaseIdx(ease_start + i))
+        ctx.moveTo(0, yAtEaseIdx(view_start, ease_dencity))
+        for (let i = view_start; i < view_end; i += 1) {
+            ctx.lineTo((i - view_start) * X_SPACING, yAtEaseIdx(i, ease_dencity))
         }
         ctx.stroke()
 
@@ -144,9 +148,9 @@ export const App: solid.Component = () => {
         ctx.lineWidth = 1
         ctx.fillStyle = '#fff'
         ctx.beginPath()
-        for (let i = 0; i < source.length; i += 1) {
-            const x = i * EASE_DENCITY * X_SPACING - ease_start * X_SPACING
-            const y = source.data[i]!
+        for (let i = 0; i < source.len; i += 1) {
+            const x = i * ease_dencity * X_SPACING - view_start * X_SPACING
+            const y = source.buf[i]!
             ctx.moveTo(x, y)
             ctx.arc(x, y, 2, 0, Math.PI * 2)
         }
@@ -161,14 +165,14 @@ export const App: solid.Component = () => {
             const new_value = Math.random() * 200
 
             if (is_data_full) {
-                fixedPushRight(source.data, new_value)
+                fixedPushRight(source.buf, new_value)
 
                 if (anchor > 0) {
-                    delta_x += EASE_DENCITY // ? maybe it's better to set anchor directly
+                    delta_x += 1 // ? maybe it's better to set anchor directly
                 }
             } else {
-                source.data[source.length] = new_value
-                source.length += 1
+                source.buf[source.len] = new_value
+                source.len += 1
             }
         }
     })
