@@ -1,3 +1,14 @@
+/*
+
+TODO
+
+- [ ] Drag to pan
+- [ ] Scale to mouse position
+- [ ] Reduce number of points when zoomed out
+
+
+*/
+
 import {signal as s} from '@nothing-but/solid'
 import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
@@ -57,7 +68,7 @@ export const App: solid.Component = () => {
 
     /* input data */
     const source = {
-        buf: new Float32Array(64),
+        buf: new Float32Array(1024),
         len: 1,
     }
 
@@ -66,9 +77,9 @@ export const App: solid.Component = () => {
     // }
     // source.len = source.buf.length
 
-    const EASE_LENGTH = 1024
-    const EASE_DENCITY = 64
-    const X_SPACING = 0.2
+    const EASE_DENCITY = 32 // ease points between data points
+    const X_SPACING = 0.4 // px between points
+    const MARGIN = 20 // px
 
     function yAtProgress(progress: number): number {
         const data_i = Math.floor(progress)
@@ -86,7 +97,7 @@ export const App: solid.Component = () => {
     let scale = 1
 
     const unsubWheel = utils.event.listener(el, 'wheel', e => {
-        scale = utils.num.clamp(scale + e.deltaY / 500, 0.2, 8)
+        scale = utils.num.clamp(scale - e.deltaY / 500, 0.5, 8)
         delta_x -= e.deltaX / 100 / scale
     })
     void s.onCleanup(unsubWheel)
@@ -95,6 +106,9 @@ export const App: solid.Component = () => {
     const loop = utils.raf.makeAnimationLoop(time => {
         const is_data_full = source.len === source.buf.length
 
+        const ease_dencity = scale * EASE_DENCITY
+        const view_width_points = (el.width - MARGIN * 2) / X_SPACING
+
         const delta = time - last_time
         last_time = time
 
@@ -102,8 +116,9 @@ export const App: solid.Component = () => {
         const max_progress = source.len - 2 + anim_progress
         const min_progress = is_data_full ? anim_progress : 0
 
-        const ease_dencity = scale * EASE_DENCITY
-        const view_points = Math.round(utils.num.clamp(max_progress * ease_dencity, 0, EASE_LENGTH))
+        const view_points = Math.round(
+            utils.num.clamp(max_progress * ease_dencity, 0, view_width_points),
+        )
         const view_progress = view_points / ease_dencity
 
         const anchor_progress = anchor < 0 ? max_progress : anchor
@@ -127,7 +142,7 @@ export const App: solid.Component = () => {
         */
         ctx.resetTransform()
         ctx.clearRect(0, 0, el.width, el.height)
-        ctx.setTransform(1, 0, 0, -1, 300, el.height - 200)
+        ctx.setTransform(1, 0, 0, -1, MARGIN, el.height - 200)
 
         /*
             draw ease line
@@ -141,20 +156,6 @@ export const App: solid.Component = () => {
             ctx.lineTo((i - view_start) * X_SPACING, yAtProgress(i / ease_dencity))
         }
         ctx.stroke()
-
-        // /*
-        //     reference points
-        // */
-        // ctx.lineWidth = 1
-        // ctx.fillStyle = '#fff'
-        // ctx.beginPath()
-        // for (let i = 0; i < source.len; i += 1) {
-        //     const x = i * ease_dencity * X_SPACING - view_start * X_SPACING
-        //     const y = source.buf[i]!
-        //     ctx.moveTo(x, y)
-        //     ctx.arc(x, y, 2, 0, Math.PI * 2)
-        // }
-        // ctx.fill()
 
         /*
             update data
