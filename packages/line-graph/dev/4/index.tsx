@@ -14,21 +14,6 @@ import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import * as sweb from 'solid-js/web'
 
-const Shell: solid.FlowComponent = props => {
-    return (
-        <div class="min-h-100vh min-w-100vw">
-            <div class="w-screen h-screen center-child flex-col">
-                <div
-                    ref={utils.event.preventMobileScrolling}
-                    class="relative h-80vh w-90vw m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
-                >
-                    {props.children}
-                </div>
-            </div>
-        </div>
-    )
-}
-
 type ArrayLike<T> = {
     readonly length: number
     [index: number]: T
@@ -180,7 +165,18 @@ export const App: solid.Component = () => {
     utils.raf.loopStart(loop)
     s.addCleanup(loop, utils.raf.loopClear)
 
-    return <Shell>{el}</Shell>
+    return (
+        <div class="min-h-100vh min-w-100vw">
+            <div class="w-screen h-screen center-child flex-col">
+                <div
+                    ref={utils.event.preventMobileScrolling}
+                    class="relative h-80vh w-90vw m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
+                >
+                    {el}
+                </div>
+            </div>
+        </div>
+    )
 }
 
 void sweb.render(() => <App />, document.getElementById('root')!)
