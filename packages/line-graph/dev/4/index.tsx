@@ -39,21 +39,75 @@ function fixedPushLeft<T>(arr: ArrayLike<T>, value: T): void {
     arr[0] = value
 }
 
+interface CanvasResizeObserver {
+    /**
+     * Canvas was resized since last check.
+     * Set it to `false` to reset.
+     */
+    resized: boolean
+    canvas: HTMLCanvasElement
+    observer: ResizeObserver
+    width: number
+    height: number
+}
+function makeCanvasResizeObserver(canvas: HTMLCanvasElement): CanvasResizeObserver {
+    const rect = canvas.getBoundingClientRect()
+    const dpr = window.devicePixelRatio
+
+    const data: CanvasResizeObserver = {
+        resized: false,
+        canvas,
+        observer: new ResizeObserver(() => {
+            const rect = canvas.getBoundingClientRect()
+
+            const display_width = Math.round(rect.width * dpr)
+            const display_height = Math.round(rect.height * dpr)
+
+            if (canvas.width !== display_width || canvas.height !== display_height) {
+                canvas.width = display_width
+                canvas.height = display_height
+                data.width = rect.width
+                data.height = rect.height
+                data.resized = true
+            }
+        }),
+        width: rect.width,
+        height: rect.height,
+    }
+    data.observer.observe(canvas)
+    return data
+}
+function cleanCanvasResizeObserver(data: CanvasResizeObserver): void {
+    data.observer.disconnect()
+}
+
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
     const ctx = el.getContext('2d')
     if (!ctx) throw new Error('2d context is not supported')
 
-    /*
-    Update the canvas's size to match the size it's displayed.
-    */
-    const ro = utils.canvas.makeCanvasResizeObserver(el)
-    s.addCleanup(ro, utils.canvas.cleanCanvasResizeObserver)
+    const dpr = window.devicePixelRatio
+    const ro = makeCanvasResizeObserver(el)
+    s.addCleanup(ro, cleanCanvasResizeObserver)
+
+    let wheel_delta_x = 0
+    let wheel_delta_y = 0
+    const unsubWheel = utils.event.listener(el, 'wheel', e => {
+        wheel_delta_x += e.deltaX
+        wheel_delta_y += e.deltaY
+    })
+    void s.onCleanup(unsubWheel)
+
+    let mouse_x = 0
+    const unsubMouse = utils.event.listener(el, 'mousemove', e => {
+        mouse_x = e.offsetX
+    })
+    void s.onCleanup(unsubMouse)
 
     /* input data */
     const source = {
-        buf: new Float32Array(1024),
+        buf: new Float32Array(256),
         len: 1,
     }
 
@@ -78,26 +132,32 @@ export const App: solid.Component = () => {
     let anim_progress = 0 // 0 -> 1
 
     let anchor = -1 // follow the last point
-    let delta_x = 0
     let scale = 1
 
-    const unsubWheel = utils.event.listener(el, 'wheel', e => {
-        scale = utils.num.clamp(scale - e.deltaY / 500, 0.5, 8)
-        delta_x -= e.deltaX / 100 / scale
-    })
-    void s.onCleanup(unsubWheel)
-
+    let last_mouse_progress = 0
     let last_time = 0
     const loop = utils.raf.makeAnimationLoop(time => {
         const is_data_full = source.len === source.buf.length
 
-        const ease_dencity = scale * EASE_DENCITY
-        const view_width_points = (el.width - MARGIN * 2) / X_SPACING
-
         const delta = time - last_time
         last_time = time
-
         anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
+
+        const drawable_width = ro.width - MARGIN * 2
+
+        const mouse_p = (mouse_x - MARGIN) / drawable_width
+
+        // const mouse_progress = utils.num.clamp(mouse_p * scale + delta_progress, 0, 1)
+        // console.log(mouse_progress)
+
+        scale = utils.num.clamp(scale - wheel_delta_y / 500, 0.5, 8)
+        const delta_progress = wheel_delta_x / 20 / scale
+        wheel_delta_x = 0
+        wheel_delta_y = 0
+
+        const ease_dencity = scale * EASE_DENCITY
+        const view_width_points = drawable_width / X_SPACING
+
         const max_progress = source.len - 2 + anim_progress
         const min_progress = is_data_full ? anim_progress : 0
 
@@ -108,15 +168,19 @@ export const App: solid.Component = () => {
 
         const anchor_progress = anchor < 0 ? max_progress : anchor
         const end_progress = utils.num.clamp(
-            anchor_progress - delta_x,
+            anchor_progress - delta_progress,
             view_progress + min_progress,
             max_progress,
         )
 
-        delta_x = 0
         anchor = end_progress >= max_progress ? -1 : end_progress
 
+        /* correct for when both start and end are visible, when zoomed out */
         const start_progress = Math.max(end_progress - view_progress, min_progress)
+
+        const mouse_progress = start_progress + mouse_p * (end_progress - start_progress)
+        const mouse_progress_delta = mouse_progress - last_mouse_progress
+        last_mouse_progress = mouse_progress
 
         const view_end = Math.floor(end_progress * ease_dencity)
         const view_start = Math.floor(start_progress * ease_dencity)
@@ -127,7 +191,7 @@ export const App: solid.Component = () => {
         */
         ctx.resetTransform()
         ctx.clearRect(0, 0, el.width, el.height)
-        ctx.setTransform(1, 0, 0, -1, MARGIN, el.height - 200)
+        ctx.setTransform(dpr, 0, 0, -dpr, 0, el.height - 200)
 
         /*
             draw ease line
@@ -136,9 +200,9 @@ export const App: solid.Component = () => {
         ctx.lineCap = 'round'
         ctx.strokeStyle = '#e50'
         ctx.beginPath()
-        ctx.moveTo(0, yAtProgress(view_start / ease_dencity))
+        ctx.moveTo(MARGIN, yAtProgress(view_start / ease_dencity))
         for (let i = view_start; i < view_end; i += 1) {
-            ctx.lineTo((i - view_start) * X_SPACING, yAtProgress(i / ease_dencity))
+            ctx.lineTo(MARGIN + (i - view_start) * X_SPACING, yAtProgress(i / ease_dencity))
         }
         ctx.stroke()
 
@@ -154,7 +218,7 @@ export const App: solid.Component = () => {
                 fixedPushRight(source.buf, new_value)
 
                 if (anchor > 0) {
-                    delta_x += 1 // ? maybe it's better to set anchor directly
+                    anchor -= 1
                 }
             } else {
                 source.buf[source.len] = new_value
