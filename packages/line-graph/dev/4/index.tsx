@@ -13,6 +13,8 @@ TODO
 
 */
 
+import '../index.jsx' // setup
+
 import {signal as s} from '@nothing-but/solid'
 import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
@@ -89,6 +91,11 @@ function makeElementResizeState(el: HTMLElement): ElementResizeState {
 function cleanCanvasResizeObserver(data: ElementResizeState): void {
     data.observer.disconnect()
 }
+function createElementResizeState(el: HTMLElement): ElementResizeState {
+    const state = makeElementResizeState(el)
+    utils.lifecycle.onCleanup(() => cleanCanvasResizeObserver(state))
+    return state
+}
 
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
@@ -97,32 +104,28 @@ export const App: solid.Component = () => {
     if (!ctx) throw new Error('2d context is not supported')
 
     const dpr = window.devicePixelRatio
-    const ro = makeElementResizeState(el)
-    s.addCleanup(ro, cleanCanvasResizeObserver)
+    const ro = createElementResizeState(el)
 
     let wheel_delta_x = 0
     let wheel_delta_y = 0
-    const unsubWheel = utils.event.listener(el, 'wheel', e => {
+    utils.event.createListener(el, 'wheel', e => {
         wheel_delta_x += e.deltaX
         wheel_delta_y += e.deltaY
     })
-    void s.onCleanup(unsubWheel)
 
     let mouse_x = 0
-    const unsubMouse = utils.event.listener(el, 'mousemove', e => {
+    utils.event.createListener(el, 'mousemove', e => {
         mouse_x = e.offsetX
     })
-    void s.onCleanup(unsubMouse)
 
     let mousedown = false
-    const unsubMousedown = utils.event.listener(el, 'mousedown', () => {
+    utils.event.createListener(el, 'mousedown', () => {
         mousedown = true
     })
-    void s.onCleanup(unsubMousedown)
-    const unsubMouseup = utils.event.listener(el, 'mouseup', () => {
+
+    utils.event.createListener(el, 'mouseup', () => {
         mousedown = false
     })
-    void s.onCleanup(unsubMouseup)
 
     /* input data */
     const source = {

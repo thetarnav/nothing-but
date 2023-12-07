@@ -1,3 +1,4 @@
+import {onCleanup} from './lifecycle.js'
 import * as T from './types.js'
 
 export type EventListenerOptions = boolean | AddEventListenerOptions
@@ -219,7 +220,7 @@ export function listener<
     type: TEventType,
     handler: (event: TEventMap[TEventType]) => void,
     options?: EventListenerOptions,
-): VoidFunction
+): () => void
 
 // Custom Events
 export function listener<
@@ -240,6 +241,39 @@ export function listener(
 ): () => void {
     target.addEventListener(type, handler, options)
     return target.removeEventListener.bind(target, type, handler, options)
+}
+
+// DOM Events
+export function createListener<
+    TTarget extends TargetWithEventMap,
+    TEventMap extends EventMapOf<TTarget>,
+    TEventType extends keyof TEventMap,
+>(
+    target: TTarget,
+    type: TEventType,
+    handler: (event: TEventMap[TEventType]) => void,
+    options?: EventListenerOptions,
+): void
+
+// Custom Events
+export function createListener<
+    TEventMap extends Record<string, Event>,
+    TEventType extends keyof TEventMap = keyof TEventMap,
+>(
+    target: EventTarget,
+    type: TEventType,
+    handler: (event: TEventMap[TEventType]) => void,
+    options?: EventListenerOptions,
+): void
+
+export function createListener(
+    target: EventTarget,
+    type: string,
+    handler: (event: Event) => void,
+    options?: EventListenerOptions,
+): void {
+    target.addEventListener(type, handler, options)
+    onCleanup(target.removeEventListener.bind(target, type, handler, options))
 }
 
 export type EventHandlerMap<TEventMap> = {
@@ -280,3 +314,25 @@ export function listenerMap(
  * Alias to {@link listenerMap}
  */
 export const listeners = listenerMap
+
+// DOM Events
+export function createListeners<
+    TTarget extends TargetWithEventMap,
+    TEventMap extends EventMapOf<TTarget>,
+    THandlersMap extends Partial<EventHandlerMap<TEventMap>>,
+>(target: TTarget, handlersMap: THandlersMap, options?: EventListenerOptions): void
+
+// Custom Events
+export function createListeners<TEventMap extends Record<string, Event>>(
+    target: EventTarget,
+    handlersMap: Partial<EventHandlerMap<TEventMap>>,
+    options?: EventListenerOptions,
+): void
+
+export function createListeners(
+    target: EventTarget,
+    handlers: Record<string, T.AnyFunction | T.Nullish>,
+    options?: EventListenerOptions,
+): void {
+    onCleanup((listeners as any)(target, handlers, options))
+}

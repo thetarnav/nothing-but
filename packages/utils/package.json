@@ -44,42 +44,5 @@
                 "default": "./dist/*.js"
             }
         }
-    },
-    "typesVersions": {
-        "*": {
-            "array": [
-                "./dist/array.d.ts"
-            ],
-            "color": [
-                "./dist/color.d.ts"
-            ],
-            "ease": [
-                "./dist/ease.d.ts"
-            ],
-            "num": [
-                "./dist/num.d.ts"
-            ],
-            "set": [
-                "./dist/set.d.ts"
-            ],
-            "misc": [
-                "./dist/misc.d.ts"
-            ],
-            "trig": [
-                "./dist/trig.d.ts"
-            ],
-            "types": [
-                "./dist/types.d.ts"
-            ],
-            "canvas": [
-                "./dist/canvas.d.ts"
-            ],
-            "event": [
-                "./dist/event.d.ts"
-            ],
-            "raf": [
-                "./dist/raf.d.ts"
-            ]
-        }
     }
 }
