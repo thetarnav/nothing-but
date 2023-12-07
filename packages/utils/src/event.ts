@@ -2,69 +2,169 @@ import * as T from './types.js'
 
 export type EventListenerOptions = boolean | AddEventListenerOptions
 
-export type TargetEventMapMap =
-    | {target: Window; map: WindowEventMap}
-    | {target: Document | XMLDocument; map: DocumentEventMap}
-    | {target: HTMLBodyElement; map: HTMLBodyElementEventMap}
-    | {target: HTMLFrameSetElement; map: HTMLFrameSetElementEventMap}
-    | {target: HTMLMediaElement; map: HTMLMediaElementEventMap}
-    | {target: HTMLVideoElement; map: HTMLVideoElementEventMap}
-    | {target: HTMLElement; map: HTMLElementEventMap}
-    | {target: SVGSVGElement; map: SVGSVGElementEventMap}
-    | {target: SVGElement; map: SVGElementEventMap}
-    | {target: MathMLElement; map: MathMLElementEventMap}
-    | {target: Element; map: ElementEventMap}
-    | {target: AbortSignal; map: AbortSignalEventMap}
-    | {target: AbstractWorker; map: AbstractWorkerEventMap}
-    | {target: Animation; map: AnimationEventMap}
-    | {target: BroadcastChannel; map: BroadcastChannelEventMap}
-    | {target: CSSAnimation; map: AnimationEventMap}
-    | {target: CSSTransition; map: AnimationEventMap}
-    | {target: FileReader; map: FileReaderEventMap}
-    | {target: IDBDatabase; map: IDBDatabaseEventMap}
-    | {target: IDBOpenDBRequest; map: IDBOpenDBRequestEventMap}
-    | {target: IDBRequest; map: IDBRequestEventMap}
-    | {target: IDBTransaction; map: IDBTransactionEventMap}
-    | {target: MediaDevices; map: MediaDevicesEventMap}
-    | {target: MediaKeySession; map: MediaKeySessionEventMap}
-    | {target: MediaQueryList; map: MediaQueryListEventMap}
-    | {target: MediaRecorder; map: MediaRecorderEventMap}
-    | {target: MediaSource; map: MediaSourceEventMap}
-    | {target: MediaStream; map: MediaStreamEventMap}
-    | {target: MediaStreamTrack; map: MediaStreamTrackEventMap}
-    | {target: MessagePort; map: MessagePortEventMap}
-    | {target: Notification; map: NotificationEventMap}
-    | {target: PaymentRequest; map: PaymentRequestEventMap}
-    | {target: Performance; map: PerformanceEventMap}
-    | {target: PermissionStatus; map: PermissionStatusEventMap}
-    | {target: PictureInPictureWindow; map: PictureInPictureWindowEventMap}
-    | {target: RemotePlayback; map: RemotePlaybackEventMap}
-    | {target: ScreenOrientation; map: ScreenOrientationEventMap}
-    | {target: ServiceWorker; map: ServiceWorkerEventMap}
-    | {target: ServiceWorkerContainer; map: ServiceWorkerContainerEventMap}
-    | {target: ServiceWorkerRegistration; map: ServiceWorkerRegistrationEventMap}
-    | {target: ShadowRoot; map: ShadowRootEventMap}
-    | {target: SharedWorker; map: AbstractWorkerEventMap}
-    | {target: SourceBuffer; map: SourceBufferEventMap}
-    | {target: SourceBufferList; map: SourceBufferListEventMap}
-    | {target: SpeechSynthesis; map: SpeechSynthesisEventMap}
-    | {target: SpeechSynthesisUtterance; map: SpeechSynthesisUtteranceEventMap}
-    | {target: VisualViewport; map: VisualViewportEventMap}
-    | {target: WebSocket; map: WebSocketEventMap}
-    | {target: Worker; map: WorkerEventMap}
-    | {target: XMLHttpRequest; map: XMLHttpRequestEventMap}
-    | {target: XMLHttpRequestEventTarget; map: XMLHttpRequestEventTargetEventMap}
-    | {target: XMLHttpRequestUpload; map: XMLHttpRequestEventTargetEventMap}
-    | {target: EventSource; map: EventSourceEventMap}
+export type TargetWithEventMap =
+    | Window
+    | Document
+    | XMLDocument
+    | HTMLBodyElement
+    | HTMLFrameSetElement
+    | HTMLMediaElement
+    | HTMLVideoElement
+    | HTMLElement
+    | SVGSVGElement
+    | SVGElement
+    | MathMLElement
+    | Element
+    | AbortSignal
+    | AbstractWorker
+    | Animation
+    | BroadcastChannel
+    | CSSAnimation
+    | CSSTransition
+    | FileReader
+    | IDBDatabase
+    | IDBOpenDBRequest
+    | IDBRequest
+    | IDBTransaction
+    | MediaDevices
+    | MediaKeySession
+    | MediaQueryList
+    | MediaRecorder
+    | MediaSource
+    | MediaStream
+    | MediaStreamTrack
+    | MessagePort
+    | Notification
+    | PaymentRequest
+    | Performance
+    | PermissionStatus
+    | PictureInPictureWindow
+    | RemotePlayback
+    | ScreenOrientation
+    | ServiceWorker
+    | ServiceWorkerContainer
+    | ServiceWorkerRegistration
+    | ShadowRoot
+    | SharedWorker
+    | SourceBuffer
+    | SourceBufferList
+    | SpeechSynthesis
+    | SpeechSynthesisUtterance
+    | VisualViewport
+    | WebSocket
+    | Worker
+    | XMLHttpRequest
+    | XMLHttpRequestEventTarget
+    | XMLHttpRequestUpload
+    | EventSource
 
-export type TargetWithEventMap = TargetEventMapMap['target']
-
-export type EventMapOf<TTarget extends TargetWithEventMap> = TargetEventMapMap extends {
-    target: TTarget
-    map: infer TEventMap
-}
-    ? TEventMap
-    : never
+export type EventMapOf<Target> = Target extends Window
+    ? WindowEventMap
+    : Target extends Document | XMLDocument
+      ? DocumentEventMap
+      : Target extends HTMLBodyElement
+        ? HTMLBodyElementEventMap
+        : Target extends HTMLFrameSetElement
+          ? HTMLFrameSetElementEventMap
+          : Target extends HTMLMediaElement
+            ? HTMLMediaElementEventMap
+            : Target extends HTMLVideoElement
+              ? HTMLVideoElementEventMap
+              : Target extends HTMLElement
+                ? HTMLElementEventMap
+                : Target extends SVGSVGElement
+                  ? SVGSVGElementEventMap
+                  : Target extends SVGElement
+                    ? SVGElementEventMap
+                    : Target extends MathMLElement
+                      ? MathMLElementEventMap
+                      : Target extends Element
+                        ? ElementEventMap
+                        : Target extends AbortSignal
+                          ? AbortSignalEventMap
+                          : Target extends AbstractWorker
+                            ? AbstractWorkerEventMap
+                            : Target extends Animation
+                              ? AnimationEventMap
+                              : Target extends BroadcastChannel
+                                ? BroadcastChannelEventMap
+                                : Target extends CSSAnimation
+                                  ? AnimationEventMap
+                                  : Target extends CSSTransition
+                                    ? AnimationEventMap
+                                    : Target extends FileReader
+                                      ? FileReaderEventMap
+                                      : Target extends IDBDatabase
+                                        ? IDBDatabaseEventMap
+                                        : Target extends IDBOpenDBRequest
+                                          ? IDBOpenDBRequestEventMap
+                                          : Target extends IDBRequest
+                                            ? IDBRequestEventMap
+                                            : Target extends IDBTransaction
+                                              ? IDBTransactionEventMap
+                                              : Target extends MediaDevices
+                                                ? MediaDevicesEventMap
+                                                : Target extends MediaKeySession
+                                                  ? MediaKeySessionEventMap
+                                                  : Target extends MediaQueryList
+                                                    ? MediaQueryListEventMap
+                                                    : Target extends MediaRecorder
+                                                      ? MediaRecorderEventMap
+                                                      : Target extends MediaSource
+                                                        ? MediaSourceEventMap
+                                                        : Target extends MediaStream
+                                                          ? MediaStreamEventMap
+                                                          : Target extends MediaStreamTrack
+                                                            ? MediaStreamTrackEventMap
+                                                            : Target extends MessagePort
+                                                              ? MessagePortEventMap
+                                                              : Target extends Notification
+                                                                ? NotificationEventMap
+                                                                : Target extends PaymentRequest
+                                                                  ? PaymentRequestEventMap
+                                                                  : Target extends Performance
+                                                                    ? PerformanceEventMap
+                                                                    : Target extends PermissionStatus
+                                                                      ? PermissionStatusEventMap
+                                                                      : Target extends PictureInPictureWindow
+                                                                        ? PictureInPictureWindowEventMap
+                                                                        : Target extends RemotePlayback
+                                                                          ? RemotePlaybackEventMap
+                                                                          : Target extends ScreenOrientation
+                                                                            ? ScreenOrientationEventMap
+                                                                            : Target extends ServiceWorker
+                                                                              ? ServiceWorkerEventMap
+                                                                              : Target extends ServiceWorkerContainer
+                                                                                ? ServiceWorkerContainerEventMap
+                                                                                : Target extends ServiceWorkerRegistration
+                                                                                  ? ServiceWorkerRegistrationEventMap
+                                                                                  : Target extends ShadowRoot
+                                                                                    ? ShadowRootEventMap
+                                                                                    : Target extends SharedWorker
+                                                                                      ? AbstractWorkerEventMap
+                                                                                      : Target extends SourceBuffer
+                                                                                        ? SourceBufferEventMap
+                                                                                        : Target extends SourceBufferList
+                                                                                          ? SourceBufferListEventMap
+                                                                                          : Target extends SpeechSynthesis
+                                                                                            ? SpeechSynthesisEventMap
+                                                                                            : Target extends SpeechSynthesisUtterance
+                                                                                              ? SpeechSynthesisUtteranceEventMap
+                                                                                              : Target extends VisualViewport
+                                                                                                ? VisualViewportEventMap
+                                                                                                : Target extends WebSocket
+                                                                                                  ? WebSocketEventMap
+                                                                                                  : Target extends Worker
+                                                                                                    ? WorkerEventMap
+                                                                                                    : Target extends XMLHttpRequest
+                                                                                                      ? XMLHttpRequestEventMap
+                                                                                                      : Target extends XMLHttpRequestEventTarget
+                                                                                                        ? XMLHttpRequestEventTargetEventMap
+                                                                                                        : Target extends XMLHttpRequestUpload
+                                                                                                          ? XMLHttpRequestEventTargetEventMap
+                                                                                                          : Target extends EventSource
+                                                                                                            ? EventSourceEventMap
+                                                                                                            : never
 
 export const PASSIVE = {passive: true} as const
 export const NOT_PASSIVE = {passive: false} as const
