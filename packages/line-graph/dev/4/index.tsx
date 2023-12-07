@@ -3,7 +3,7 @@
 TODO
 
 - [ ] Drag to pan
-- [ ] Scale to mouse position
+- [x] Scale to mouse position
 - [ ] Reduce number of points when zoomed out
 
 
@@ -120,7 +120,7 @@ export const App: solid.Component = () => {
     const X_SPACING = 0.4 // px between points
     const MARGIN = 20 // px
 
-    function yAtProgress(progress: number): number {
+    const yAtProgress = (progress: number): number => {
         const data_i = Math.floor(progress)
         const p = utils.ease.in_out_cubic(progress - data_i)
         const from = source.buf[data_i]!
@@ -136,7 +136,8 @@ export const App: solid.Component = () => {
 
     let last_mouse_progress = 0
     let last_time = 0
-    const loop = utils.raf.makeAnimationLoop(time => {
+
+    const frame = (time: number): void => {
         const is_data_full = source.len === source.buf.length
 
         const delta = time - last_time
@@ -144,42 +145,44 @@ export const App: solid.Component = () => {
         anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
 
         const drawable_width = ro.width - MARGIN * 2
+        const drawable_points = drawable_width / X_SPACING
 
         const mouse_p = (mouse_x - MARGIN) / drawable_width
 
-        // const mouse_progress = utils.num.clamp(mouse_p * scale + delta_progress, 0, 1)
-        // console.log(mouse_progress)
+        const len_progress = source.len - 1 + anim_progress
+        const max_progress = len_progress - 1
+        const min_progress = is_data_full ? anim_progress : 0
 
+        const prev_scale = scale
         scale = utils.num.clamp(scale - wheel_delta_y / 500, 0.5, 8)
+        const ease_dencity = scale * EASE_DENCITY
+
         const delta_progress = wheel_delta_x / 20 / scale
         wheel_delta_x = 0
         wheel_delta_y = 0
 
-        const ease_dencity = scale * EASE_DENCITY
-        const view_width_points = drawable_width / X_SPACING
-
-        const max_progress = source.len - 2 + anim_progress
-        const min_progress = is_data_full ? anim_progress : 0
-
         const view_points = Math.round(
-            utils.num.clamp(max_progress * ease_dencity, 0, view_width_points),
+            utils.num.clamp(max_progress * ease_dencity, 0, drawable_points),
         )
         const view_progress = view_points / ease_dencity
 
-        const anchor_progress = anchor < 0 ? max_progress : anchor
+        const anchor_progress = anchor < 0 ? len_progress + anchor : anchor
         const end_progress = utils.num.clamp(
             anchor_progress - delta_progress,
             view_progress + min_progress,
             max_progress,
         )
-
-        anchor = end_progress >= max_progress ? -1 : end_progress
+        anchor = end_progress >= max_progress - EASE_DENCITY / 8 ? -1 : end_progress
 
         /* correct for when both start and end are visible, when zoomed out */
         const start_progress = Math.max(end_progress - view_progress, min_progress)
 
         const mouse_progress = start_progress + mouse_p * (end_progress - start_progress)
-        const mouse_progress_delta = mouse_progress - last_mouse_progress
+        if (prev_scale !== scale) {
+            anchor -= mouse_progress - last_mouse_progress
+            frame(time) // need view pos after applied scale, and then to change it
+            return
+        }
         last_mouse_progress = mouse_progress
 
         const view_end = Math.floor(end_progress * ease_dencity)
@@ -225,7 +228,9 @@ export const App: solid.Component = () => {
                 source.len += 1
             }
         }
-    })
+    }
+
+    const loop = utils.raf.makeAnimationLoop(frame)
     utils.raf.loopStart(loop)
     s.addCleanup(loop, utils.raf.loopClear)
 
