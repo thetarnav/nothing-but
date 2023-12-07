@@ -2,7 +2,11 @@
 
 TODO
 
-- [ ] Drag to pan
+- [x] Drag to pan
+    - [ ] handle drag outside of canvas
+    - [ ] momentum
+    - [ ] fix glitches when dragging to the beginning or end
+    - [ ] fix glitches with data-points moving
 - [x] Scale to mouse position
 - [ ] Reduce number of points when zoomed out
 
@@ -110,6 +114,16 @@ export const App: solid.Component = () => {
     })
     void s.onCleanup(unsubMouse)
 
+    let mousedown = false
+    const unsubMousedown = utils.event.listener(el, 'mousedown', () => {
+        mousedown = true
+    })
+    void s.onCleanup(unsubMousedown)
+    const unsubMouseup = utils.event.listener(el, 'mouseup', () => {
+        mousedown = false
+    })
+    void s.onCleanup(unsubMouseup)
+
     /* input data */
     const source = {
         buf: new Float32Array(256),
@@ -188,7 +202,11 @@ export const App: solid.Component = () => {
             frame(time) // need view pos after applied scale, and then to change it
             return
         }
-        last_mouse_progress = mouse_progress
+        if (mousedown) {
+            anchor -= mouse_progress - last_mouse_progress
+        } else {
+            last_mouse_progress = mouse_progress
+        }
 
         const view_end = Math.floor(end_progress * ease_dencity)
         const view_start = Math.floor(start_progress * ease_dencity)
