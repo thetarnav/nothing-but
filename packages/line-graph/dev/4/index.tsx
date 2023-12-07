@@ -39,45 +39,50 @@ function fixedPushLeft<T>(arr: ArrayLike<T>, value: T): void {
     arr[0] = value
 }
 
-interface CanvasResizeObserver {
+interface ElementResizeState {
     /**
      * Canvas was resized since last check.
      * Set it to `false` to reset.
      */
     resized: boolean
-    canvas: HTMLCanvasElement
+    canvas: HTMLElement
     observer: ResizeObserver
     width: number
     height: number
 }
-function makeCanvasResizeObserver(canvas: HTMLCanvasElement): CanvasResizeObserver {
+function getCanvasDisplaySize(canvas: HTMLCanvasElement): {width: number; height: number} {
     const rect = canvas.getBoundingClientRect()
     const dpr = window.devicePixelRatio
+    return {
+        width: Math.round(rect.width * dpr),
+        height: Math.round(rect.height * dpr),
+    }
+}
+function makeElementResizeState(el: HTMLElement): ElementResizeState {
+    const rect = el.getBoundingClientRect()
 
-    const data: CanvasResizeObserver = {
-        resized: false,
-        canvas,
+    const data: ElementResizeState = {
+        resized: true,
+        canvas: el,
         observer: new ResizeObserver(() => {
-            const rect = canvas.getBoundingClientRect()
+            const rect = el.getBoundingClientRect()
+            const width = Math.round(rect.width)
+            const height = Math.round(rect.height)
 
-            const display_width = Math.round(rect.width * dpr)
-            const display_height = Math.round(rect.height * dpr)
-
-            if (canvas.width !== display_width || canvas.height !== display_height) {
-                canvas.width = display_width
-                canvas.height = display_height
-                data.width = rect.width
-                data.height = rect.height
+            if (data.width !== width || data.height !== height) {
+                data.width = width
+                data.height = height
                 data.resized = true
             }
         }),
-        width: rect.width,
-        height: rect.height,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
     }
-    data.observer.observe(canvas)
+    data.observer.observe(el)
+
     return data
 }
-function cleanCanvasResizeObserver(data: CanvasResizeObserver): void {
+function cleanCanvasResizeObserver(data: ElementResizeState): void {
     data.observer.disconnect()
 }
 
@@ -88,7 +93,7 @@ export const App: solid.Component = () => {
     if (!ctx) throw new Error('2d context is not supported')
 
     const dpr = window.devicePixelRatio
-    const ro = makeCanvasResizeObserver(el)
+    const ro = makeElementResizeState(el)
     s.addCleanup(ro, cleanCanvasResizeObserver)
 
     let wheel_delta_x = 0
@@ -192,6 +197,12 @@ export const App: solid.Component = () => {
             clear
             flip y
         */
+        if (ro.resized) {
+            ro.resized = false
+            const ds = getCanvasDisplaySize(el)
+            el.width = ds.width
+            el.height = ds.height
+        }
         ctx.resetTransform()
         ctx.clearRect(0, 0, el.width, el.height)
         ctx.setTransform(dpr, 0, 0, -dpr, 0, el.height - 200)
