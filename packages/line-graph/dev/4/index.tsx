@@ -133,10 +133,10 @@ export const App: solid.Component = () => {
         len: 1,
     }
 
-    // for (let i = 0; i < source.buf.length; i += 1) {
-    //     source.buf[i] = Math.random() * 200
-    // }
-    // source.len = source.buf.length
+    for (let i = 0; i < source.buf.length; i += 1) {
+        source.buf[i] = Math.random() * 200
+    }
+    source.len = source.buf.length
 
     const EASE_DENCITY = 32 // ease points between data points
     const X_SPACING = 0.4 // px between points
@@ -158,6 +158,7 @@ export const App: solid.Component = () => {
 
     let last_mouse_progress = 0
     let last_time = 0
+    let mousedown_handled = false
 
     const frame = (time: number): void => {
         const is_data_full = source.len === source.buf.length
@@ -205,11 +206,15 @@ export const App: solid.Component = () => {
             frame(time) // need view pos after applied scale, and then to change it
             return
         }
-        if (mousedown) {
-            anchor -= mouse_progress - last_mouse_progress
-        } else {
-            last_mouse_progress = mouse_progress
+        if (mousedown && !mousedown_handled) {
+            mousedown_handled = true
+            const new_anchor = anchor - mouse_progress + last_mouse_progress
+            anchor = anchor < 0 ? Math.min(new_anchor, -1) : Math.max(new_anchor, 0)
+            frame(time) // I've lost my way
+            return
         }
+        mousedown_handled = false
+        last_mouse_progress = mouse_progress
 
         const view_end = Math.floor(end_progress * ease_dencity)
         const view_start = Math.floor(start_progress * ease_dencity)
@@ -254,6 +259,7 @@ export const App: solid.Component = () => {
 
                 if (anchor > 0) {
                     anchor -= 1
+                    last_mouse_progress -= 1
                 }
             } else {
                 source.buf[source.len] = new_value
