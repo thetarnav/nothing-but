@@ -158,7 +158,6 @@ export const App: solid.Component = () => {
 
     let last_mouse_progress = 0
     let last_time = 0
-    let mousedown_handled = false
 
     type ViewProgress = {
         start: number
@@ -236,33 +235,25 @@ export const App: solid.Component = () => {
 
         updateViewState()
 
+        anchor =
+            view_state.end >= view_state.max_progress - EASE_DENCITY / 8
+                ? view_state.end - view_state.max_progress - 1
+                : view_state.end
+
         if (delta_progress) {
             const anchor_progress = anchor < 0 ? view_state.len_progress + anchor : anchor
             anchor = anchor_progress + delta_progress
             updateViewState()
         }
 
-        anchor =
-            view_state.end >= view_state.max_progress - EASE_DENCITY / 8
-                ? view_state.end - view_state.max_progress - 1
-                : view_state.end
-
         const mouse_p = (mouse_x - MARGIN) / view_state.drawable_width
         const mouse_progress = view_state.start + mouse_p * (view_state.end - view_state.start)
 
-        if (prev_scale !== scale) {
+        if ((prev_scale !== scale || mousedown) && mouse_progress !== last_mouse_progress) {
             const new_anchor = anchor - mouse_progress + last_mouse_progress
             anchor = anchor < 0 ? Math.min(new_anchor, -1) : Math.max(new_anchor, 0)
             updateViewState()
         } else {
-            if (mousedown && !mousedown_handled) {
-                mousedown_handled = true
-                const new_anchor = anchor - mouse_progress + last_mouse_progress
-                anchor = anchor < 0 ? Math.min(new_anchor, -1) : Math.max(new_anchor, 0)
-                updateViewState()
-            } else {
-                mousedown_handled = false
-            }
             last_mouse_progress = mouse_progress
         }
 
@@ -327,10 +318,8 @@ export const App: solid.Component = () => {
             if (is_data_full) {
                 fixedPushRight(source.buf, new_value)
 
-                if (anchor > 0) {
-                    anchor -= 1
-                    last_mouse_progress -= 1
-                }
+                if (anchor > 0) anchor -= 1
+                last_mouse_progress -= 1
             } else {
                 source.buf[source.len] = new_value
                 source.len += 1
