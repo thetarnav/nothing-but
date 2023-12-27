@@ -5,15 +5,13 @@ TODO
 - [x] Drag to pan
     - [ ] handle drag outside of canvas
     - [ ] momentum
-    - [ ] fix glitches when dragging to the beginning or end
-    - [ ] fix glitches with data-points moving
+    - [x] fix glitches when dragging to the beginning or end
+    - [x] fix glitches with data-points moving
 - [x] Scale to mouse position
 - [ ] Reduce number of points when zoomed out
 
 
 */
-
-import '../index.jsx' // setup
 
 import {signal as s} from '@nothing-but/solid'
 import * as utils from '@nothing-but/utils'
@@ -133,7 +131,7 @@ export const App: solid.Component = () => {
         len: 1,
     }
 
-    source.len = 128
+    source.len = 256
     for (let i = 0; i < source.len; i += 1) {
         source.buf[i] = Math.random() * 200
     }
@@ -151,7 +149,7 @@ export const App: solid.Component = () => {
     }
 
     const ANIM_DURATION = 400
-    let anim_progress = 0 // 0 -> 1
+    let anim_progress = 0 // %
 
     let anchor = -1 // follow the last point
     let scale = 1

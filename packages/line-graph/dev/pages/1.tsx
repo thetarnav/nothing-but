@@ -3,8 +3,43 @@ import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import * as sweb from 'solid-js/web'
 import * as lib from '../../src'
-import fragment_shader_source from './fragment.glsl?raw'
-import vertex_shader_source from './vertex.glsl?raw'
+
+const vertex_shader_source = /*glsl*/ `
+// an attribute will receive data from a buffer
+attribute vec2 a_position;
+attribute vec4 a_color;
+uniform vec2 u_resolution;
+// color to pass to the fragment shader
+// value in fragment shader will be interpolated
+varying vec4 v_color;
+
+void main() {
+    // from pixels to 0->1 then to 0->2 then to -1->+1 (clipspace)
+    vec2 clip_space = (a_position / u_resolution) * 2.0 - 1.0;
+
+    gl_Position = vec4(clip_space * vec2(1, -1), 0, 1);
+
+    // Convert from clip space to color space.
+    // Clip space goes -1.0 to +1.0
+    // Color space goes from 0.0 to 1.0
+    // v_color = 1.0 - (gl_Position * 0.5 + 0.5);
+    v_color = a_color;
+}
+`
+
+const fragment_shader_source = /*glsl*/ `
+// fragment shaders don't have a default precision so we need
+// to pick one. mediump is a good default
+precision mediump float;
+
+// color varying received from vertex shader
+varying vec4 v_color;
+
+void main() {
+  // gl_FragColor is a special variable a fragment shader is responsible for setting
+  gl_FragColor = v_color;
+}
+`
 
 const Shell: solid.FlowComponent = props => {
     return (
