@@ -20,11 +20,11 @@ import * as utils from '@nothing-but/utils'
 import * as solid from 'solid-js'
 import * as sweb from 'solid-js/web'
 
-type ArrayLike<T> = {
+interface ArrayLike<T> {
     readonly length: number
     [index: number]: T
 }
-type ReadonlyArrayLike<T> = {
+interface ReadonlyArrayLike<T> {
     readonly length: number
     readonly [index: number]: T
 }
@@ -160,29 +160,40 @@ export const App: solid.Component = () => {
     let last_time = 0
     let mousedown_handled = false
 
-    const frame = (time: number): void => {
-        const is_data_full = source.len === source.buf.length
+    type ViewProgress = {
+        start: number
+        end: number
+        len_progress: number
+        max_progress: number
+        min_progress: number
+        ease_dencity: number
+        drawable_width: number
+        drawable_points: number
+    }
 
-        const delta = time - last_time
-        last_time = time
-        anim_progress = Math.min(anim_progress + delta / ANIM_DURATION, 1)
+    const view_state: ViewProgress = {
+        start: 0,
+        end: 0,
+        len_progress: 0,
+        max_progress: 0,
+        min_progress: 0,
+        ease_dencity: 0,
+        drawable_width: 0,
+        drawable_points: 0,
+    }
+    updateViewState()
+
+    function updateViewState(): void {
+        const is_data_full = source.len === source.buf.length
 
         const drawable_width = ro.width - MARGIN * 2
         const drawable_points = drawable_width / X_SPACING
-
-        const mouse_p = (mouse_x - MARGIN) / drawable_width
 
         const len_progress = source.len - 1 + anim_progress
         const max_progress = len_progress - 1
         const min_progress = is_data_full ? anim_progress : 0
 
-        const prev_scale = scale
-        scale = utils.num.clamp(scale - wheel_delta_y / 500, 0.5, 8)
         const ease_dencity = scale * EASE_DENCITY
-
-        const delta_progress = wheel_delta_x / 20 / scale
-        wheel_delta_x = 0
-        wheel_delta_y = 0
 
         const view_points = Math.round(
             utils.num.clamp(max_progress * ease_dencity, 0, drawable_points),
@@ -191,33 +202,72 @@ export const App: solid.Component = () => {
 
         const anchor_progress = anchor < 0 ? len_progress + anchor : anchor
         const end_progress = utils.num.clamp(
-            anchor_progress - delta_progress,
+            anchor_progress,
             view_progress + min_progress,
             max_progress,
         )
-        anchor = end_progress >= max_progress - EASE_DENCITY / 8 ? -1 : end_progress
 
         /* correct for when both start and end are visible, when zoomed out */
         const start_progress = Math.max(end_progress - view_progress, min_progress)
 
-        const mouse_progress = start_progress + mouse_p * (end_progress - start_progress)
-        if (prev_scale !== scale) {
-            anchor -= mouse_progress - last_mouse_progress
-            frame(time) // need view pos after applied scale, and then to change it
-            return
+        view_state.start = start_progress
+        view_state.end = end_progress
+        view_state.len_progress = len_progress
+        view_state.max_progress = max_progress
+        view_state.min_progress = min_progress
+        view_state.ease_dencity = ease_dencity
+        view_state.drawable_width = drawable_width
+        view_state.drawable_points = drawable_points
+    }
+
+    const frame = (time: number): void => {
+        const is_data_full = source.len === source.buf.length
+
+        const delta_time = time - last_time
+        last_time = time
+        anim_progress = Math.min(anim_progress + delta_time / ANIM_DURATION, 1)
+
+        const prev_scale = scale
+        scale = utils.num.clamp(scale - wheel_delta_y / 500, 0.5, 8)
+
+        const delta_progress = wheel_delta_x / 20 / scale
+        wheel_delta_x = 0
+        wheel_delta_y = 0
+
+        updateViewState()
+
+        if (delta_progress) {
+            const anchor_progress = anchor < 0 ? view_state.len_progress + anchor : anchor
+            anchor = anchor_progress + delta_progress
+            updateViewState()
         }
-        if (mousedown && !mousedown_handled) {
-            mousedown_handled = true
+
+        anchor =
+            view_state.end >= view_state.max_progress - EASE_DENCITY / 8
+                ? view_state.end - view_state.max_progress - 1
+                : view_state.end
+
+        const mouse_p = (mouse_x - MARGIN) / view_state.drawable_width
+        const mouse_progress = view_state.start + mouse_p * (view_state.end - view_state.start)
+
+        if (prev_scale !== scale) {
             const new_anchor = anchor - mouse_progress + last_mouse_progress
             anchor = anchor < 0 ? Math.min(new_anchor, -1) : Math.max(new_anchor, 0)
-            frame(time) // I've lost my way
-            return
+            updateViewState()
+        } else {
+            if (mousedown && !mousedown_handled) {
+                mousedown_handled = true
+                const new_anchor = anchor - mouse_progress + last_mouse_progress
+                anchor = anchor < 0 ? Math.min(new_anchor, -1) : Math.max(new_anchor, 0)
+                updateViewState()
+            } else {
+                mousedown_handled = false
+            }
+            last_mouse_progress = mouse_progress
         }
-        mousedown_handled = false
-        last_mouse_progress = mouse_progress
 
-        const view_end = Math.floor(end_progress * ease_dencity)
-        const view_start = Math.floor(start_progress * ease_dencity)
+        const view_end = Math.floor(view_state.end * view_state.ease_dencity)
+        const view_start = Math.floor(view_state.start * view_state.ease_dencity)
 
         /*
             clear
@@ -240,10 +290,30 @@ export const App: solid.Component = () => {
         ctx.lineCap = 'round'
         ctx.strokeStyle = '#e50'
         ctx.beginPath()
-        ctx.moveTo(MARGIN, yAtProgress(view_start / ease_dencity))
+        ctx.moveTo(MARGIN, yAtProgress(view_start / view_state.ease_dencity))
         for (let i = view_start; i < view_end; i += 1) {
-            ctx.lineTo(MARGIN + (i - view_start) * X_SPACING, yAtProgress(i / ease_dencity))
+            ctx.lineTo(
+                MARGIN + (i - view_start) * X_SPACING,
+                yAtProgress(i / view_state.ease_dencity),
+            )
         }
+        ctx.stroke()
+
+        const drawable_width = ro.width - MARGIN * 2
+
+        /*
+        progress indicator
+        */
+        ctx.lineWidth = 5
+        ctx.strokeStyle = '#ff0000'
+        ctx.beginPath()
+        ctx.moveTo(MARGIN, -50)
+        ctx.lineTo(MARGIN + drawable_width * anim_progress, -50)
+        ctx.stroke()
+        ctx.beginPath()
+        ctx.strokeStyle = '#00ff00'
+        ctx.moveTo(MARGIN + (view_state.start / view_state.max_progress) * drawable_width, -100)
+        ctx.lineTo(MARGIN + (view_state.end / view_state.max_progress) * drawable_width, -100)
         ctx.stroke()
 
         /*
