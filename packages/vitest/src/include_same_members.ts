@@ -1,4 +1,4 @@
-import * as v from 'vitest'
+import * as v from "vitest"
 
 v.expect.extend({
     toIncludeSameMembers(received, expected) {
@@ -55,7 +55,7 @@ interface CustomMatchers<R = unknown> {
     toIncludeSameMembers(arr: unknown[]): R
 }
 
-declare module 'vitest' {
+declare module "vitest" {
     interface Assertion<T = any> extends CustomMatchers<T> {}
     interface AsymmetricMatchersContaining extends CustomMatchers {}
 }

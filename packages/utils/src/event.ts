@@ -1,5 +1,5 @@
-import {onCleanup} from './lifecycle.js'
-import * as T from './types.js'
+import {onCleanup} from "./lifecycle.js"
+import * as T from "./types.js"
 
 export type EventListenerOptions = boolean | AddEventListenerOptions
 
@@ -191,8 +191,8 @@ export function stopImmediatePropagation(e: Event): Event {
 }
 
 export function preventMobileScrolling(container: HTMLElement): void {
-    container.addEventListener('touchstart', preventCancelable, NOT_PASSIVE)
-    container.addEventListener('touchmove', preventCancelable, NOT_PASSIVE)
+    container.addEventListener("touchstart", preventCancelable, NOT_PASSIVE)
+    container.addEventListener("touchmove", preventCancelable, NOT_PASSIVE)
 }
 
 export function ratioInElement(

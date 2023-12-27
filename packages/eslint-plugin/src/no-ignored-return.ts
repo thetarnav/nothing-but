@@ -1,18 +1,18 @@
-import {eslint, getType, isVoidReturnType} from './utils'
+import {eslint, getType, isVoidReturnType} from "./utils"
 
 const MUTATING_METHODS: Record<string, Set<string>> = {
-    Array: new Set(['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse']),
-    Map: new Set(['set', 'delete']),
-    Set: new Set(['add', 'delete']),
+    Array: new Set(["push", "pop", "shift", "unshift", "splice", "sort", "reverse"]),
+    Map: new Set(["set", "delete"]),
+    Set: new Set(["add", "delete"]),
 }
 
 export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
     meta: {
-        type: 'problem',
+        type: "problem",
         schema: [],
         messages: {
             use_return_value:
-                'Return value from function with non-void return type should be used.',
+                "Return value from function with non-void return type should be used.",
         },
     },
     defaultOptions: [],
@@ -34,7 +34,7 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
                 if (
                     callee.type === eslint.AST_NODE_TYPES.MemberExpression &&
                     callee.property.type === eslint.AST_NODE_TYPES.Identifier &&
-                    (callee.property.name === 'apply' || callee.property.name === 'call')
+                    (callee.property.name === "apply" || callee.property.name === "call")
                 ) {
                     callee = callee.object
                 }
@@ -68,7 +68,7 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
                         return
                 }
 
-                context.report({node, messageId: 'use_return_value'})
+                context.report({node, messageId: "use_return_value"})
             },
         }
     },

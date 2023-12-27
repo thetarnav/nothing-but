@@ -1,8 +1,8 @@
-import {signal as s} from '@nothing-but/solid'
-import * as utils from '@nothing-but/utils'
-import * as solid from 'solid-js'
-import * as sweb from 'solid-js/web'
-import * as lib from '../../src'
+import {signal as s} from "@nothing-but/solid"
+import * as utils from "@nothing-but/utils"
+import * as solid from "solid-js"
+import * as sweb from "solid-js/web"
+import * as lib from "../../src"
 
 const vertex_shader_source = /*glsl*/ `
 // an attribute will receive data from a buffer
@@ -59,8 +59,8 @@ const Shell: solid.FlowComponent = props => {
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
-    const gl = el.getContext('webgl2')
-    if (!gl) throw new Error('webgl2 is not supported')
+    const gl = el.getContext("webgl2")
+    if (!gl) throw new Error("webgl2 is not supported")
 
     /*
     Update the canvas's size to match the size it's displayed.
@@ -82,9 +82,9 @@ export const App: solid.Component = () => {
 
     gl.useProgram(program)
 
-    const a_position = gl.getAttribLocation(program, 'a_position')
-    const a_color = gl.getAttribLocation(program, 'a_color')
-    const u_resolution = gl.getUniformLocation(program, 'u_resolution')
+    const a_position = gl.getAttribLocation(program, "a_position")
+    const a_color = gl.getAttribLocation(program, "a_color")
+    const u_resolution = gl.getUniformLocation(program, "u_resolution")
 
     // Turn on the attribute
     gl.enableVertexAttribArray(a_position)
@@ -93,7 +93,7 @@ export const App: solid.Component = () => {
     const positions_buffer = gl.createBuffer()
     const colors_buffer = gl.createBuffer()
 
-    if (!positions_buffer || !colors_buffer) throw new Error('failed to create gl buffers')
+    if (!positions_buffer || !colors_buffer) throw new Error("failed to create gl buffers")
 
     function randomColor(): [number, number, number, number] {
         return [Math.random() * 256, Math.random() * 256, Math.random() * 256, 255]
@@ -163,4 +163,4 @@ export const App: solid.Component = () => {
     return <Shell>{el}</Shell>
 }
 
-void sweb.render(() => <App />, document.getElementById('root')!)
+void sweb.render(() => <App />, document.getElementById("root")!)

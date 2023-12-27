@@ -1,4 +1,4 @@
-import {num, T, trig} from '@nothing-but/utils'
+import {num, T, trig} from "@nothing-but/utils"
 
 export interface Options {
     /**
@@ -189,7 +189,7 @@ export interface Node {
 export function zeroNode(): Node {
     return {
         key: undefined,
-        label: '',
+        label: "",
         position: {x: 0, y: 0},
         velocity: {x: 0, y: 0},
         edges: [],

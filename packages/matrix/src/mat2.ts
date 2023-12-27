@@ -8,9 +8,9 @@ https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/
 
 */
 
-import {num} from '@nothing-but/utils'
-import {array_constructor} from './array_type.js'
-import {ReadonlyVec2} from './vec2.js'
+import {num} from "@nothing-but/utils"
+import {array_constructor} from "./array_type.js"
+import {ReadonlyVec2} from "./vec2.js"
 
 /**
  * 2x2 Matrix
@@ -417,7 +417,7 @@ export function fromScaling(v: ReadonlyVec2): Mat2 {
  * @returns string representation of the matrix
  */
 export function str(a: ReadonlyMat2): string {
-    return 'Mat2(' + a[0] + ', ' + a[1] + ', ' + a[2] + ', ' + a[3] + ')'
+    return "Mat2(" + a[0] + ", " + a[1] + ", " + a[2] + ", " + a[3] + ")"
 }
 
 /**

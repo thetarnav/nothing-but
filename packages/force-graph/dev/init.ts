@@ -1,8 +1,8 @@
-import {num} from '@nothing-but/utils'
-import {graph} from '../src/index.js'
-import {graph_options} from './app.jsx'
-import la_raw from './la.json'
-import la_2_raw from './la_2.json'
+import {num} from "@nothing-but/utils"
+import {graph} from "../src/index.js"
+import {graph_options} from "./app.jsx"
+import la_raw from "./la.json"
+import la_2_raw from "./la_2.json"
 
 export function getLA2Graph(): graph.Graph {
     const entries = Object.entries(la_2_raw)

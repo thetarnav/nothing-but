@@ -8,9 +8,9 @@ https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/
 
 */
 
-import {num} from '@nothing-but/utils'
-import {array_constructor} from './array_type.js'
-import {ReadonlyMat2} from './mat2.js'
+import {num} from "@nothing-but/utils"
+import {array_constructor} from "./array_type.js"
+import {ReadonlyMat2} from "./mat2.js"
 
 /**
  * 2 Dimensional Vector
@@ -617,7 +617,7 @@ export function moveByAngle(
  * @returns string representation of the vector
  */
 export function str(a: ReadonlyVec2): string {
-    return 'vec2(' + a[0] + ', ' + a[1] + ')'
+    return "vec2(" + a[0] + ", " + a[1] + ")"
 }
 
 /**

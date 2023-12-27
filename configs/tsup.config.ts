@@ -1,17 +1,17 @@
-import fs from 'fs'
-import path from 'path'
-import * as tsup from 'tsup'
-import * as preset from 'tsup-preset-solid'
+import fs from "fs"
+import path from "path"
+import * as tsup from "tsup"
+import * as preset from "tsup-preset-solid"
 
 export const CI =
-    process.env['CI'] === 'true' ||
-    process.env['CI'] === '"1"' ||
-    process.env['GITHUB_ACTIONS'] === 'true' ||
-    process.env['GITHUB_ACTIONS'] === '"1"' ||
-    !!process.env['TURBO_HASH']
+    process.env["CI"] === "true" ||
+    process.env["CI"] === '"1"' ||
+    process.env["GITHUB_ACTIONS"] === "true" ||
+    process.env["GITHUB_ACTIONS"] === '"1"' ||
+    !!process.env["TURBO_HASH"]
 
 export function get_src_entries(from: string): preset.EntryOptions[] {
-    const src = path.resolve(from, 'src')
+    const src = path.resolve(from, "src")
     const entries = fs.readdirSync(src)
     return entries.map(entry => ({entry: path.join(src, entry)}))
 }
@@ -30,7 +30,7 @@ export function get_multi_entry_options(
 
 export function get_single_entry_options(cli_options: tsup.Options): preset.ParsedPresetOptions {
     const options: preset.PresetOptions = {
-        entries: {entry: 'src/index.ts'},
+        entries: {entry: "src/index.ts"},
         drop_console: true,
     }
     const watching = !!cli_options.watch

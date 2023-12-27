@@ -1,5 +1,5 @@
-import transformerDirectives from '@unocss/transformer-directives'
-import {defineConfig, presetUno} from 'unocss'
+import transformerDirectives from "@unocss/transformer-directives"
+import {defineConfig, presetUno} from "unocss"
 
 export default defineConfig({
     presets: [presetUno()],
@@ -8,6 +8,6 @@ export default defineConfig({
         // colors: colors,
     },
     shortcuts: {
-        'center-child': 'flex items-center justify-center',
+        "center-child": "flex items-center justify-center",
     },
 })

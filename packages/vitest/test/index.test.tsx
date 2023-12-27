@@ -1,7 +1,7 @@
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it} from "vitest"
 
-describe('.', () => {
-    it('.', () => {
+describe(".", () => {
+    it(".", () => {
         expect(1).toBe(1)
     })
 })

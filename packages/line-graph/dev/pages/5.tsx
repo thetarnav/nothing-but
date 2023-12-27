@@ -13,10 +13,10 @@ TODO
 
 */
 
-import {signal as s} from '@nothing-but/solid'
-import * as utils from '@nothing-but/utils'
-import * as solid from 'solid-js'
-import * as sweb from 'solid-js/web'
+import {signal as s} from "@nothing-but/solid"
+import * as utils from "@nothing-but/utils"
+import * as solid from "solid-js"
+import * as sweb from "solid-js/web"
 
 interface ArrayLike<T> {
     readonly length: number
@@ -98,30 +98,30 @@ function createElementResizeState(el: HTMLElement): ElementResizeState {
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
-    const ctx = el.getContext('2d')
-    if (!ctx) throw new Error('2d context is not supported')
+    const ctx = el.getContext("2d")
+    if (!ctx) throw new Error("2d context is not supported")
 
     const dpr = window.devicePixelRatio
     const ro = createElementResizeState(el)
 
     let wheel_delta_x = 0
     let wheel_delta_y = 0
-    utils.event.createListener(el, 'wheel', e => {
+    utils.event.createListener(el, "wheel", e => {
         wheel_delta_x += e.deltaX
         wheel_delta_y += e.deltaY
     })
 
     let mouse_x = 0
-    utils.event.createListener(el, 'mousemove', e => {
+    utils.event.createListener(el, "mousemove", e => {
         mouse_x = e.offsetX
     })
 
     let mousedown = false
-    utils.event.createListener(el, 'mousedown', () => {
+    utils.event.createListener(el, "mousedown", () => {
         mousedown = true
     })
 
-    utils.event.createListener(el, 'mouseup', () => {
+    utils.event.createListener(el, "mouseup", () => {
         mousedown = false
     })
 
@@ -287,8 +287,8 @@ export const App: solid.Component = () => {
             draw ease line
         */
         ctx.lineWidth = 2
-        ctx.lineCap = 'round'
-        ctx.strokeStyle = '#e50'
+        ctx.lineCap = "round"
+        ctx.strokeStyle = "#e50"
         ctx.beginPath()
         ctx.moveTo(MARGIN, yAtProgress(view_start / ease_dencity))
         for (let i = view_start; i < view_end; i += 1) {
@@ -300,13 +300,13 @@ export const App: solid.Component = () => {
         progress indicator
         */
         ctx.lineWidth = 5
-        ctx.strokeStyle = '#ff0000'
+        ctx.strokeStyle = "#ff0000"
         ctx.beginPath()
         ctx.moveTo(MARGIN, -50)
         ctx.lineTo(MARGIN + drawable_width * anim_progress, -50)
         ctx.stroke()
         ctx.beginPath()
-        ctx.strokeStyle = '#00ff00'
+        ctx.strokeStyle = "#00ff00"
         ctx.moveTo(MARGIN + (start_progress / max_progress) * drawable_width, -100)
         ctx.lineTo(MARGIN + (end_progress / max_progress) * drawable_width, -100)
         ctx.stroke()
@@ -330,4 +330,4 @@ export const App: solid.Component = () => {
     )
 }
 
-void sweb.render(() => <App />, document.getElementById('root')!)
+void sweb.render(() => <App />, document.getElementById("root")!)

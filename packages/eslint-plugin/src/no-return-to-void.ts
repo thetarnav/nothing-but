@@ -1,12 +1,12 @@
-import {eslint, getType, isVoidReturnType, ts} from './utils'
+import {eslint, getType, isVoidReturnType, ts} from "./utils"
 
 export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
     meta: {
-        type: 'problem',
+        type: "problem",
         schema: [],
         messages: {
             no_return_to_void:
-                'This callback is expected to not return anything, but it returns a value.',
+                "This callback is expected to not return anything, but it returns a value.",
         },
     },
     defaultOptions: [],
@@ -44,7 +44,7 @@ export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
             const type = getType(node, checker, services)
             if (isVoidReturnType(type)) return
 
-            context.report({node, messageId: 'no_return_to_void'})
+            context.report({node, messageId: "no_return_to_void"})
         }
 
         return {

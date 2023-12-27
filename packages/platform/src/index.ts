@@ -1,6 +1,6 @@
 const w =
-    typeof document === 'undefined'
-        ? ({document: {}, navigator: {userAgent: ''}} as Window)
+    typeof document === "undefined"
+        ? ({document: {}, navigator: {userAgent: ""}} as Window)
         : window
 const n = w.navigator
 const ua = n.userAgent
@@ -68,10 +68,10 @@ export const is_opera: boolean =
 /** Browser is Safari */
 export const is_safari: boolean = !!(
     n.vendor &&
-    n.vendor.includes('Apple') &&
+    n.vendor.includes("Apple") &&
     ua &&
-    !ua.includes('CriOS') &&
-    !ua.includes('FxiOS')
+    !ua.includes("CriOS") &&
+    !ua.includes("FxiOS")
 )
 
 /** Browser is Internet Explorer 6-11 */
@@ -85,13 +85,13 @@ export const is_chromium: boolean = !!w.chrome
 export const is_edge: boolean = /*#__PURE__*/ /Edg/.test(ua) && is_chromium
 
 /** Browser is Chrome */
-export const is_chrome: boolean = is_chromium && n.vendor === 'Google Inc.' && !is_opera && !is_edge
+export const is_chrome: boolean = is_chromium && n.vendor === "Google Inc." && !is_opera && !is_edge
 
 /** Browser is Brave */
 export const is_brave: boolean = !!(
     n.brave &&
     n.brave.isBrave &&
-    n.brave.isBrave.name === 'isBrave'
+    n.brave.isBrave.name === "isBrave"
 )
 
 /*

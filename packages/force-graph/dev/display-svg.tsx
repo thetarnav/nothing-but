@@ -1,7 +1,7 @@
-import {resolveElements} from '@solid-primitives/refs'
-import {createRootPool, type RootPoolFactory} from '@solid-primitives/rootless'
-import {createEffect, createMemo, createSignal, onCleanup, onMount, type JSX} from 'solid-js'
-import {Anim, Graph} from '../src/index.js'
+import {resolveElements} from "@solid-primitives/refs"
+import {createRootPool, type RootPoolFactory} from "@solid-primitives/rootless"
+import {createEffect, createMemo, createSignal, onCleanup, onMount, type JSX} from "solid-js"
+import {Anim, Graph} from "../src/index.js"
 
 export function SvgForceGraph(props: {
     graph: Graph.Graph
@@ -9,7 +9,7 @@ export function SvgForceGraph(props: {
     active?: boolean
     targetFPS?: number
 }): JSX.Element {
-    const isActive = 'active' in props ? () => props.active : () => false
+    const isActive = "active" in props ? () => props.active : () => false
 
     const useNodeEl = createRootPool(props.node)
     const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
@@ -19,7 +19,7 @@ export function SvgForceGraph(props: {
     )
     const lines = createMemo(() => props.graph.edges.map(useLine))
 
-    const posToP = (xy: number, grid_size: number) => ((xy + grid_size / 2) / grid_size) * 100 + '%'
+    const posToP = (xy: number, grid_size: number) => ((xy + grid_size / 2) / grid_size) * 100 + "%"
 
     function updateElements() {
         const els = nodeEls(),

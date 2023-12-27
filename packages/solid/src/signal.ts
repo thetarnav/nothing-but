@@ -1,10 +1,10 @@
-import * as solid from 'solid-js'
-import * as solid_web from 'solid-js/web'
+import * as solid from "solid-js"
+import * as solid_web from "solid-js/web"
 
-export * from 'solid-js'
+export * from "solid-js"
 
 const warn = (msg: string): void => {
-    if (solid_web.isDev && 'console' in globalThis) {
+    if (solid_web.isDev && "console" in globalThis) {
         ;(globalThis as any).console.warn(msg)
     }
 }
@@ -134,7 +134,7 @@ export function reset<T>(obj: Signal<T | undefined>): void {
 
 export function set_nested<T, K extends keyof T>(sig: Signal<T>, key: K, value: T[K]): void {
     const obj = peek(sig)
-    if (!obj || typeof obj !== 'object') return
+    if (!obj || typeof obj !== "object") return
     const old = obj[key]
     if (old !== value) {
         const copy: any = Array.isArray(obj) ? [...obj] : {...obj}
@@ -171,7 +171,7 @@ export function readonly<T>(sig: Signal<T>): Reactive<T> {
     return new Reactive(() => sig.value)
 }
 
-declare module 'solid-js' {
+declare module "solid-js" {
     interface Owner {
         _cl_fn?: ((data: any) => void)[]
         _cl_d?: any[]
@@ -187,7 +187,7 @@ export function _dataCleanup(owner: solid.Owner): void {
 export const addCleanup = <T>(data: T, cleanup: (data: T) => void): void => {
     const owner = solid.getOwner()
     if (!owner) {
-        warn('Cannot register a cleanup outside a reactive owner.')
+        warn("Cannot register a cleanup outside a reactive owner.")
         return
     }
 

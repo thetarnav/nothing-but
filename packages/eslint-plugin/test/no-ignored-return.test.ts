@@ -1,19 +1,19 @@
-import {RuleTester} from '@typescript-eslint/rule-tester'
-import path from 'node:path'
-import * as rule from '../src/no-ignored-return.js'
+import {RuleTester} from "@typescript-eslint/rule-tester"
+import path from "node:path"
+import * as rule from "../src/no-ignored-return.js"
 
 const ruleTester = new RuleTester({
-    parser: '@typescript-eslint/parser',
+    parser: "@typescript-eslint/parser",
     parserOptions: {
-        project: path.resolve(__dirname, 'resources', 'tsconfig.json'),
-        tsconfigRootDir: path.resolve(__dirname, 'resources'),
+        project: path.resolve(__dirname, "resources", "tsconfig.json"),
+        tsconfigRootDir: path.resolve(__dirname, "resources"),
     },
 })
 
-ruleTester.run('no-ignored-return', rule.no_ignored_return, {
+ruleTester.run("no-ignored-return", rule.no_ignored_return, {
     valid: [
         {
-            name: 'captured',
+            name: "captured",
             code: /*javascript*/ `
                 declare function func(): boolean
 
@@ -21,7 +21,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'void',
+            name: "void",
             code: /*javascript*/ `
                 declare function func(): void
 
@@ -29,7 +29,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'overload',
+            name: "overload",
             code: /*javascript*/ `
                 declare function func(a: string, b: string): void
                 declare function func(a: number): void
@@ -38,7 +38,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'arrow captured',
+            name: "arrow captured",
             code: /*javascript*/ `
                 const func = () => true
 
@@ -46,7 +46,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'arrow void',
+            name: "arrow void",
             code: /*javascript*/ `
                 const func = () => {}
 
@@ -54,7 +54,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'object declaration',
+            name: "object declaration",
             code: /*javascript*/ `
                 declare function func(): boolean
 
@@ -64,7 +64,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'property assignment',
+            name: "property assignment",
             code: /*javascript*/ `
                 declare function func(): boolean
 
@@ -72,7 +72,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'if',
+            name: "if",
             code: /*javascript*/ `
                 declare function func(): boolean
 
@@ -80,7 +80,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'parameter',
+            name: "parameter",
             code: /*javascript*/ `
                 declare function func(): boolean
 
@@ -88,7 +88,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'call as parameter',
+            name: "call as parameter",
             code: /*javascript*/ `
                 declare function funcA(a: boolean): void
                 declare function funcB(): boolean
@@ -97,13 +97,13 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'no function type',
+            name: "no function type",
             code: /*javascript*/ `
                 func(123)
             `,
         },
         {
-            name: 'array methods',
+            name: "array methods",
             code: /*javascript*/ `
                 const arr = []
                 arr.push(4);
@@ -116,7 +116,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'map methods',
+            name: "map methods",
             code: /*javascript*/ `
                 const map = new Map()
                 map.set(1, 2)
@@ -124,7 +124,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'set methods',
+            name: "set methods",
             code: /*javascript*/ `
                 const set = new Set()
                 set.add(1)
@@ -132,7 +132,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'nested object',
+            name: "nested object",
             code: /*javascript*/ `
                 const obj = {
                     prop: {
@@ -144,7 +144,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: '.call() and .apply()',
+            name: ".call() and .apply()",
             code: /*javascript*/ `
                 function foo(a: number): void {}
 
@@ -153,7 +153,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: '.call() and .apply() with return value',
+            name: ".call() and .apply() with return value",
             code: /*javascript*/ `
                 function foo(a: number): number {}
 
@@ -162,7 +162,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: '.call() and .apply() with arr.length',
+            name: ".call() and .apply() with arr.length",
             code: /*javascript*/ `
                 const array = [1, 2, 3]
 
@@ -170,7 +170,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'logical expression assignment',
+            name: "logical expression assignment",
             code: /*javascript*/ `
                 function condition(): boolean {}
                 const some_bool: boolean = true
@@ -180,7 +180,7 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
             `,
         },
         {
-            name: 'logical expression void',
+            name: "logical expression void",
             code: /*javascript*/ `
                 function condition(): boolean {}
                 const some_bool: boolean = true
@@ -192,40 +192,40 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
     ],
     invalid: [
         {
-            name: 'not captured',
+            name: "not captured",
             code: /*javascript*/ `
                 declare function func(): boolean
                 func()
             `,
-            errors: [{messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}],
         },
         {
-            name: 'returns union',
+            name: "returns union",
             code: /*javascript*/ `
                 declare function func(): boolean | void
                 func()
             `,
-            errors: [{messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}],
         },
         {
-            name: 'overload',
+            name: "overload",
             code: /*javascript*/ `
                 declare function func(): void
                 declare function func(a: number): boolean
                 func()
             `,
-            errors: [{messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}],
         },
         {
-            name: 'arrow',
+            name: "arrow",
             code: /*javascript*/ `
                 const func = () => true
                 func()
             `,
-            errors: [{messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}],
         },
         {
-            name: 'nested object',
+            name: "nested object",
             code: /*javascript*/ `
                 const obj = {
                     prop: {
@@ -235,36 +235,36 @@ ruleTester.run('no-ignored-return', rule.no_ignored_return, {
 
                 obj.prop.nested()
             `,
-            errors: [{messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}],
         },
         {
-            name: '.call() and .apply() with return value',
+            name: ".call() and .apply() with return value",
             code: /*javascript*/ `
                 function foo(a: number): number {}
 
                 foo.call(null, 123)
                 foo.apply(null, [123])
             `,
-            errors: [{messageId: 'use_return_value'}, {messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}, {messageId: "use_return_value"}],
         },
         {
-            name: 'logical expression action',
+            name: "logical expression action",
             code: /*javascript*/ `
                 function condition(): boolean {}
                 function action(): void {}
 
                 condition() && action()
             `,
-            errors: [{messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}],
         },
         {
-            name: 'multi logical expression',
+            name: "multi logical expression",
             code: /*javascript*/ `
                 function condition(): boolean {}
 
                 condition() && condition() && condition()
             `,
-            errors: [{messageId: 'use_return_value'}],
+            errors: [{messageId: "use_return_value"}],
         },
     ],
 })

@@ -1,1 +1,1 @@
-export * as signal from './signal.js'
+export * as signal from "./signal.js"

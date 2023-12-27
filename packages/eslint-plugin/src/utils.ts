@@ -1,5 +1,5 @@
-import * as eslint from '@typescript-eslint/utils'
-import * as ts from 'typescript'
+import * as eslint from "@typescript-eslint/utils"
+import * as ts from "typescript"
 
 export {eslint, ts}
 

@@ -1,4 +1,4 @@
-import type {Position} from './types.js'
+import type {Position} from "./types.js"
 
 /**
  * Represents a template string type in the format `(${number}, ${number})`.
@@ -31,11 +31,11 @@ export class Vector {
     constructor(vec: Position)
     constructor(x: number, y?: number)
     constructor(x: number | Vector_String | Position, y?: number) {
-        if (typeof x === 'string') {
-            const [xStr, yStr] = x.slice(1, -1).split(', ')
+        if (typeof x === "string") {
+            const [xStr, yStr] = x.slice(1, -1).split(", ")
             x = Number(xStr)
             y = Number(yStr)
-        } else if (typeof x === 'object') {
+        } else if (typeof x === "object") {
             y = x.y
             x = x.x
         }
@@ -105,7 +105,7 @@ export function difference(a: Position, b: Position): Vector {
 export function add(vec: Position, velocity: Position | Force | number): void
 export function add(vec: Position, x: number, y: number): void
 export function add(vec: Position, x: Position | Force | number, y?: number): void {
-    if (typeof x === 'number') {
+    if (typeof x === "number") {
         vec.x += x
         vec.y += y ?? x
         return
@@ -129,7 +129,7 @@ export function sum(a: Position, b: Position): Vector {
  * Multiplies a vector by another vector or a scalar in place. The first vector is **mutated**.
  */
 export function multiply(a: Position, b: Position | number): void {
-    if (typeof b === 'number') {
+    if (typeof b === "number") {
         a.x *= b
         a.y *= b
         return
@@ -143,7 +143,7 @@ export function multiply(a: Position, b: Position | number): void {
  * @returns The product vector.
  */
 export function product(a: Position, b: Position | number): Vector {
-    if (typeof b === 'number') {
+    if (typeof b === "number") {
         return vector(a.x * b, a.y * b)
     }
     return vector(a.x * b.x, a.y * b.y)
@@ -258,7 +258,7 @@ export class Force {
     constructor(delta_x: Vector, delta_y: Vector)
     constructor(dist: number, ang: number)
     constructor(a: number | Vector, b: number | Vector) {
-        if (typeof a === 'object') {
+        if (typeof a === "object") {
             this.angle = angle(a, b as Vector)
             this.distance = distance(a, b as Vector)
         } else {
@@ -287,7 +287,7 @@ export const force: {
 export function force_to_vector(f: Force): Vector
 export function force_to_vector(dist: number, ang: number): Vector
 export function force_to_vector(dist: number | Force, ang?: number): Vector {
-    if (typeof dist === 'object') {
+    if (typeof dist === "object") {
         ang = dist.angle
         dist = dist.distance
     }

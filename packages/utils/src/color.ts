@@ -136,7 +136,7 @@ export function rgb_value(rgb: RGB): string {
  * @returns A string in the format "#rrggbb" representing the RGB color in hexadecimal notation.
  */
 export function rgb_to_hex(rgb: RGB): string {
-    return '#' + rgb.r.toString(16) + rgb.g.toString(16) + rgb.b.toString(16)
+    return "#" + rgb.r.toString(16) + rgb.g.toString(16) + rgb.b.toString(16)
 }
 
 /**
@@ -146,7 +146,7 @@ export function rgb_to_hex(rgb: RGB): string {
  */
 export function rgba_to_hex(rgba: RGBA): string {
     return (
-        '#' + rgba.r.toString(16) + rgba.g.toString(16) + rgba.b.toString(16) + rgba.a.toString(16)
+        "#" + rgba.r.toString(16) + rgba.g.toString(16) + rgba.b.toString(16) + rgba.a.toString(16)
     )
 }
 
@@ -158,7 +158,7 @@ export function rgba_to_hex(rgba: RGBA): string {
  * hexToRGBA('#f00') // { r: 255, g: 0, b: 0 }
  */
 export function hex_to_rgb(hex: string): RGB {
-    if (hex[0] === '#') hex = hex.slice(1)
+    if (hex[0] === "#") hex = hex.slice(1)
     if (hex.length < 6) {
         const r = parseInt(hex[0]!, 16)
         const g = parseInt(hex[1]!, 16)
@@ -181,7 +181,7 @@ export function hex_to_rgb(hex: string): RGB {
  * hexToRGBA('#f000') // { r: 255, g: 0, b: 0, a: 0 }
  */
 export function hex_to_rgba(hex: string): RGBA {
-    if (hex[0] === '#') hex = hex.slice(1)
+    if (hex[0] === "#") hex = hex.slice(1)
     if (hex.length < 6) {
         const r = parseInt(hex[0]!, 16)
         const g = parseInt(hex[1]!, 16)

@@ -1,6 +1,6 @@
-import {Position} from '@nothing-but/utils/types'
-import * as vi from 'vitest'
-import * as fg from '../src/index.js'
+import {Position} from "@nothing-but/utils/types"
+import * as vi from "vitest"
+import * as fg from "../src/index.js"
 
 const test_options: fg.graph.Options = {
     ...fg.graph.DEFAULT_OPTIONS,
@@ -8,8 +8,8 @@ const test_options: fg.graph.Options = {
     repel_distance: 10,
 }
 
-void vi.describe('makeGraphGrid', () => {
-    vi.test('makeGraphGrid', () => {
+void vi.describe("makeGraphGrid", () => {
+    vi.test("makeGraphGrid", () => {
         const grid = fg.graph.graphGrid(test_options)
         vi.expect(grid.axis_cells).toBe(4)
         vi.expect(grid.cells.length).toBe(16)
@@ -18,7 +18,7 @@ void vi.describe('makeGraphGrid', () => {
     })
 })
 
-void vi.describe('find closest node', () => {
+void vi.describe("find closest node", () => {
     /*
         0    10    20    30    40
         ------------------------- 0
@@ -68,57 +68,57 @@ void vi.describe('find closest node', () => {
 
     Object.entries(fns).forEach(([name, fn]) => {
         void vi.describe(name, () => {
-            vi.test('same pos', () => {
+            vi.test("same pos", () => {
                 const closest = fn(graph, {x: 11, y: 12})
                 vi.expect(closest).toBe(node_a)
             })
 
-            vi.test('same cell', () => {
+            vi.test("same cell", () => {
                 const closest = fn(graph, {x: 24, y: 12})
                 vi.expect(closest).toBe(node_b)
             })
 
-            vi.test('cell above', () => {
+            vi.test("cell above", () => {
                 const closest = fn(graph, {x: 19, y: 22})
                 vi.expect(closest).toBe(node_c)
             })
 
-            vi.test('cell below', () => {
+            vi.test("cell below", () => {
                 const closest = fn(graph, {x: 11, y: 9})
                 vi.expect(closest).toBe(node_a)
             })
 
-            vi.test('cell left', () => {
+            vi.test("cell left", () => {
                 const closest = fn(graph, {x: 32, y: 25})
                 vi.expect(closest).toBe(node_d)
             })
 
-            vi.test('cell right', () => {
+            vi.test("cell right", () => {
                 const closest = fn(graph, {x: 19, y: 28})
                 vi.expect(closest).toBe(node_e)
             })
 
-            vi.test('cell above left', () => {
+            vi.test("cell above left", () => {
                 const closest = fn(graph, {x: 32, y: 31})
                 vi.expect(closest).toBe(node_d)
             })
 
-            vi.test('cell above right', () => {
+            vi.test("cell above right", () => {
                 const closest = fn(graph, {x: 19, y: 31})
                 vi.expect(closest).toBe(node_e)
             })
 
-            vi.test('cell below left', () => {
+            vi.test("cell below left", () => {
                 const closest = fn(graph, {x: 32, y: 19})
                 vi.expect(closest).toBe(node_d)
             })
 
-            vi.test('cell below right', () => {
+            vi.test("cell below right", () => {
                 const closest = fn(graph, {x: 9, y: 9})
                 vi.expect(closest).toBe(node_a)
             })
 
-            vi.test('max distance', () => {
+            vi.test("max distance", () => {
                 const pos = {x: 34, y: 25}
 
                 const fail = fn(graph, pos, 5)

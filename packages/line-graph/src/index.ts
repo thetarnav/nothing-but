@@ -4,7 +4,7 @@ export function makeShader(
     source: string,
 ): WebGLShader | Error {
     const shader = gl.createShader(type)
-    if (!shader) return new Error('failed to create gl shader')
+    if (!shader) return new Error("failed to create gl shader")
 
     gl.shaderSource(shader, source)
     gl.compileShader(shader)
@@ -13,7 +13,7 @@ export function makeShader(
     if (!success) {
         const log = gl.getShaderInfoLog(shader)
         gl.deleteShader(shader)
-        return new Error(log || 'failed to compile shader')
+        return new Error(log || "failed to compile shader")
     }
 
     return shader
@@ -34,7 +34,7 @@ export function makeProgram(
     shaders: WebGLShader[],
 ): WebGLProgram | Error {
     const program = gl.createProgram()
-    if (!program) return new Error('failed to create gl program')
+    if (!program) return new Error("failed to create gl program")
 
     for (const shader of shaders) {
         gl.attachShader(program, shader)
@@ -45,7 +45,7 @@ export function makeProgram(
     if (!success) {
         const log = gl.getProgramInfoLog(program)
         gl.deleteProgram(program)
-        return new Error(log || 'failed to link program')
+        return new Error(log || "failed to link program")
     }
 
     return program

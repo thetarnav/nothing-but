@@ -1,8 +1,8 @@
-import {signal as s} from '@nothing-but/solid'
-import * as utils from '@nothing-but/utils'
-import * as solid from 'solid-js'
-import * as sweb from 'solid-js/web'
-import * as lib from '../../src'
+import {signal as s} from "@nothing-but/solid"
+import * as utils from "@nothing-but/utils"
+import * as solid from "solid-js"
+import * as sweb from "solid-js/web"
+import * as lib from "../../src"
 
 const RED: lib.Vec4 = [255, 0, 0, 255]
 const GREEN: lib.Vec4 = [0, 255, 0, 255]
@@ -26,8 +26,8 @@ const Shell: solid.FlowComponent = props => {
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
-    const ctx = el.getContext('2d')
-    if (!ctx) throw new Error('2d context is not supported')
+    const ctx = el.getContext("2d")
+    if (!ctx) throw new Error("2d context is not supported")
 
     /*
     Update the canvas's size to match the size it's displayed.
@@ -184,7 +184,7 @@ export const App: solid.Component = () => {
             bg
         */
 
-        ctx.fillStyle = '#0005'
+        ctx.fillStyle = "#0005"
         ctx.beginPath()
         ctx.moveTo(left_cap[0]!, left_cap[1]!)
         for (let i = 0; i < cap_points_count; i += 1) {
@@ -210,9 +210,9 @@ export const App: solid.Component = () => {
             draw normal lines
         */
         ctx.lineWidth = 1
-        ctx.lineCap = 'round'
-        ctx.lineJoin = 'round'
-        ctx.strokeStyle = '#39e9'
+        ctx.lineCap = "round"
+        ctx.lineJoin = "round"
+        ctx.strokeStyle = "#39e9"
         ctx.beginPath()
         for (let i = 0; i < positions_count; i += 3) {
             const idx = i * 2
@@ -225,9 +225,9 @@ export const App: solid.Component = () => {
             draw line segments
         */
         ctx.lineWidth = 2
-        ctx.lineCap = 'round'
-        ctx.lineJoin = 'round'
-        ctx.strokeStyle = '#e50'
+        ctx.lineCap = "round"
+        ctx.lineJoin = "round"
+        ctx.strokeStyle = "#e50"
         ctx.beginPath()
         ctx.moveTo(positions[2]!, positions[3]!)
         for (let i = 0; i < positions_count; i += 3) {
@@ -245,7 +245,7 @@ export const App: solid.Component = () => {
             draw cap points
         */
         for (const points of [left_cap, right_cap]) {
-            ctx.fillStyle = '#e39'
+            ctx.fillStyle = "#e39"
             ctx.beginPath()
             for (let i = 0; i < cap_points_count; i += 1) {
                 const idx = i * 2
@@ -254,7 +254,7 @@ export const App: solid.Component = () => {
             }
             ctx.fill()
 
-            ctx.strokeStyle = '#ee339990'
+            ctx.strokeStyle = "#ee339990"
             ctx.beginPath()
             for (let i = 0; i < cap_points_count; i += 1) {
                 const idx = i * 2
@@ -267,7 +267,7 @@ export const App: solid.Component = () => {
         /*
             draw points dots
         */
-        ctx.fillStyle = '#fff'
+        ctx.fillStyle = "#fff"
         ctx.beginPath()
         for (let i = 0; i < positions_count; i += 3) {
             const idx = i * 2
@@ -286,4 +286,4 @@ export const App: solid.Component = () => {
     return <Shell>{el}</Shell>
 }
 
-void sweb.render(() => <App />, document.getElementById('root')!)
+void sweb.render(() => <App />, document.getElementById("root")!)

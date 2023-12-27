@@ -1,26 +1,26 @@
-import {RuleTester} from '@typescript-eslint/rule-tester'
-import path from 'node:path'
-import * as rule from '../src/no-return-to-void.js'
+import {RuleTester} from "@typescript-eslint/rule-tester"
+import path from "node:path"
+import * as rule from "../src/no-return-to-void.js"
 
 const ruleTester = new RuleTester({
-    parser: '@typescript-eslint/parser',
+    parser: "@typescript-eslint/parser",
     parserOptions: {
-        project: path.resolve(__dirname, 'resources', 'tsconfig.json'),
-        tsconfigRootDir: path.resolve(__dirname, 'resources'),
+        project: path.resolve(__dirname, "resources", "tsconfig.json"),
+        tsconfigRootDir: path.resolve(__dirname, "resources"),
     },
 })
 
-ruleTester.run('no-return-to-void', rule.no_return_to_void, {
+ruleTester.run("no-return-to-void", rule.no_return_to_void, {
     valid: [
         {
-            name: 'arrow: empty callback',
+            name: "arrow: empty callback",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {})
             `,
         },
         {
-            name: 'arrow: return nothing',
+            name: "arrow: return nothing",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {
@@ -29,35 +29,35 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             `,
         },
         {
-            name: 'arrow: return expected value',
+            name: "arrow: return expected value",
             code: /*javascript*/ `
                 declare function func(callback: () => number): boolean
                 func(() => 123)
             `,
         },
         {
-            name: 'arrow: return expected value (2)',
+            name: "arrow: return expected value (2)",
             code: /*javascript*/ `
                 declare function func(thing: number, callback: () => number): boolean
                 func(312, () => 123)
             `,
         },
         {
-            name: 'arrow: return expected value (3)',
+            name: "arrow: return expected value (3)",
             code: /*javascript*/ `
                 declare function func(callback: () => number | void): boolean
                 func(() => 123)
             `,
         },
         {
-            name: 'function: empty callback',
+            name: "function: empty callback",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(function() {})
             `,
         },
         {
-            name: 'function: return nothing',
+            name: "function: return nothing",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(function()  {
@@ -66,28 +66,28 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             `,
         },
         {
-            name: 'function: return expected value',
+            name: "function: return expected value",
             code: /*javascript*/ `
                 declare function func(callback: () => number): boolean
                 func(function() {return 123})
             `,
         },
         {
-            name: 'function: return expected value (2)',
+            name: "function: return expected value (2)",
             code: /*javascript*/ `
                 declare function func(thing: number, callback: () => number): boolean
                 func(312, function() {return 123})
             `,
         },
         {
-            name: 'function: return expected value (3)',
+            name: "function: return expected value (3)",
             code: /*javascript*/ `
                 declare function func(callback: () => number | void): boolean
                 func(function() {return 123})
             `,
         },
         {
-            name: 'arrow: overloads',
+            name: "arrow: overloads",
             code: /*javascript*/ `
                 declare function func(callback: () => void, b: 2): boolean
                 declare function func(callback: () => number, b: 1): boolean
@@ -95,7 +95,7 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
             `,
         },
         {
-            name: 'function: overloads',
+            name: "function: overloads",
             code: /*javascript*/ `
                 declare function func(callback: () => void, b: 2): boolean
                 declare function func(callback: () => number, b: 1): boolean
@@ -105,33 +105,33 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
     ],
     invalid: [
         {
-            name: 'arrow: => number',
+            name: "arrow: => number",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => 123)
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'arrow: returns a number',
+            name: "arrow: returns a number",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {
                     return 123
                 })
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'arrow: => math.random()',
+            name: "arrow: => math.random()",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => Math.random())
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'arrow: returns a number or void',
+            name: "arrow: returns a number or void",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(() => {
@@ -139,26 +139,26 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
                     return 123
                 })
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'function: returns a number',
+            name: "function: returns a number",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(function() {return 123})
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'function: => math.random()',
+            name: "function: => math.random()",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(function() {return Math.random()})
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'function: returns a number or void',
+            name: "function: returns a number or void",
             code: /*javascript*/ `
                 declare function func(callback: () => void): boolean
                 func(function() {
@@ -166,25 +166,25 @@ ruleTester.run('no-return-to-void', rule.no_return_to_void, {
                     return 123
                 })
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'arrow: overloads',
+            name: "arrow: overloads",
             code: /*javascript*/ `
                 declare function func(callback: () => void, b: 2): boolean
                 declare function func(callback: () => number, b: 1): boolean
                 func(() => 123, 2)
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
         {
-            name: 'function: overloads',
+            name: "function: overloads",
             code: /*javascript*/ `
                 declare function func(callback: () => void, b: 2): boolean
                 declare function func(callback: () => number, b: 1): boolean
                 func(function() {return 123}, 2)
             `,
-            errors: [{messageId: 'no_return_to_void'}],
+            errors: [{messageId: "no_return_to_void"}],
         },
     ],
 })

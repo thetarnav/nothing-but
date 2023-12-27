@@ -1,4 +1,4 @@
-import {num} from './index.js'
+import {num} from "./index.js"
 
 export interface AnimationLoop {
     /**

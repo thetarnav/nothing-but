@@ -1,8 +1,8 @@
-import {signal as s} from '@nothing-but/solid'
-import * as utils from '@nothing-but/utils'
-import * as solid from 'solid-js'
-import * as sweb from 'solid-js/web'
-import * as lib from '../../src'
+import {signal as s} from "@nothing-but/solid"
+import * as utils from "@nothing-but/utils"
+import * as solid from "solid-js"
+import * as sweb from "solid-js/web"
+import * as lib from "../../src"
 
 const vertex_shader_source = /*glsl*/ `
 uniform vec2 u_resolution;
@@ -61,8 +61,8 @@ function randomColor(): lib.Vec4 {
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
-    const gl = el.getContext('webgl2')
-    if (!gl) throw new Error('webgl2 is not supported')
+    const gl = el.getContext("webgl2")
+    if (!gl) throw new Error("webgl2 is not supported")
 
     /*
     Update the canvas's size to match the size it's displayed.
@@ -84,12 +84,12 @@ export const App: solid.Component = () => {
 
     gl.useProgram(program)
 
-    const u_resolution = gl.getUniformLocation(program, 'u_resolution')
-    const u_color = gl.getUniformLocation(program, 'u_color')
-    const u_thickness = gl.getUniformLocation(program, 'u_thickness')
+    const u_resolution = gl.getUniformLocation(program, "u_resolution")
+    const u_color = gl.getUniformLocation(program, "u_color")
+    const u_thickness = gl.getUniformLocation(program, "u_thickness")
 
-    const a_position = gl.getAttribLocation(program, 'a_position')
-    const a_normal = gl.getAttribLocation(program, 'a_normal')
+    const a_position = gl.getAttribLocation(program, "a_position")
+    const a_normal = gl.getAttribLocation(program, "a_normal")
 
     // Turn on the attribute
     gl.enableVertexAttribArray(a_position)
@@ -98,7 +98,7 @@ export const App: solid.Component = () => {
     const positions_buffer = gl.createBuffer()
     const angles_buffer = gl.createBuffer()
 
-    if (!positions_buffer || !angles_buffer) throw new Error('failed to create gl buffers')
+    if (!positions_buffer || !angles_buffer) throw new Error("failed to create gl buffers")
 
     const X_SPACING = 100
 
@@ -255,4 +255,4 @@ export const App: solid.Component = () => {
     return <Shell>{el}</Shell>
 }
 
-void sweb.render(() => <App />, document.getElementById('root')!)
+void sweb.render(() => <App />, document.getElementById("root")!)

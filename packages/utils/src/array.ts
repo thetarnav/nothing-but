@@ -1,4 +1,4 @@
-import {num} from './index.js'
+import {num} from "./index.js"
 
 /**
  * Check shallow array equality

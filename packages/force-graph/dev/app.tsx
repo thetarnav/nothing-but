@@ -1,8 +1,8 @@
-import * as s from '@nothing-but/solid/signal'
-import * as utils from '@nothing-but/utils'
-import * as solid from 'solid-js'
-import * as fg from '../src/index.js'
-import * as init from './init.js'
+import * as s from "@nothing-but/solid/signal"
+import * as utils from "@nothing-but/utils"
+import * as solid from "solid-js"
+import * as fg from "../src/index.js"
+import * as init from "./init.js"
 
 const Shell: solid.FlowComponent = props => {
     return (
@@ -34,8 +34,8 @@ export const App: solid.Component = () => {
 
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
-    const ctx = el.getContext('2d')
-    if (!ctx) throw new Error('no context')
+    const ctx = el.getContext("2d")
+    if (!ctx) throw new Error("no context")
 
     const canvas_state = fg.canvas.canvasState({
         ...fg.canvas.DEFAULT_OPTIONS,
@@ -87,7 +87,7 @@ export const App: solid.Component = () => {
                 }
                 case fg.canvas.GestureEventType.NodeClick: {
                     // eslint-disable-next-line no-console
-                    console.log('click', e.node)
+                    console.log("click", e.node)
                     break
                 }
             }

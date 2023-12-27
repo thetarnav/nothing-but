@@ -1,5 +1,5 @@
-import {T, event, num, trig} from '@nothing-but/utils'
-import {graph} from './index.js'
+import {T, event, num, trig} from "@nothing-but/utils"
+import {graph} from "./index.js"
 
 export interface Options {
     readonly ctx: CanvasRenderingContext2D
@@ -230,8 +230,8 @@ export function drawTextNodes(canvas: CanvasState): void {
         {width, height} = canvas.ctx.canvas,
         max_size = Math.max(width, height)
 
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
 
     for (const node of graph.nodes) {
         const {x, y} = node.position
@@ -335,7 +335,7 @@ function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: M
 function defaultState(gesture: CanvasGestures): DefaultState {
     const {canvas} = gesture
 
-    const removeListener = event.listener(canvas.ctx.canvas, 'mousemove', e => {
+    const removeListener = event.listener(canvas.ctx.canvas, "mousemove", e => {
         handleMouseMoveEvent(gesture, state, e)
     })
 
@@ -394,7 +394,7 @@ function draggingNodeState(
 
     const down_event_pos = {x: input.e.clientX, y: input.e.clientY}
 
-    const removeListener = event.listener(document, 'pointermove', e => {
+    const removeListener = event.listener(document, "pointermove", e => {
         if (e.pointerId !== state.pointer_id) return
 
         state.goal_point_ratio = eventToPointRatio(canvas, e)
@@ -479,7 +479,7 @@ function moveDraggingState(
 ): MovingDraggingState {
     const {canvas} = gesture
 
-    const removeListener = event.listener(document, 'pointermove', e => {
+    const removeListener = event.listener(document, "pointermove", e => {
         const should_update = handleMoveEvent(state, e)
         if (should_update) {
             gesture.onGesture({type: GestureEventType.Translate})
@@ -566,7 +566,7 @@ function moveMultiTouchState(
     const init_ratio_0 = input.init_ratio_0
     const init_ratio_1 = eventToPointRatio(canvas, input.e)
 
-    const removeListener = event.listener(document, 'pointermove', e => {
+    const removeListener = event.listener(document, "pointermove", e => {
         const should_update = handleMultiTouchEvent(state, e)
         if (should_update) {
             gesture.onGesture({type: GestureEventType.Translate})
@@ -784,14 +784,14 @@ function handleKeyDownEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
     const {mode} = gesture
 
     switch (e.key) {
-        case 'Control': {
+        case "Control": {
             if (mode.type !== Mode.Default) return
             e.preventDefault()
             changeModeState(gesture, Mode.MovingSpace)
             break
         }
 
-        case 'Escape': {
+        case "Escape": {
             if (mode.type === Mode.Default) return
             e.preventDefault()
             changeModeState(gesture, Mode.Default)
@@ -803,7 +803,7 @@ function handleKeyDownEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
 function handleKeyUpEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
     if (event.shouldIgnoreKeydown(e)) return
 
-    if (e.key !== 'Control') return
+    if (e.key !== "Control") return
 
     const {mode} = gesture
 

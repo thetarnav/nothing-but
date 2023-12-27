@@ -8,9 +8,9 @@ https://github.com/toji/gl-matrix/blob/2534c9d0dd8c947ec7ddd4223d99447de017bac9/
 
 */
 
-import {num} from '@nothing-but/utils'
-import {array_constructor} from './array_type.js'
-import {ReadonlyVec2} from './vec2.js'
+import {num} from "@nothing-but/utils"
+import {array_constructor} from "./array_type.js"
+import {ReadonlyVec2} from "./vec2.js"
 
 /**
  * 3x3 Matrix
@@ -688,25 +688,25 @@ export function projection(width: number, height: number): Mat3 {
  */
 export function str(a: ReadonlyMat3): string {
     return (
-        'Mat3(' +
+        "Mat3(" +
         a[0] +
-        ', ' +
+        ", " +
         a[1] +
-        ', ' +
+        ", " +
         a[2] +
-        ', ' +
+        ", " +
         a[3] +
-        ', ' +
+        ", " +
         a[4] +
-        ', ' +
+        ", " +
         a[5] +
-        ', ' +
+        ", " +
         a[6] +
-        ', ' +
+        ", " +
         a[7] +
-        ', ' +
+        ", " +
         a[8] +
-        ')'
+        ")"
     )
 }
 

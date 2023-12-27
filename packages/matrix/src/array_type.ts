@@ -1,5 +1,5 @@
 export let array_constructor: typeof Float32Array | typeof Array =
-    typeof Float32Array !== 'undefined' ? Float32Array : Array
+    typeof Float32Array !== "undefined" ? Float32Array : Array
 
 /**
  * Sets the global array constructor used when creating new vectors and matrices
