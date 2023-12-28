@@ -1,3 +1,14 @@
+/*
+
+Smooth dragging
+
+- [ ] multiple pointers
+- [x] initial smooth move to center
+- [x] momentum
+- [ ] optimistic events
+
+*/
+
 import {signal as s} from "@nothing-but/solid"
 import * as utils from "@nothing-but/utils"
 import * as solid from "solid-js"
@@ -120,16 +131,36 @@ export const App: solid.Component = () => {
 
     let box_x = 100
     let box_y = 100
+
+    let momentum_x = 0
+    let momentum_y = 0
+
+    let goal_x = box_x
+    let goal_y = box_y
+
     let last_rect_x = 0
     let last_rect_y = 0
+
     let pointer_down = false
 
     const BOX_SIZE = 40
     const HALF_BOX_SIZE = BOX_SIZE / 2
 
-    // TODO multiple pointers
+    const INERTIA_STRENGTH = 0.3
+    const DECAY_STRENGTH = 0.5
+
+    function updatePosition(x: number, y: number): void {
+        goal_x = x
+        goal_y = y
+    }
+    function updateLastRect(rect: DOMRect): void {
+        last_rect_x = rect.x
+        last_rect_y = rect.y
+    }
 
     utils.event.createListener(el, "pointerdown", e => {
+        e.preventDefault()
+
         const x = e.offsetX
         const y = e.offsetY
         if (
@@ -141,28 +172,21 @@ export const App: solid.Component = () => {
             return
         }
 
-        const rect = el.getBoundingClientRect()
-        last_rect_x = rect.x
-        last_rect_y = rect.y
-        box_x = x
-        box_y = y
+        updatePosition(x, y)
+        updateLastRect(el.getBoundingClientRect())
         pointer_down = true
     })
     utils.event.createListener(document, "pointermove", e => {
         if (!pointer_down) return
         const rect = el.getBoundingClientRect()
-        box_x = e.clientX - rect.left
-        box_y = e.clientY - rect.top
-        last_rect_x = rect.x
-        last_rect_y = rect.y
+        updatePosition(e.clientX - rect.left, e.clientY - rect.top)
+        updateLastRect(rect)
     })
     utils.event.createListener(document, "scroll", () => {
         if (!pointer_down) return
         const rect = el.getBoundingClientRect()
-        box_x -= rect.x - last_rect_x
-        box_y -= rect.y - last_rect_y
-        last_rect_x = rect.x
-        last_rect_y = rect.y
+        updatePosition(goal_x + last_rect_x - rect.x, goal_y + last_rect_y - rect.y)
+        updateLastRect(rect)
     })
     utils.event.createListener(document, "pointerup", () => {
         pointer_down = false
@@ -174,7 +198,14 @@ export const App: solid.Component = () => {
         pointer_down = false
     })
 
-    const frame = (time: number): void => {
+    const frame = (): void => {
+        momentum_x += (goal_x - box_x) * INERTIA_STRENGTH
+        momentum_y += (goal_y - box_y) * INERTIA_STRENGTH
+        momentum_x *= DECAY_STRENGTH
+        momentum_y *= DECAY_STRENGTH
+        box_x += momentum_x
+        box_y += momentum_y
+
         /* resize */
         if (ro.resized) {
             ro.resized = false
@@ -189,10 +220,20 @@ export const App: solid.Component = () => {
         ctx.scale(dpr, dpr)
 
         /*
-        draw a box at box_x, box_y
+        draw a box
         */
         ctx.fillStyle = "red"
         ctx.fillRect(box_x - HALF_BOX_SIZE, box_y - HALF_BOX_SIZE, BOX_SIZE, BOX_SIZE)
+
+        /*
+        momentum indicator
+        */
+        ctx.strokeStyle = "blue"
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(box_x, box_y)
+        ctx.lineTo(box_x + momentum_x, box_y + momentum_y)
+        ctx.stroke()
     }
 
     const loop = utils.raf.makeAnimationLoop(frame)
