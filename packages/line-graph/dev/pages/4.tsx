@@ -54,12 +54,12 @@ interface ElementResizeState {
     width: number
     height: number
 }
-function getCanvasDisplaySize(canvas: HTMLCanvasElement): {width: number; height: number} {
+function getCanvasDisplaySize(canvas: HTMLCanvasElement): utils.T.Position {
     const rect = canvas.getBoundingClientRect()
     const dpr = window.devicePixelRatio
     return {
-        width: Math.round(rect.width * dpr),
-        height: Math.round(rect.height * dpr),
+        x: Math.round(rect.width * dpr),
+        y: Math.round(rect.height * dpr),
     }
 }
 function makeElementResizeState(el: HTMLElement): ElementResizeState {
@@ -270,21 +270,20 @@ export const App: solid.Component = () => {
         const view_start = Math.floor(start_progress * ease_dencity)
 
         /*
-            clear
-            flip y
+        resize, clear, flip y
         */
         if (ro.resized) {
             ro.resized = false
             const ds = getCanvasDisplaySize(el)
-            el.width = ds.width
-            el.height = ds.height
+            el.width = ds.x
+            el.height = ds.y
         }
         ctx.resetTransform()
         ctx.clearRect(0, 0, el.width, el.height)
         ctx.setTransform(dpr, 0, 0, -dpr, 0, el.height - 200)
 
         /*
-            draw ease line
+        draw ease line
         */
         ctx.lineWidth = 2
         ctx.lineCap = "round"

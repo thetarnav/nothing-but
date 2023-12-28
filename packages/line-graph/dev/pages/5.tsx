@@ -1,18 +1,3 @@
-/*
-
-TODO
-
-- [x] Drag to pan
-    - [ ] handle drag outside of canvas
-    - [ ] momentum
-    - [x] fix glitches when dragging to the beginning or end
-    - [x] fix glitches with data-points moving
-- [x] Scale to mouse position
-- [ ] Reduce number of points when zoomed out
-
-
-*/
-
 import {signal as s} from "@nothing-but/solid"
 import * as utils from "@nothing-but/utils"
 import * as solid from "solid-js"
@@ -54,12 +39,12 @@ interface ElementResizeState {
     width: number
     height: number
 }
-function getCanvasDisplaySize(canvas: HTMLCanvasElement): {width: number; height: number} {
+function getCanvasDisplaySize(canvas: HTMLCanvasElement): utils.T.Position {
     const rect = canvas.getBoundingClientRect()
     const dpr = window.devicePixelRatio
     return {
-        width: Math.round(rect.width * dpr),
-        height: Math.round(rect.height * dpr),
+        x: Math.round(rect.width * dpr),
+        y: Math.round(rect.height * dpr),
     }
 }
 function makeElementResizeState(el: HTMLElement): ElementResizeState {
@@ -95,6 +80,35 @@ function createElementResizeState(el: HTMLElement): ElementResizeState {
     return state
 }
 
+// type DragPosition = {
+//     x: number
+//     y: number
+//     down: boolean
+// }
+
+// function handlePointerDownEvent(gesture: DragPosition, e: PointerEvent): void {
+//     gesture.down = true
+//     gesture.x = e.offsetX
+//     gesture.y = e.offsetY
+// }
+
+// type Cleanup = () => void
+
+// function addDragListeners(target: HTMLElement, gesture: DragPosition): Cleanup {
+//     const unsub1 = utils.event.listener(target, "pointerdown", e => {})
+//     const unsub2 = utils.event.listener(document, "pointermove", e => {})
+//     const unsub3 = utils.event.listener(document, "pointerup", e => {})
+//     const unsub4 = utils.event.listener(document, "pointercancel", e => {})
+//     const unsub5 = utils.event.listener(document, "contextmenu", e => {})
+//     return () => {
+//         unsub1()
+//         unsub2()
+//         unsub3()
+//         unsub4()
+//         unsub5()
+//     }
+// }
+
 export const App: solid.Component = () => {
     const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
@@ -104,212 +118,81 @@ export const App: solid.Component = () => {
     const dpr = window.devicePixelRatio
     const ro = createElementResizeState(el)
 
-    let wheel_delta_x = 0
-    let wheel_delta_y = 0
-    utils.event.createListener(el, "wheel", e => {
-        wheel_delta_x += e.deltaX
-        wheel_delta_y += e.deltaY
-    })
+    let box_x = 100
+    let box_y = 100
+    let last_rect_x = 0
+    let last_rect_y = 0
+    let pointer_down = false
 
-    let mouse_x = 0
-    utils.event.createListener(el, "mousemove", e => {
-        mouse_x = e.offsetX
-    })
+    const BOX_SIZE = 40
+    const HALF_BOX_SIZE = BOX_SIZE / 2
 
-    let mousedown = false
-    utils.event.createListener(el, "mousedown", () => {
-        mousedown = true
-    })
+    // TODO multiple pointers
 
-    utils.event.createListener(el, "mouseup", () => {
-        mousedown = false
-    })
-
-    /* input data */
-    const source = {
-        buf: new Float32Array(256),
-        len: 1,
-    }
-
-    source.len = 256
-    for (let i = 0; i < source.len; i += 1) {
-        source.buf[i] = Math.random() * 200
-    }
-
-    const EASE_DENCITY = 32 // ease points between data points
-    const X_SPACING = 0.4 // px between points
-    const MARGIN = 20 // px
-
-    const yAtProgress = (progress: number): number => {
-        const data_i = Math.floor(progress)
-        const p = utils.ease.in_out_cubic(progress - data_i)
-        const from = source.buf[data_i]!
-        const to = source.buf[data_i + 1]!
-        return from + (to - from) * p
-    }
-
-    const ANIM_DURATION = 400
-    let anim_progress = 0 // %
-
-    let anchor = -1 // follow the last point
-    let scale = 1
-
-    let last_mouse_progress = 0
-    let last_time = 0
-
-    let is_data_full = false
-
-    let drawable_width = 0
-    let drawable_points = 0
-
-    let len_progress = 0
-    let max_progress = 0
-    let min_progress = 0
-
-    let ease_dencity = 0
-
-    let view_points = 0
-    let view_progress = 0
-
-    let anchor_progress = 0
-    let end_progress = 0
-    let start_progress = 0
-
-    function updateViewState(): void {
-        drawable_width = ro.width - MARGIN * 2
-        drawable_points = drawable_width / X_SPACING
-
-        len_progress = source.len - 1 + anim_progress
-        max_progress = len_progress - 1
-        min_progress = is_data_full ? anim_progress : 0
-
-        ease_dencity = scale * EASE_DENCITY
-
-        view_points = Math.round(utils.num.clamp(max_progress * ease_dencity, 0, drawable_points))
-        view_progress = view_points / ease_dencity
-
-        anchor_progress = anchor < 0 ? len_progress + anchor : anchor
-        end_progress = utils.num.clamp(anchor_progress, view_progress + min_progress, max_progress)
-
-        /* correct for when both start and end are visible, when zoomed out */
-        start_progress = Math.max(end_progress - view_progress, min_progress)
-
-        anchor =
-            end_progress >= max_progress - EASE_DENCITY / 8
-                ? end_progress - max_progress - 1
-                : end_progress
-    }
-
-    function updateAnchor(new_anchor: number): void {
-        new_anchor = anchor < 0 ? Math.min(new_anchor, -1) : Math.max(new_anchor, 0)
-        if (new_anchor !== anchor) {
-            anchor = new_anchor
-            updateViewState()
+    utils.event.createListener(el, "pointerdown", e => {
+        const x = e.offsetX
+        const y = e.offsetY
+        if (
+            x < box_x - HALF_BOX_SIZE ||
+            x > box_x + HALF_BOX_SIZE ||
+            y < box_y - HALF_BOX_SIZE ||
+            y > box_y + HALF_BOX_SIZE
+        ) {
+            return
         }
-    }
+
+        const rect = el.getBoundingClientRect()
+        last_rect_x = rect.x
+        last_rect_y = rect.y
+        box_x = x
+        box_y = y
+        pointer_down = true
+    })
+    utils.event.createListener(document, "pointermove", e => {
+        if (!pointer_down) return
+        const rect = el.getBoundingClientRect()
+        box_x = e.clientX - rect.left
+        box_y = e.clientY - rect.top
+        last_rect_x = rect.x
+        last_rect_y = rect.y
+    })
+    utils.event.createListener(document, "scroll", () => {
+        if (!pointer_down) return
+        const rect = el.getBoundingClientRect()
+        box_x -= rect.x - last_rect_x
+        box_y -= rect.y - last_rect_y
+        last_rect_x = rect.x
+        last_rect_y = rect.y
+    })
+    utils.event.createListener(document, "pointerup", () => {
+        pointer_down = false
+    })
+    utils.event.createListener(document, "pointercancel", () => {
+        pointer_down = false
+    })
+    utils.event.createListener(document, "contextmenu", () => {
+        pointer_down = false
+    })
 
     const frame = (time: number): void => {
-        is_data_full = source.len === source.buf.length
-
-        const delta_time = time - last_time
-        last_time = time
-        anim_progress = Math.min(anim_progress + delta_time / ANIM_DURATION, 1)
-
-        /*
-            update data
-        */
-        if (anim_progress === 1) {
-            anim_progress = 0
-
-            const new_value = Math.random() * 200
-
-            if (is_data_full) {
-                fixedPushRight(source.buf, new_value)
-
-                if (anchor > 0) anchor -= 1
-                last_mouse_progress -= 1
-            } else {
-                source.buf[source.len] = new_value
-                source.len += 1
-            }
-        }
-
-        /*
-            user input
-        */
-        const prev_scale = scale
-        scale = utils.num.clamp(scale - wheel_delta_y / 500, 0.5, 8)
-
-        const wheel_progress = wheel_delta_x / 20 / scale
-        wheel_delta_x = 0
-        wheel_delta_y = 0
-
-        /*
-            calc view state
-        */
-        updateViewState()
-
-        /*
-            apply user input
-        */
-        if (wheel_progress) {
-            updateAnchor(anchor + wheel_progress)
-        } else {
-            const mouse_p = (mouse_x - MARGIN) / drawable_width
-            const mouse_progress = start_progress + mouse_p * (end_progress - start_progress)
-            const mouse_progress_delta = mouse_progress - last_mouse_progress
-
-            if ((prev_scale !== scale || mousedown) && mouse_progress_delta) {
-                updateAnchor(anchor - mouse_progress_delta)
-            } else {
-                last_mouse_progress = mouse_progress
-            }
-        }
-
-        const view_end = Math.floor(end_progress * ease_dencity)
-        const view_start = Math.floor(start_progress * ease_dencity)
-
-        /*
-            clear
-            flip y
-        */
+        /* resize */
         if (ro.resized) {
             ro.resized = false
             const ds = getCanvasDisplaySize(el)
-            el.width = ds.width
-            el.height = ds.height
+            el.width = ds.x
+            el.height = ds.y
         }
+        /* clear */
         ctx.resetTransform()
         ctx.clearRect(0, 0, el.width, el.height)
-        ctx.setTransform(dpr, 0, 0, -dpr, 0, el.height - 200)
+        /* scale to device pixel ratio, so 1 ctx unit is 1 px */
+        ctx.scale(dpr, dpr)
 
         /*
-            draw ease line
+        draw a box at box_x, box_y
         */
-        ctx.lineWidth = 2
-        ctx.lineCap = "round"
-        ctx.strokeStyle = "#e50"
-        ctx.beginPath()
-        ctx.moveTo(MARGIN, yAtProgress(view_start / ease_dencity))
-        for (let i = view_start; i < view_end; i += 1) {
-            ctx.lineTo(MARGIN + (i - view_start) * X_SPACING, yAtProgress(i / ease_dencity))
-        }
-        ctx.stroke()
-
-        /*
-        progress indicator
-        */
-        ctx.lineWidth = 5
-        ctx.strokeStyle = "#ff0000"
-        ctx.beginPath()
-        ctx.moveTo(MARGIN, -50)
-        ctx.lineTo(MARGIN + drawable_width * anim_progress, -50)
-        ctx.stroke()
-        ctx.beginPath()
-        ctx.strokeStyle = "#00ff00"
-        ctx.moveTo(MARGIN + (start_progress / max_progress) * drawable_width, -100)
-        ctx.lineTo(MARGIN + (end_progress / max_progress) * drawable_width, -100)
-        ctx.stroke()
+        ctx.fillStyle = "red"
+        ctx.fillRect(box_x - HALF_BOX_SIZE, box_y - HALF_BOX_SIZE, BOX_SIZE, BOX_SIZE)
     }
 
     const loop = utils.raf.makeAnimationLoop(frame)
