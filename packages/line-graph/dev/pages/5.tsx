@@ -141,8 +141,6 @@ export const App: solid.Component = () => {
     let pointer_y = box_y
     let last_pointer_x = box_x
     let last_pointer_y = box_y
-    let pointer_momentum_x = 0
-    let pointer_momentum_y = 0
 
     let pointer_down = false
 
@@ -164,8 +162,6 @@ export const App: solid.Component = () => {
         pointer_down = false
         last_pointer_x = pointer_x
         last_pointer_y = pointer_y
-        pointer_momentum_x = 0
-        pointer_momentum_y = 0
     }
 
     utils.event.createListener(el, "pointerdown", e => {
@@ -202,31 +198,30 @@ export const App: solid.Component = () => {
     utils.event.createListener(document, "pointercancel", handlePointerUp)
     utils.event.createListener(document, "contextmenu", handlePointerUp)
 
+    let last_pointer_angle = 0
+    let last_pointer_delta = 0
+
     const frame = (): void => {
         const pointer_delta_x = pointer_x - last_pointer_x
         const pointer_delta_y = pointer_y - last_pointer_y
+
+        const pointer_delta = Math.sqrt(pointer_delta_x ** 2 + pointer_delta_y ** 2)
+        const speed_change = Math.min(last_pointer_delta / pointer_delta, 1.2) || 0
+
+        const pointer_angle = Math.atan2(pointer_delta_y, pointer_delta_x)
+        const pointer_angle_delta =
+            Math.sign(pointer_angle) === Math.sign(last_pointer_angle)
+                ? pointer_angle - last_pointer_angle
+                : pointer_angle + last_pointer_angle
+        const guessed_angle = pointer_angle + pointer_angle_delta * speed_change
+
         last_pointer_y = pointer_y
         last_pointer_x = pointer_x
+        last_pointer_delta = pointer_delta
+        last_pointer_angle = pointer_angle
 
-        if (
-            Math.sign(pointer_delta_x) !== Math.sign(pointer_momentum_x) ||
-            Math.abs(pointer_delta_x) < 10
-        ) {
-            pointer_momentum_x = 0
-        }
-        if (
-            Math.sign(pointer_delta_y) !== Math.sign(pointer_momentum_y) ||
-            Math.abs(pointer_delta_y) < 10
-        ) {
-            pointer_momentum_y = 0
-        }
-        pointer_momentum_x += pointer_delta_x
-        pointer_momentum_x *= 0.5
-        pointer_momentum_y += pointer_delta_y
-        pointer_momentum_y *= 0.5
-
-        const guessed_pointer_x = pointer_x + pointer_momentum_x
-        const guessed_pointer_y = pointer_y + pointer_momentum_y
+        const guessed_pointer_x = pointer_x + Math.cos(guessed_angle) * pointer_delta
+        const guessed_pointer_y = pointer_y + Math.sin(guessed_angle) * pointer_delta
 
         momentum_x *= 0.6
         momentum_y *= 0.6
@@ -261,13 +256,30 @@ export const App: solid.Component = () => {
         ctx.lineWidth = 3
         ctx.beginPath()
         ctx.moveTo(box_x, box_y)
-        ctx.lineTo(box_x + momentum_x, box_y + momentum_y)
+        ctx.lineTo(box_x - momentum_x, box_y - momentum_y)
         ctx.stroke()
 
         // ctx.fillStyle = "gray"
         // ctx.beginPath()
         // ctx.arc(box_x, box_y, 4, 0, Math.PI * 2)
         // ctx.fill()
+        // ctx.strokeStyle = "gray"
+        // ctx.lineWidth = 1
+        // ctx.beginPath()
+        // ctx.moveTo(pointer_x, pointer_y)
+        // ctx.lineTo(box_x, box_y)
+        // ctx.stroke()
+
+        // ctx.fillStyle = "pink"
+        // ctx.beginPath()
+        // ctx.arc(old_guessed_pointer_x, old_guessed_pointer_y, 4, 0, Math.PI * 2)
+        // ctx.fill()
+        // ctx.strokeStyle = "pink"
+        // ctx.lineWidth = 1
+        // ctx.beginPath()
+        // ctx.moveTo(pointer_x, pointer_y)
+        // ctx.lineTo(old_guessed_pointer_x, old_guessed_pointer_y)
+        // ctx.stroke()
 
         /*
         guessed pointer indicator
@@ -276,6 +288,12 @@ export const App: solid.Component = () => {
         ctx.beginPath()
         ctx.arc(guessed_pointer_x, guessed_pointer_y, 4, 0, Math.PI * 2)
         ctx.fill()
+        // ctx.strokeStyle = "yellow"
+        // ctx.lineWidth = 1
+        // ctx.beginPath()
+        // ctx.moveTo(pointer_x, pointer_y)
+        // ctx.lineTo(guessed_pointer_x, guessed_pointer_y)
+        // ctx.stroke()
 
         /*
         pointer indicator
