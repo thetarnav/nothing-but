@@ -141,6 +141,8 @@ export const App: solid.Component = () => {
     let pointer_y = box_y
     let last_pointer_x = box_x
     let last_pointer_y = box_y
+    let pointer_timestamp = 0
+    let last_pointer_timestamp = 0
 
     let pointer_down = false
 
@@ -153,6 +155,8 @@ export const App: solid.Component = () => {
     function updatePointer(x: number, y: number): void {
         pointer_x = x
         pointer_y = y
+        last_pointer_timestamp = pointer_timestamp
+        pointer_timestamp = performance.now()
     }
     function updateLastRect(rect: DOMRect): void {
         last_rect_x = rect.x
@@ -160,8 +164,8 @@ export const App: solid.Component = () => {
     }
     function handlePointerUp(): void {
         pointer_down = false
-        last_pointer_x = pointer_x
-        last_pointer_y = pointer_y
+        // last_pointer_x = pointer_x
+        // last_pointer_y = pointer_y
     }
 
     utils.event.createListener(el, "pointerdown", e => {
@@ -178,6 +182,7 @@ export const App: solid.Component = () => {
             return
         }
 
+        pointer_timestamp = performance.now()
         updatePointer(x, y)
         updateLastRect(el.getBoundingClientRect())
         pointer_down = true
@@ -199,34 +204,53 @@ export const App: solid.Component = () => {
     utils.event.createListener(document, "contextmenu", handlePointerUp)
 
     let last_pointer_angle = 0
-    let last_pointer_delta = 0
+
+    const DRAW_BOX = true as boolean
+    const DRAW_CLEAR = true as boolean
+    const DRAW_POINTS = false as boolean
+    const DRAW_LINES = false as boolean
+
+    let guessed_pointer_x = pointer_x
+    let guessed_pointer_y = pointer_y
 
     const frame = (): void => {
         const pointer_delta_x = pointer_x - last_pointer_x
         const pointer_delta_y = pointer_y - last_pointer_y
 
-        const pointer_delta = Math.sqrt(pointer_delta_x ** 2 + pointer_delta_y ** 2)
-        const speed_change = Math.min(last_pointer_delta / pointer_delta, 1.2) || 0
+        let speed_mod = 0
 
-        const pointer_angle = Math.atan2(pointer_delta_y, pointer_delta_x)
-        const pointer_angle_delta =
-            Math.sign(pointer_angle) === Math.sign(last_pointer_angle)
-                ? pointer_angle - last_pointer_angle
-                : pointer_angle + last_pointer_angle
-        const guessed_angle = pointer_angle + pointer_angle_delta * speed_change
+        if (pointer_delta_x !== 0 || pointer_delta_y !== 0) {
+            const pointer_delta = Math.sqrt(pointer_delta_x ** 2 + pointer_delta_y ** 2)
+            const pointer_speed =
+                pointer_timestamp !== last_pointer_timestamp
+                    ? pointer_delta / (pointer_timestamp - last_pointer_timestamp)
+                    : 0
 
-        last_pointer_y = pointer_y
-        last_pointer_x = pointer_x
-        last_pointer_delta = pointer_delta
-        last_pointer_angle = pointer_angle
+            const pointer_angle = Math.atan2(pointer_delta_y, pointer_delta_x)
+            const pointer_angle_delta =
+                Math.sign(pointer_angle) === Math.sign(last_pointer_angle)
+                    ? pointer_angle - last_pointer_angle
+                    : pointer_angle + last_pointer_angle
 
-        const guessed_pointer_x = pointer_x + Math.cos(guessed_angle) * pointer_delta
-        const guessed_pointer_y = pointer_y + Math.sin(guessed_angle) * pointer_delta
+            speed_mod = Math.min(pointer_speed / 5, 1.3)
+            const guessed_angle = pointer_angle + pointer_angle_delta * (2 - speed_mod)
 
-        momentum_x *= 0.6
-        momentum_y *= 0.6
-        momentum_x += (guessed_pointer_x - box_x) * 0.2
-        momentum_y += (guessed_pointer_y - box_y) * 0.2
+            last_pointer_y = pointer_y
+            last_pointer_x = pointer_x
+            last_pointer_angle = pointer_angle
+
+            guessed_pointer_x = pointer_x + Math.cos(guessed_angle) * pointer_delta * speed_mod
+            guessed_pointer_y = pointer_y + Math.sin(guessed_angle) * pointer_delta * speed_mod
+
+            momentum_x *= 0.2
+            momentum_y *= 0.2
+            momentum_x += (guessed_pointer_x - box_x) * 0.5
+            momentum_y += (guessed_pointer_y - box_y) * 0.5
+        } else {
+            momentum_x *= 0.5
+            momentum_y *= 0.5
+        }
+
         box_x += momentum_x
         box_y += momentum_y
 
@@ -239,69 +263,71 @@ export const App: solid.Component = () => {
         }
         /* clear */
         ctx.resetTransform()
-        ctx.clearRect(0, 0, el.width, el.height)
+        if (DRAW_CLEAR) {
+            ctx.clearRect(0, 0, el.width, el.height)
+        }
         /* scale to device pixel ratio, so 1 ctx unit is 1 px */
         ctx.scale(dpr, dpr)
 
         /*
         draw a box
         */
-        ctx.fillStyle = "gray"
-        ctx.fillRect(box_x - HALF_BOX_SIZE, box_y - HALF_BOX_SIZE, BOX_SIZE, BOX_SIZE)
+        if (DRAW_BOX) {
+            ctx.fillStyle = "gray"
+            ctx.fillRect(box_x - HALF_BOX_SIZE, box_y - HALF_BOX_SIZE, BOX_SIZE, BOX_SIZE)
+        }
+
+        const speed_change_g = Math.round((1 - speed_mod / 1.3) * 255)
+        const speed_change_color = `rgb(255, ${speed_change_g}, 0)`
 
         /*
         momentum indicator
         */
-        ctx.strokeStyle = "blue"
-        ctx.lineWidth = 3
-        ctx.beginPath()
-        ctx.moveTo(box_x, box_y)
-        ctx.lineTo(box_x - momentum_x, box_y - momentum_y)
-        ctx.stroke()
+        if (DRAW_LINES) {
+            // ctx.strokeStyle = "blue"
+            // ctx.lineWidth = 1
+            // ctx.beginPath()
+            // ctx.moveTo(box_x, box_y)
+            // ctx.lineTo(box_x - momentum_x, box_y - momentum_y)
+            // ctx.stroke()
 
-        // ctx.fillStyle = "gray"
-        // ctx.beginPath()
-        // ctx.arc(box_x, box_y, 4, 0, Math.PI * 2)
-        // ctx.fill()
-        // ctx.strokeStyle = "gray"
-        // ctx.lineWidth = 1
-        // ctx.beginPath()
-        // ctx.moveTo(pointer_x, pointer_y)
-        // ctx.lineTo(box_x, box_y)
-        // ctx.stroke()
+            ctx.strokeStyle = "gray"
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(pointer_x, pointer_y)
+            ctx.lineTo(box_x, box_y)
+            ctx.stroke()
 
-        // ctx.fillStyle = "pink"
-        // ctx.beginPath()
-        // ctx.arc(old_guessed_pointer_x, old_guessed_pointer_y, 4, 0, Math.PI * 2)
-        // ctx.fill()
-        // ctx.strokeStyle = "pink"
-        // ctx.lineWidth = 1
-        // ctx.beginPath()
-        // ctx.moveTo(pointer_x, pointer_y)
-        // ctx.lineTo(old_guessed_pointer_x, old_guessed_pointer_y)
-        // ctx.stroke()
+            ctx.strokeStyle = speed_change_color
+            ctx.lineWidth = 1
+            ctx.beginPath()
+            ctx.moveTo(pointer_x, pointer_y)
+            ctx.lineTo(guessed_pointer_x, guessed_pointer_y)
+            ctx.stroke()
+        }
 
-        /*
-        guessed pointer indicator
-        */
-        ctx.fillStyle = "yellow"
-        ctx.beginPath()
-        ctx.arc(guessed_pointer_x, guessed_pointer_y, 4, 0, Math.PI * 2)
-        ctx.fill()
-        // ctx.strokeStyle = "yellow"
-        // ctx.lineWidth = 1
-        // ctx.beginPath()
-        // ctx.moveTo(pointer_x, pointer_y)
-        // ctx.lineTo(guessed_pointer_x, guessed_pointer_y)
-        // ctx.stroke()
+        if (DRAW_POINTS) {
+            ctx.fillStyle = "gray"
+            ctx.beginPath()
+            ctx.arc(box_x, box_y, 3, 0, Math.PI * 2)
+            ctx.fill()
 
-        /*
-        pointer indicator
-        */
-        ctx.fillStyle = "red"
-        ctx.beginPath()
-        ctx.arc(pointer_x, pointer_y, 4, 0, Math.PI * 2)
-        ctx.fill()
+            /*
+            guessed pointer indicator
+            */
+            ctx.fillStyle = speed_change_color
+            ctx.beginPath()
+            ctx.arc(guessed_pointer_x, guessed_pointer_y, 3, 0, Math.PI * 2)
+            ctx.fill()
+
+            /*
+            pointer indicator
+            */
+            ctx.fillStyle = "blue"
+            ctx.beginPath()
+            ctx.arc(pointer_x, pointer_y, 3, 0, Math.PI * 2)
+            ctx.fill()
+        }
     }
 
     const loop = utils.raf.makeAnimationLoop(frame)
