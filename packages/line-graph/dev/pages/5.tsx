@@ -152,20 +152,18 @@ export const App: solid.Component = () => {
     const INERTIA_STRENGTH = 0.3
     const DECAY_STRENGTH = 0.5
 
-    function updatePointer(x: number, y: number): void {
+    function updatePointer(x: number, y: number, rect: DOMRect, e: Event): void {
         pointer_x = x
         pointer_y = y
         last_pointer_timestamp = pointer_timestamp
-        pointer_timestamp = performance.now()
-    }
-    function updateLastRect(rect: DOMRect): void {
+        pointer_timestamp = e.timeStamp
         last_rect_x = rect.x
         last_rect_y = rect.y
     }
     function handlePointerUp(): void {
         pointer_down = false
-        // last_pointer_x = pointer_x
-        // last_pointer_y = pointer_y
+        last_pointer_x = pointer_x
+        last_pointer_y = pointer_y
     }
 
     utils.event.createListener(el, "pointerdown", e => {
@@ -182,49 +180,44 @@ export const App: solid.Component = () => {
             return
         }
 
-        pointer_timestamp = performance.now()
-        updatePointer(x, y)
-        updateLastRect(el.getBoundingClientRect())
+        pointer_timestamp = e.timeStamp
+        updatePointer(x, y, el.getBoundingClientRect(), e)
         pointer_down = true
     })
     utils.event.createListener(document, "pointermove", e => {
         if (!pointer_down) return
         const rect = el.getBoundingClientRect()
-        updatePointer(e.clientX - rect.left, e.clientY - rect.top)
-        updateLastRect(rect)
+        updatePointer(e.clientX - rect.left, e.clientY - rect.top, rect, e)
     })
-    utils.event.createListener(document, "scroll", () => {
+    utils.event.createListener(document, "scroll", e => {
         if (!pointer_down) return
         const rect = el.getBoundingClientRect()
-        updatePointer(pointer_x + last_rect_x - rect.x, pointer_y + last_rect_y - rect.y)
-        updateLastRect(rect)
+        updatePointer(pointer_x + last_rect_x - rect.x, pointer_y + last_rect_y - rect.y, rect, e)
     })
     utils.event.createListener(document, "pointerup", handlePointerUp)
     utils.event.createListener(document, "pointercancel", handlePointerUp)
     utils.event.createListener(document, "contextmenu", handlePointerUp)
-
-    let last_pointer_angle = 0
 
     const DRAW_BOX = true as boolean
     const DRAW_CLEAR = true as boolean
     const DRAW_POINTS = false as boolean
     const DRAW_LINES = false as boolean
 
+    let last_pointer_angle = 0
     let guessed_pointer_x = pointer_x
     let guessed_pointer_y = pointer_y
+    let speed_mod = 0
 
     const frame = (): void => {
         const pointer_delta_x = pointer_x - last_pointer_x
         const pointer_delta_y = pointer_y - last_pointer_y
+        last_pointer_y = pointer_y
+        last_pointer_x = pointer_x
 
-        let speed_mod = 0
-
-        if (pointer_delta_x !== 0 || pointer_delta_y !== 0) {
+        if (pointer_down && (pointer_delta_x !== 0 || pointer_delta_y !== 0)) {
             const pointer_delta = Math.sqrt(pointer_delta_x ** 2 + pointer_delta_y ** 2)
-            const pointer_speed =
-                pointer_timestamp !== last_pointer_timestamp
-                    ? pointer_delta / (pointer_timestamp - last_pointer_timestamp)
-                    : 0
+            const pointer_timestamp_delta = pointer_timestamp - last_pointer_timestamp
+            const pointer_speed = pointer_timestamp_delta && pointer_delta / pointer_timestamp_delta
 
             const pointer_angle = Math.atan2(pointer_delta_y, pointer_delta_x)
             const pointer_angle_delta =
@@ -235,8 +228,6 @@ export const App: solid.Component = () => {
             speed_mod = Math.min(pointer_speed / 5, 1.3)
             const guessed_angle = pointer_angle + pointer_angle_delta * (2 - speed_mod)
 
-            last_pointer_y = pointer_y
-            last_pointer_x = pointer_x
             last_pointer_angle = pointer_angle
 
             guessed_pointer_x = pointer_x + Math.cos(guessed_angle) * pointer_delta * speed_mod
@@ -247,8 +238,8 @@ export const App: solid.Component = () => {
             momentum_x += (guessed_pointer_x - box_x) * 0.5
             momentum_y += (guessed_pointer_y - box_y) * 0.5
         } else {
-            momentum_x *= 0.5
-            momentum_y *= 0.5
+            momentum_x *= 0.7
+            momentum_y *= 0.7
         }
 
         box_x += momentum_x
