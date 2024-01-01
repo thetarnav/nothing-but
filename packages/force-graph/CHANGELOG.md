@@ -1,5 +1,15 @@
 # @nothing-but/force-graph
 
+## 0.7.3
+
+### Patch Changes
+
+-   Updated dependencies [8386caa]
+-   Updated dependencies [316fd7a]
+-   Updated dependencies [1a1cdfb]
+-   Updated dependencies [dac347e]
+    -   @nothing-but/utils@0.14.0
+
 ## 0.7.2
 
 ### Patch Changes

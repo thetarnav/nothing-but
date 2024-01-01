@@ -1,5 +1,29 @@
 # @nothing-but/utils
 
+## 0.14.0
+
+### Minor Changes
+
+-   8386caa: Add lifecycle module with global cleanup handlers.
+-   dac347e: Add types to `array` module:
+
+    -   `ArrayLike`
+    -   `ReadonlyArrayLike`
+    -   `NumArray`
+    -   `ReadonlyNumArray`
+
+    Add procedures `array` module:
+
+    -   `fixedPush`
+    -   `fixedPushMany`
+    -   `fixedUnshift`
+    -   `fixedUnshiftMany`
+
+### Patch Changes
+
+-   316fd7a: Add listeners alias to listenerMap
+-   1a1cdfb: Correct name in_qut_quad to in_out_quad
+
 ## 0.13.0
 
 ### Minor Changes
