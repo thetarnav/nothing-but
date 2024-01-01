@@ -1,5 +1,16 @@
 # @nothing-but/line-graph
 
+## 0.0.4
+
+### Patch Changes
+
+-   Updated dependencies [8386caa]
+-   Updated dependencies [316fd7a]
+-   Updated dependencies [1a1cdfb]
+-   Updated dependencies [dac347e]
+    -   @nothing-but/utils@0.14.0
+    -   @nothing-but/matrix@0.0.2
+
 ## 0.0.3
 
 ### Patch Changes
