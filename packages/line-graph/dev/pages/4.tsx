@@ -18,31 +18,6 @@ import * as utils from "@nothing-but/utils"
 import * as solid from "solid-js"
 import * as sweb from "solid-js/web"
 
-interface ArrayLike<T> {
-    readonly length: number
-    [index: number]: T
-}
-interface ReadonlyArrayLike<T> {
-    readonly length: number
-    readonly [index: number]: T
-}
-type NumArray = ArrayLike<number>
-type ReadonlyNumArray = ReadonlyArrayLike<number>
-
-function fixedPushRight<T>(arr: ArrayLike<T>, value: T): void {
-    const end = arr.length - 1
-    for (let i = 0; i < end; i += 1) {
-        arr[i] = arr[i + 1]!
-    }
-    arr[end] = value
-}
-function fixedPushLeft<T>(arr: ArrayLike<T>, value: T): void {
-    for (let i = arr.length - 1; i > 0; i -= 1) {
-        arr[i] = arr[i - 1]!
-    }
-    arr[0] = value
-}
-
 interface ElementResizeState {
     /**
      * Canvas was resized since last check.
@@ -224,7 +199,7 @@ export const App: solid.Component = () => {
             const new_value = Math.random() * 200
 
             if (is_data_full) {
-                fixedPushRight(source.buf, new_value)
+                utils.array.fixedPush(source.buf, new_value)
 
                 if (anchor > 0) anchor -= 1
                 last_mouse_progress -= 1

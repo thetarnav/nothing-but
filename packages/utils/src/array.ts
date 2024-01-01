@@ -1,10 +1,33 @@
 import {num} from "./index.js"
 
 /**
+ * Basic array-like interface. has a length and can be indexed by number.
+ *
+ * Can be used with {@link Array}, {@link Uint8Array}, etc.
+ */
+interface ArrayLike<T> {
+    readonly length: number
+    readonly [Symbol.iterator]: () => IterableIterator<number>
+    [index: number]: T
+}
+interface ReadonlyArrayLike<T> {
+    readonly length: number
+    readonly [Symbol.iterator]: () => IterableIterator<number>
+    readonly [index: number]: T
+}
+export type NumArray = ArrayLike<number>
+export type ReadonlyNumArray = ReadonlyArrayLike<number>
+
+/**
  * Check shallow array equality
  */
-export function equals(a: readonly unknown[], b: readonly unknown[]): boolean {
-    return a === b || (a.length === b.length && a.every((e, i) => e === b[i]))
+export function equals(a: ReadonlyArrayLike<unknown>, b: ReadonlyArrayLike<unknown>): boolean {
+    if (a === b) return true
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false
+    }
+    return true
 }
 
 export function wrap<T>(arr: readonly T[], index: number): T | undefined {
@@ -105,6 +128,53 @@ export function* random_iterate<T>(arr: readonly T[]): Generator<T> {
     while (copy.length) {
         const index = num.random_int(copy.length)
         yield copy.splice(index, 1)[0]!
+    }
+}
+
+/**
+ * Push to the end of the array, but shift all items to the left, removing the first item and keeping the length the same.
+ */
+export function fixedPush<T>(arr: ArrayLike<T>, value: T): void {
+    const end = arr.length - 1
+    for (let i = 0; i < end; i += 1) {
+        arr[i] = arr[i + 1]!
+    }
+    arr[end] = value
+}
+
+/**
+ * Push to the end of the array, but shift all items to the left, removing the first item and keeping the length the same.
+ */
+export function fixedPushMany<T>(arr: ArrayLike<T>, ...values: T[]): void {
+    const end = arr.length - values.length
+    for (let i = 0; i < end; i += 1) {
+        arr[i] = arr[i + values.length]!
+    }
+    for (let i = 0; i < values.length; i += 1) {
+        arr[end + i] = values[i]!
+    }
+}
+
+/**
+ * Push to the start of the array, and shift all items to the right, removing the last item and keeping the length the same.
+ */
+export function fixedUnshift<T>(arr: ArrayLike<T>, value: T): void {
+    for (let i = arr.length - 1; i > 0; i -= 1) {
+        arr[i] = arr[i - 1]!
+    }
+    arr[0] = value
+}
+
+/**
+ * Push to the start of the array, and shift all items to the right, removing the last item and keeping the length the same.
+ */
+export function fixedUnshiftMany<T>(arr: ArrayLike<T>, ...values: T[]): void {
+    const end = arr.length - values.length
+    for (let i = end - 1; i >= 0; i -= 1) {
+        arr[i + values.length] = arr[i]!
+    }
+    for (let i = 0; i < values.length; i += 1) {
+        arr[i] = values[i]!
     }
 }
 
