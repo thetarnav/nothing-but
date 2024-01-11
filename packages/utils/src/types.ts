@@ -92,7 +92,11 @@ export type NoInfer<T> = [T][T extends any ? 0 : never]
 /**
  * Enumerate<N> creates a union of numbers from 0 to N-1
  *
- * @example Enumerate<3> // 0 | 1 | 2
+ * @example
+ *
+ * ```ts
+ * Enumerate<3> // 0 | 1 | 2
+ * ```
  */
 export type Enumerate<N extends number, Acc extends number[] = []> = Acc["length"] extends N
 	? Acc[number]
@@ -101,7 +105,11 @@ export type Enumerate<N extends number, Acc extends number[] = []> = Acc["length
 /**
  * Remove the first item of a tuple
  *
- * @example {undefined} 1, 2, 3, 4 => [2, 3, 4]
+ * @example
+ *
+ * ```ts
+ * 1, 2, 3, 4 => [2, 3, 4]
+ * ```
  */
 export type Tail<T extends any[]> = ((...t: T) => void) extends (x: any, ...u: infer U) => void
 	? U
@@ -110,28 +118,44 @@ export type Tail<T extends any[]> = ((...t: T) => void) extends (x: any, ...u: i
 /**
  * Get the first item of a tuple
  *
- * @example {undefined} 1, 2, 3, 4 => 1
+ * @example
+ *
+ * ```ts
+ * 1, 2, 3, 4 => 1
+ * ```
  */
 export type Head<T extends any[]> = T extends [any, ...any[]] ? T[0] : never
 
 /**
  * Get the last item of a tuple
  *
- * @example {undefined} 1, 2, 3, 4 => 4
+ * @example
+ *
+ * ```ts
+ * 1, 2, 3, 4 => 4
+ * ```
  */
 export type Last<T extends any[]> = T extends [...any[], infer L] ? L : never
 
 /**
  * Remove the last item of a tuple
  *
- * @example {undefined} 1, 2, 3, 4 => [1, 2, 3]
+ * @example
+ *
+ * ```ts
+ * 1, 2, 3, 4 => [1, 2, 3]
+ * ```
  */
 export type ButLast<T extends any[]> = T extends [...infer U, any] ? U : never
 
 /**
  * Exclude items from the end of a tuple that match a type
  *
- * @example ExcludeEnd<[1, 2, 3, 4], 4> => [1, 2, 3] ExcludeEnd<[1, 2, 3, 4], 3 | 4> => [1, 2]
+ * @example
+ *
+ * ```ts
+ * ExcludeEnd<[1, 2, 3, 4], 4> => [1, 2, 3] ExcludeEnd<[1, 2, 3, 4], 3 | 4> => [1, 2]
+ * ```
  */
 export type ExcludeEnd<T extends any[], U> = T extends [...infer V, U] ? ExcludeEnd<V, U> : T
 
