@@ -1,4 +1,4 @@
-import {eslint, getType, isVoidReturnType, ts} from "./utils"
+import {eslint, getType, returnTypeEquals, ts} from "./utils"
 
 export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
 	meta: {
@@ -10,9 +10,10 @@ export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
 		},
 	},
 	defaultOptions: [],
-	create(context) {
-		const services = context.parserServices
-		if (!services || !services.program) return {}
+	create(ctx) {
+		const services = ctx.sourceCode.parserServices
+
+		if (!services.program) return {}
 
 		const checker = services.program.getTypeChecker()
 
@@ -39,12 +40,12 @@ export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
 			if (!arg_type) return
 
 			const arg_return_type = checker.getTypeAtLocation(arg_type)
-			if (!isVoidReturnType(arg_return_type)) return
+			if (!returnTypeEquals(arg_return_type, ts.TypeFlags.Void)) return
 
 			const type = getType(node, checker, services)
-			if (isVoidReturnType(type)) return
+			if (returnTypeEquals(type, ts.TypeFlags.Void)) return
 
-			context.report({node, messageId: "no_return_to_void"})
+			ctx.report({node, messageId: "no_return_to_void"})
 		}
 
 		return {

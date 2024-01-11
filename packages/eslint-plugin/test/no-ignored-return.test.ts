@@ -189,6 +189,13 @@ ruleTester.run("no-ignored-return", rule.no_ignored_return, {
                 void (some_bool && condition())
             `,
 		},
+		{
+			name: "never return type",
+			code: /*javascript*/ `
+				function func(): never {}
+				func()
+			`,
+		}
 	],
 	invalid: [
 		{

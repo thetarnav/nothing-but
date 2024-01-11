@@ -9,7 +9,7 @@ TODO:
 -   [x] nested methods `utl.raf.makeAnimationLoop`
 -   [x] `fn.apply()` and `fn.call()` methods
 -   [x] `bool && returningFunc()` expressions
--   [ ] `never` doesn't need to be used
+-   [x] `never` doesn't need to be used
 
 ## `no-return-to-void`
 

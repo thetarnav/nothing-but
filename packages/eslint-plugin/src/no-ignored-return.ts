@@ -1,4 +1,4 @@
-import {eslint, getType, isVoidReturnType} from "./utils"
+import {eslint, getType, returnTypeEquals, ts} from "./utils"
 
 const MUTATING_METHODS: Record<string, Set<string>> = {
 	Array: new Set(["push", "pop", "shift", "unshift", "splice", "sort", "reverse"]),
@@ -16,9 +16,10 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
 		},
 	},
 	defaultOptions: [],
-	create(context) {
-		const services = context.parserServices
-		if (!services || !services.program) return {}
+	create(ctx) {
+		const services = ctx.sourceCode.parserServices
+
+		if (!services.program) return {}
 
 		const checker = services.program.getTypeChecker()
 
@@ -50,7 +51,12 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
 				}
 
 				const type = getType(callee, checker, services)
-				if (isVoidReturnType(type)) return
+				if (
+					returnTypeEquals(type, ts.TypeFlags.Void) ||
+					returnTypeEquals(type, ts.TypeFlags.Never)
+				) {
+					return
+				}
 
 				/*
                 Exclude mutating array methods
@@ -68,7 +74,7 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
 						return
 				}
 
-				context.report({node, messageId: "use_return_value"})
+				ctx.report({node, messageId: "use_return_value"})
 			},
 		}
 	},
