@@ -158,8 +158,8 @@ export function rgba_to_hex(rgba: RGBA): string {
 /**
  * Converts a hex color to an rgb color
  *
- * @example hexToRGBA('#ff0000') // { r: 255, g: 0, b: 0 } hexToRGBA('#f00') // { r: 255, g: 0, b:
- * 0 }
+ * @example hexToRGBA('#ff0000') // { r: 255, g: 0, b: 0 } hexToRGBA('#f00') // { r: 255, g: 0, b: 0
+ * }
  */
 export function hex_to_rgb(hex: string): RGB {
 	if (hex[0] === "#") hex = hex.slice(1)
@@ -178,9 +178,9 @@ export function hex_to_rgb(hex: string): RGB {
 /**
  * Converts a hex color to an rgba color
  *
- * @example hexToRGBA('#ff0000') // { r: 255, g: 0, b: 0, a: 1 } hexToRGBA('#ff000000') // { r:
- * 255, g: 0, b: 0, a: 0 } hexToRGBA('#f00') // { r: 255, g: 0, b: 0, a: 1 } hexToRGBA('#f000') // {
- * r: 255, g: 0, b: 0, a: 0 }
+ * @example hexToRGBA('#ff0000') // { r: 255, g: 0, b: 0, a: 1 } hexToRGBA('#ff000000') // { r: 255,
+ * g: 0, b: 0, a: 0 } hexToRGBA('#f00') // { r: 255, g: 0, b: 0, a: 1 } hexToRGBA('#f000') // { r:
+ * 255, g: 0, b: 0, a: 0 }
  */
 export function hex_to_rgba(hex: string): RGBA {
 	if (hex[0] === "#") hex = hex.slice(1)

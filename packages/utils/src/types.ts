@@ -101,7 +101,7 @@ export type Enumerate<N extends number, Acc extends number[] = []> = Acc["length
 /**
  * Remove the first item of a tuple
  *
- * @example [1, 2, 3, 4] => [2, 3, 4]
+ * @example {undefined} 1, 2, 3, 4 => [2, 3, 4]
  */
 export type Tail<T extends any[]> = ((...t: T) => void) extends (x: any, ...u: infer U) => void
 	? U
@@ -110,21 +110,21 @@ export type Tail<T extends any[]> = ((...t: T) => void) extends (x: any, ...u: i
 /**
  * Get the first item of a tuple
  *
- * @example [1, 2, 3, 4] => 1
+ * @example {undefined} 1, 2, 3, 4 => 1
  */
 export type Head<T extends any[]> = T extends [any, ...any[]] ? T[0] : never
 
 /**
  * Get the last item of a tuple
  *
- * @example [1, 2, 3, 4] => 4
+ * @example {undefined} 1, 2, 3, 4 => 4
  */
 export type Last<T extends any[]> = T extends [...any[], infer L] ? L : never
 
 /**
  * Remove the last item of a tuple
  *
- * @example [1, 2, 3, 4] => [1, 2, 3]
+ * @example {undefined} 1, 2, 3, 4 => [1, 2, 3]
  */
 export type ButLast<T extends any[]> = T extends [...infer U, any] ? U : never
 
