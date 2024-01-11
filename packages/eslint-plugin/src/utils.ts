@@ -3,10 +3,7 @@ import * as ts from "typescript"
 
 export {eslint, ts}
 
-export function returnTypeEquals(
-	type: ts.Type,
-	flag: ts.TypeFlags
-): boolean {
+export function returnTypeEquals(type: ts.Type, flag: ts.TypeFlags): boolean {
 	const call_signatures = type.getCallSignatures()
 	if (call_signatures.length === 0) return true
 

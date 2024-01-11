@@ -195,7 +195,7 @@ ruleTester.run("no-ignored-return", rule.no_ignored_return, {
 				function func(): never {}
 				func()
 			`,
-		}
+		},
 	],
 	invalid: [
 		{
