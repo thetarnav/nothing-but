@@ -9,6 +9,7 @@ TODO:
 -   [x] nested methods `utl.raf.makeAnimationLoop`
 -   [x] `fn.apply()` and `fn.call()` methods
 -   [x] `bool && returningFunc()` expressions
+-   [ ] `never` doesn't need to be used
 
 ## `no-return-to-void`
 
@@ -19,6 +20,13 @@ TODO:
 -   [x] Arrow functions
 -   [x] Anonymous functions
 -   [x] Overloads
+-   [ ] Fix `.then`
+
+## `ignore-void-return`
+
+If a function returns `void`, the return value shouldn't be used.
+
+TODO TODO
 
 ## `no-ignored-params`
 

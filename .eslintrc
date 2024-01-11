@@ -1,12 +1,7 @@
 {
     "root": true,
     "parser": "@typescript-eslint/parser",
-    "plugins": [
-        "@typescript-eslint",
-        "no-only-tests",
-        "eslint-comments",
-        "@nothing-but"
-    ],
+    "plugins": ["@typescript-eslint", "no-only-tests", "eslint-comments", "@nothing-but"],
     "ignorePatterns": ["node_modules", "dist"],
     "parserOptions": {
         "project": "./tsconfig.json",
@@ -21,6 +16,7 @@
         "no-debugger": "warn",
         "prefer-const": "warn",
         "require-await": "warn",
+        "@typescript-eslint/await-thenable": "warn",
         "@typescript-eslint/no-unused-vars": [
             "warn",
             {
@@ -71,4 +67,3 @@
         "no-only-tests/no-only-tests": "warn"
     }
 }
-
