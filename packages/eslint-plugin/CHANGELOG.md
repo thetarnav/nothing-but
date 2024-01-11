@@ -1,5 +1,11 @@
 # @nothing-but/eslint-plugin
 
+## 0.1.4
+
+### Patch Changes
+
+-   6623717: no-ignored-return: `never` doesn't need to be used
+
 ## 0.1.3
 
 ### Patch Changes
