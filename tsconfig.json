@@ -1,19 +1,19 @@
 {
-    "compilerOptions": {
-        "strict": true,
-        "target": "ESNext",
-        "module": "NodeNext",
-        "lib": ["ESNext"],
-        "moduleResolution": "NodeNext",
-        "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true,
-        "esModuleInterop": true,
-        "noEmit": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "noPropertyAccessFromIndexSignature": true,
-        "noUncheckedIndexedAccess": true,
-        "types": []
-    },
-    "exclude": ["node_modules", "**/dist/**/*"]
+	"compilerOptions": {
+		"strict": true,
+		"target": "ESNext",
+		"module": "NodeNext",
+		"lib": ["ESNext"],
+		"moduleResolution": "NodeNext",
+		"allowSyntheticDefaultImports": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true,
+		"noEmit": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noUncheckedIndexedAccess": true,
+		"types": []
+	},
+	"exclude": ["node_modules", "**/dist/**/*"]
 }

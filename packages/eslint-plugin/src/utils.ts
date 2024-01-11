@@ -4,22 +4,22 @@ import * as ts from "typescript"
 export {eslint, ts}
 
 export function isVoidReturnType(type: ts.Type): boolean {
-    const call_signatures = type.getCallSignatures()
-    if (call_signatures.length === 0) return true
+	const call_signatures = type.getCallSignatures()
+	if (call_signatures.length === 0) return true
 
-    for (const call_signature of call_signatures) {
-        const return_type = call_signature.getReturnType()
+	for (const call_signature of call_signatures) {
+		const return_type = call_signature.getReturnType()
 
-        if (return_type.isUnion() || return_type.flags !== ts.TypeFlags.Void) return false
-    }
+		if (return_type.isUnion() || return_type.flags !== ts.TypeFlags.Void) return false
+	}
 
-    return true
+	return true
 }
 
 export function getType(
-    node: eslint.TSESTree.Node,
-    checker: ts.TypeChecker,
-    services: eslint.ParserServices,
+	node: eslint.TSESTree.Node,
+	checker: ts.TypeChecker,
+	services: eslint.ParserServices,
 ): ts.Type {
-    return checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node))
+	return checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node))
 }

@@ -1,76 +1,76 @@
 {
-    "name": "@nothing-but/force-graph",
-    "version": "0.7.3",
-    "license": "MIT",
-    "author": "Damian Tarnawski <gthetarnav@gmail.com>",
-    "contributors": [],
-    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/force-graph#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/thetarnav/nothing-but.git"
-    },
-    "bugs": {
-        "url": "https://github.com/thetarnav/nothing-but/issues"
-    },
-    "scripts": {
-        "dev": "vite serve dev",
-        "build:demo": "vite build dev",
-        "build": "pnpm tsc -p ./tsconfig.build.json",
-        "prepublish": "pnpm build",
-        "test": "vitest -c ../../configs/vitest.config.js",
-        "typecheck": "echo \"Built with TSC\""
-    },
-    "private": false,
-    "sideEffects": false,
-    "publishConfig": {
-        "access": "public"
-    },
-    "files": [
-        "dist",
-        "src"
-    ],
-    "type": "module",
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "browser": {},
-    "exports": {
-        ".": {
-            "import": {
-                "types": "./dist/index.d.ts",
-                "default": "./dist/index.js"
-            }
-        },
-        "./canvas": {
-            "import": {
-                "types": "./dist/canvas.d.ts",
-                "default": "./dist/canvas.js"
-            }
-        },
-        "./graph": {
-            "import": {
-                "types": "./dist/graph.d.ts",
-                "default": "./dist/graph.js"
-            }
-        }
-    },
-    "typesVersions": {
-        "*": {
-            "canvas": [
-                "./dist/canvas.d.ts"
-            ],
-            "graph": [
-                "./dist/graph.d.ts"
-            ]
-        }
-    },
-    "dependencies": {
-        "@nothing-but/utils": "workspace:^"
-    },
-    "devDependencies": {
-        "@nothing-but/solid": "workspace:^",
-        "@solid-primitives/event-listener": "^2.3.0",
-        "@solid-primitives/refs": "^1.0.5",
-        "@solid-primitives/rootless": "^1.4.2"
-    }
+	"name": "@nothing-but/force-graph",
+	"version": "0.7.3",
+	"license": "MIT",
+	"author": "Damian Tarnawski <gthetarnav@gmail.com>",
+	"contributors": [],
+	"homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/force-graph#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/thetarnav/nothing-but.git"
+	},
+	"bugs": {
+		"url": "https://github.com/thetarnav/nothing-but/issues"
+	},
+	"scripts": {
+		"dev": "vite serve dev",
+		"build:demo": "vite build dev",
+		"build": "pnpm tsc -p ./tsconfig.build.json",
+		"prepublish": "pnpm build",
+		"test": "vitest -c ../../configs/vitest.config.js",
+		"typecheck": "echo \"Built with TSC\""
+	},
+	"private": false,
+	"sideEffects": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"type": "module",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"browser": {},
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./canvas": {
+			"import": {
+				"types": "./dist/canvas.d.ts",
+				"default": "./dist/canvas.js"
+			}
+		},
+		"./graph": {
+			"import": {
+				"types": "./dist/graph.d.ts",
+				"default": "./dist/graph.js"
+			}
+		}
+	},
+	"typesVersions": {
+		"*": {
+			"canvas": [
+				"./dist/canvas.d.ts"
+			],
+			"graph": [
+				"./dist/graph.d.ts"
+			]
+		}
+	},
+	"dependencies": {
+		"@nothing-but/utils": "workspace:^"
+	},
+	"devDependencies": {
+		"@nothing-but/solid": "workspace:^",
+		"@solid-primitives/event-listener": "^2.3.0",
+		"@solid-primitives/refs": "^1.0.5",
+		"@solid-primitives/rootless": "^1.4.2"
+	}
 }

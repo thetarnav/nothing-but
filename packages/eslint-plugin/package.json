@@ -1,41 +1,41 @@
 {
-    "name": "@nothing-but/eslint-plugin",
-    "version": "0.1.3",
-    "license": "MIT",
-    "author": "Damian Tarnawski <gthetarnav@gmail.com>",
-    "contributors": [],
-    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/eslint#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/thetarnav/nothing-but.git"
-    },
-    "bugs": {
-        "url": "https://github.com/thetarnav/nothing-but/issues"
-    },
-    "scripts": {
-        "build": "pnpm tsc -p ./tsconfig.build.json",
-        "test": "vitest -c ../../configs/vitest.config.ts",
-        "typecheck": "echo \"Built with TSC\""
-    },
-    "private": false,
-    "sideEffects": false,
-    "publishConfig": {
-        "access": "public"
-    },
-    "files": [
-        "dist"
-    ],
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "dependencies": {
-        "@typescript-eslint/utils": "^6.11.0"
-    },
-    "devDependencies": {
-        "@typescript-eslint/parser": "^6.11.0",
-        "@typescript-eslint/rule-tester": "^6.11.0"
-    },
-    "peerDependencies": {
-        "eslint": "^6.0.0 || ^7.0.0 || ^8.0.0",
-        "typescript": "~5.2.0"
-    }
+	"name": "@nothing-but/eslint-plugin",
+	"version": "0.1.3",
+	"license": "MIT",
+	"author": "Damian Tarnawski <gthetarnav@gmail.com>",
+	"contributors": [],
+	"homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/eslint#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/thetarnav/nothing-but.git"
+	},
+	"bugs": {
+		"url": "https://github.com/thetarnav/nothing-but/issues"
+	},
+	"scripts": {
+		"build": "pnpm tsc -p ./tsconfig.build.json",
+		"test": "vitest -c ../../configs/vitest.config.ts",
+		"typecheck": "echo \"Built with TSC\""
+	},
+	"private": false,
+	"sideEffects": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist"
+	],
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"dependencies": {
+		"@typescript-eslint/utils": "^6.11.0"
+	},
+	"devDependencies": {
+		"@typescript-eslint/parser": "^6.11.0",
+		"@typescript-eslint/rule-tester": "^6.11.0"
+	},
+	"peerDependencies": {
+		"eslint": "^6.0.0 || ^7.0.0 || ^8.0.0",
+		"typescript": "~5.2.0"
+	}
 }

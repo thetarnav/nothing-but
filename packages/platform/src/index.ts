@@ -1,22 +1,22 @@
 const w =
-    typeof document === "undefined"
-        ? ({document: {}, navigator: {userAgent: ""}} as Window)
-        : window
+	typeof document === "undefined"
+		? ({document: {}, navigator: {userAgent: ""}} as Window)
+		: window
 const n = w.navigator
 const ua = n.userAgent
 
 declare global {
-    interface Window {
-        chrome?: unknown
-        opera?: unknown
-        opr?: {addons: unknown}
-    }
-    interface Document {
-        documentMode?: unknown
-    }
-    interface Navigator {
-        brave?: {isBrave?: () => unknown}
-    }
+	interface Window {
+		chrome?: unknown
+		opera?: unknown
+		opr?: {addons: unknown}
+	}
+	interface Document {
+		documentMode?: unknown
+	}
+	interface Navigator {
+		brave?: {isBrave?: () => unknown}
+	}
 }
 
 /*
@@ -63,15 +63,15 @@ export const is_firefox: boolean = /*#__PURE__*/ /^(?!.*Seamonkey)(?=.*Firefox).
 
 /** Browser is Opera */
 export const is_opera: boolean =
-    (!!w.opr && !!w.opr.addons) || !!w.opera || /*#__PURE__*/ / OPR\//.test(ua)
+	(!!w.opr && !!w.opr.addons) || !!w.opera || /*#__PURE__*/ / OPR\//.test(ua)
 
 /** Browser is Safari */
 export const is_safari: boolean = !!(
-    n.vendor &&
-    n.vendor.includes("Apple") &&
-    ua &&
-    !ua.includes("CriOS") &&
-    !ua.includes("FxiOS")
+	n.vendor &&
+	n.vendor.includes("Apple") &&
+	ua &&
+	!ua.includes("CriOS") &&
+	!ua.includes("FxiOS")
 )
 
 /** Browser is Internet Explorer 6-11 */
@@ -89,9 +89,9 @@ export const is_chrome: boolean = is_chromium && n.vendor === "Google Inc." && !
 
 /** Browser is Brave */
 export const is_brave: boolean = !!(
-    n.brave &&
-    n.brave.isBrave &&
-    n.brave.isBrave.name === "isBrave"
+	n.brave &&
+	n.brave.isBrave &&
+	n.brave.isBrave.name === "isBrave"
 )
 
 /*

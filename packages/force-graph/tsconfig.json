@@ -1,8 +1,8 @@
 {
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
-        "lib": ["ESNext", "DOM"],
-        "types": []
-    },
-    "include": ["src/**/*", "test/**/*"]
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"lib": ["ESNext", "DOM"],
+		"types": []
+	},
+	"include": ["src/**/*", "test/**/*"]
 }

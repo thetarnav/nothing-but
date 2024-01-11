@@ -4,10 +4,10 @@ import {defineConfig} from "vitest/config"
 import uno_config from "../../../uno.config.js"
 
 export default defineConfig({
-    server: {port: 3000},
-    plugins: [solid(), unocss(uno_config)],
-    build: {
-        target: "esnext",
-        minify: false,
-    },
+	server: {port: 3000},
+	plugins: [solid(), unocss(uno_config)],
+	build: {
+		target: "esnext",
+		minify: false,
+	},
 })

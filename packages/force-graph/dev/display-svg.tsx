@@ -4,93 +4,93 @@ import {createEffect, createMemo, createSignal, onCleanup, onMount, type JSX} fr
 import {Anim, Graph} from "../src/index.js"
 
 export function SvgForceGraph(props: {
-    graph: Graph.Graph
-    node: RootPoolFactory<Graph.Node, JSX.Element>
-    active?: boolean
-    targetFPS?: number
+	graph: Graph.Graph
+	node: RootPoolFactory<Graph.Node, JSX.Element>
+	active?: boolean
+	targetFPS?: number
 }): JSX.Element {
-    const isActive = "active" in props ? () => props.active : () => false
+	const isActive = "active" in props ? () => props.active : () => false
 
-    const useNodeEl = createRootPool(props.node)
-    const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
+	const useNodeEl = createRootPool(props.node)
+	const nodeEls = resolveElements(() => props.graph.nodes.map(useNodeEl)).toArray
 
-    const useLine = createRootPool(
-        () => (<line class="stroke-cyan-7/25 stroke-0.1%" />) as SVGLineElement,
-    )
-    const lines = createMemo(() => props.graph.edges.map(useLine))
+	const useLine = createRootPool(
+		() => (<line class="stroke-cyan-7/25 stroke-0.1%" />) as SVGLineElement,
+	)
+	const lines = createMemo(() => props.graph.edges.map(useLine))
 
-    const posToP = (xy: number, grid_size: number) => ((xy + grid_size / 2) / grid_size) * 100 + "%"
+	const posToP = (xy: number, grid_size: number) => ((xy + grid_size / 2) / grid_size) * 100 + "%"
 
-    function updateElements() {
-        const els = nodeEls(),
-            line_els = lines(),
-            {nodes, edges, options} = props.graph,
-            {grid_size} = options
+	function updateElements() {
+		const els = nodeEls(),
+			line_els = lines(),
+			{nodes, edges, options} = props.graph,
+			{grid_size} = options
 
-        for (let i = 0; i < edges.length; i++) {
-            const {a, b} = edges[i]!
-            const line = line_els[i]!
+		for (let i = 0; i < edges.length; i++) {
+			const {a, b} = edges[i]!
+			const line = line_els[i]!
 
-            if (a.moved) {
-                line.x1.baseVal.valueAsString = posToP(a.position.x, grid_size)
-                line.y1.baseVal.valueAsString = posToP(a.position.y, grid_size)
-            }
+			if (a.moved) {
+				line.x1.baseVal.valueAsString = posToP(a.position.x, grid_size)
+				line.y1.baseVal.valueAsString = posToP(a.position.y, grid_size)
+			}
 
-            if (b.moved) {
-                line.x2.baseVal.valueAsString = posToP(b.position.x, grid_size)
-                line.y2.baseVal.valueAsString = posToP(b.position.y, grid_size)
-            }
-        }
+			if (b.moved) {
+				line.x2.baseVal.valueAsString = posToP(b.position.x, grid_size)
+				line.y2.baseVal.valueAsString = posToP(b.position.y, grid_size)
+			}
+		}
 
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i]!
+		for (let i = 0; i < nodes.length; i++) {
+			const node = nodes[i]!
 
-            if (!node.moved) continue
+			if (!node.moved) continue
 
-            const {x, y} = node.position
-            const el = els[i]! as HTMLElement
+			const {x, y} = node.position
+			const el = els[i]! as HTMLElement
 
-            el.style.left = posToP(x, grid_size)
-            el.style.top = posToP(y, grid_size)
+			el.style.left = posToP(x, grid_size)
+			el.style.top = posToP(y, grid_size)
 
-            node.moved = false
-        }
-    }
+			node.moved = false
+		}
+	}
 
-    onMount(() => {
-        const animation = Anim.frameAnimation(props.graph, updateElements, props.targetFPS ?? 44)
+	onMount(() => {
+		const animation = Anim.frameAnimation(props.graph, updateElements, props.targetFPS ?? 44)
 
-        const init = createMemo(() => {
-            props.graph // track graph prop
+		const init = createMemo(() => {
+			props.graph // track graph prop
 
-            const [init, setInit] = createSignal(true)
-            const timeout = setTimeout(() => setInit(false), 2000)
-            onCleanup(() => clearTimeout(timeout))
+			const [init, setInit] = createSignal(true)
+			const timeout = setTimeout(() => setInit(false), 2000)
+			onCleanup(() => clearTimeout(timeout))
 
-            return init
-        })
+			return init
+		})
 
-        updateElements()
+		updateElements()
 
-        createEffect(() => {
-            if (isActive() || init()()) {
-                Anim.start(animation)
-            } else {
-                Anim.pause(animation)
-            }
-        })
+		createEffect(() => {
+			if (isActive() || init()()) {
+				Anim.start(animation)
+			} else {
+				Anim.pause(animation)
+			}
+		})
 
-        onCleanup(() => {
-            Anim.cleanup(animation)
-        })
-    })
+		onCleanup(() => {
+			Anim.cleanup(animation)
+		})
+	})
 
-    return (
-        <>
-            <svg class="absolute w-full h-full">{lines()}</svg>
-            {nodeEls()}
-        </>
-    )
+	return (
+		<>
+			<svg class="absolute w-full h-full">{lines()}</svg>
+			{nodeEls()}
+		</>
+	)
 }
 
 /* <div

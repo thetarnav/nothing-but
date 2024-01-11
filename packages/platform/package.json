@@ -1,33 +1,33 @@
 {
-    "name": "@nothing-but/platform",
-    "version": "0.1.0",
-    "license": "MIT",
-    "author": "Damian Tarnawski <gthetarnav@gmail.com>",
-    "contributors": [],
-    "homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/platform#readme",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/thetarnav/nothing-but.git"
-    },
-    "bugs": {
-        "url": "https://github.com/thetarnav/nothing-but/issues"
-    },
-    "scripts": {
-        "build": "pnpm tsc -p ./tsconfig.build.json",
-        "prepublish": "pnpm build",
-        "test": "vitest -c ../../configs/vitest.config.js",
-        "typecheck": "echo \"Built with TSC\""
-    },
-    "private": false,
-    "sideEffects": false,
-    "publishConfig": {
-        "access": "public"
-    },
-    "files": [
-        "dist"
-    ],
-    "type": "module",
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts"
+	"name": "@nothing-but/platform",
+	"version": "0.1.0",
+	"license": "MIT",
+	"author": "Damian Tarnawski <gthetarnav@gmail.com>",
+	"contributors": [],
+	"homepage": "https://github.com/thetarnav/nothing-but/tree/main/packages/platform#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/thetarnav/nothing-but.git"
+	},
+	"bugs": {
+		"url": "https://github.com/thetarnav/nothing-but/issues"
+	},
+	"scripts": {
+		"build": "pnpm tsc -p ./tsconfig.build.json",
+		"prepublish": "pnpm build",
+		"test": "vitest -c ../../configs/vitest.config.js",
+		"typecheck": "echo \"Built with TSC\""
+	},
+	"private": false,
+	"sideEffects": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts"
 }

@@ -12,5 +12,5 @@ const pathname = location.pathname
 const page = pathname.endsWith("/") ? pathname.slice(1, -1) : pathname.slice(1)
 
 if (page) {
-    await import(`./pages/${page}.tsx`)
+	await import(`./pages/${page}.tsx`)
 }

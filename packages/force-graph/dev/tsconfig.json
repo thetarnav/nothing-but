@@ -1,9 +1,9 @@
 {
-    "extends": "../tsconfig.json",
-    "compilerOptions": {
-        "jsx": "preserve",
-        "jsxImportSource": "solid-js",
-        "types": ["vite/client"]
-    },
-    "include": [".", "./vite.config.ts", "../src"]
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"jsx": "preserve",
+		"jsxImportSource": "solid-js",
+		"types": ["vite/client"]
+	},
+	"include": [".", "./vite.config.ts", "../src"]
 }
