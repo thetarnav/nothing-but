@@ -110,7 +110,7 @@ export class Signal<T> extends Reactive<T> {
 			...options,
 			equals: (a, b) => (this.mutating ? (this.mutating = false) : equals(a, b)),
 		})
-		super(read)
+		void super(read)
 		this.setter = setter
 	}
 }

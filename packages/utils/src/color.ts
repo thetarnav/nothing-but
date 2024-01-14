@@ -33,7 +33,7 @@ export class RGBA extends RGB {
 		b: number,
 		public a: number,
 	) {
-		super(r, g, b)
+		void super(r, g, b)
 	}
 
 	/** Returns a string representation of the RGBA color in the format "rgb(r g b / a)". */

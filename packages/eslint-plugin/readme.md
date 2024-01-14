@@ -10,6 +10,7 @@ TODO:
 -   [x] `fn.apply()` and `fn.call()` methods
 -   [x] `bool && returningFunc()` expressions
 -   [x] `never` doesn't need to be used
+-   [ ] ignore `super()`
 
 ## `no-return-to-void`
 
@@ -20,7 +21,7 @@ TODO:
 -   [x] Arrow functions
 -   [x] Anonymous functions
 -   [x] Overloads
--   [ ] Fix `.then`
+-   [x] Fix `.then` (unions)
 
 ## `ignore-void-return`
 

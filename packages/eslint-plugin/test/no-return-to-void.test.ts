@@ -102,6 +102,13 @@ ruleTester.run("no-return-to-void", rule.no_return_to_void, {
                 func(function() {return 123}, 1)
             `,
 		},
+		{
+			name: "optional callback",
+			code: /*javascript*/ `
+			declare function func(cb: (() => number) | number): void
+			func(() => 123)
+			`,
+		},
 	],
 	invalid: [
 		{
