@@ -1,5 +1,11 @@
 # @nothing-but/eslint-plugin
 
+## 0.1.5
+
+### Patch Changes
+
+-   57b56ae: Correct no-return-to-void with unions
+
 ## 0.1.4
 
 ### Patch Changes
