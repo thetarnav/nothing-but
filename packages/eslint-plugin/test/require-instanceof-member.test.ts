@@ -31,6 +31,11 @@ ruleTester.run("require-instanceof-member", rule.require_instanceof_member, {
 				const a = ({}) as any
 				if (a instanceof Error) {}
 			`},
+		{ 	name: "error",
+			code: /*javascript*/ `
+				const a = 123 as Error | number
+				if (a instanceof Error) {}
+			`},
 	],
 	invalid: [
 		{	name: "class",
@@ -39,7 +44,7 @@ ruleTester.run("require-instanceof-member", rule.require_instanceof_member, {
 				const b = new A()
 				if (b instanceof A) {}
 			`,
-			errors: [{messageId: "require_instanceof_member"}],
+			errors: [{messageId: "not_a_union"}],
 		},
 		{	name: "primitive",
 			code: /*javascript*/ `
@@ -47,6 +52,13 @@ ruleTester.run("require-instanceof-member", rule.require_instanceof_member, {
 				if (b instanceof Number) {}
 			`,
 			errors: [{messageId: "require_instanceof_member"}],
+		},
+		{	name: "not a class",
+			code: /*javascript*/ `
+				const b = Math.random() > 0.5 ? 1 : "1"
+				if (b instanceof number) {}
+			`,
+			errors: [{messageId: "not_a_class"}],
 		},
 		{	name: "union",
 			code: /*javascript*/ `

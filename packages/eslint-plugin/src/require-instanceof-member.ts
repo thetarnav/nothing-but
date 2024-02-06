@@ -5,6 +5,8 @@ export const require_instanceof_member = eslint.ESLintUtils.RuleCreator.withoutD
 		type: "problem",
 		schema: [],
 		messages: {
+			not_a_union: "Left side of `instanceof` should be a union type.",
+			not_a_class: "Right side of `instanceof` should be a class.",
 			require_instanceof_member:
 				"Values tested with `instanceof` should have a union type including the tested class as a member.",
 		},
@@ -21,14 +23,34 @@ export const require_instanceof_member = eslint.ESLintUtils.RuleCreator.withoutD
 				if (node.operator !== "instanceof") return
 
 				const left_type = getType(node.left, checker, services)
-				const right_type = getType(node.right, checker, services)
+				if (left_type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) return
 
-				if (
-					left_type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown) ||
-					(left_type.isUnion() &&
-						left_type.types.some(type => type.symbol === right_type.symbol))
-				) {
+				if (!left_type.isUnion()) {
+					ctx.report({node: node.left, messageId: "not_a_union"})
 					return
+				}
+
+				const right_type = getType(node.right, checker, services)
+				if (left_type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) return
+
+				const constructs = right_type.getConstructSignatures()
+				if (constructs.length === 0) {
+					ctx.report({node: node.right, messageId: "not_a_class"})
+					return
+				}
+
+				for (const c of constructs) {
+					const ct = c.getReturnType()
+
+					for (const ut of left_type.types) {
+						if (
+							ut.symbol === ct.symbol &&
+							// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+							ut.symbol !== undefined
+						) {
+							return
+						}
+					}
 				}
 
 				ctx.report({node, messageId: "require_instanceof_member"})
