@@ -1,5 +1,15 @@
 # @nothing-but/eslint-plugin
 
+## 0.2.0
+
+### Minor Changes
+
+-   63dc78c: Add "require-instanceof-member" rule
+
+### Patch Changes
+
+-   a2da3c4: Handle Any and Unknown in require-instanceof-member
+
 ## 0.1.5
 
 ### Patch Changes
