@@ -1,5 +1,11 @@
 # @nothing-but/eslint-plugin
 
+## 0.2.2
+
+### Patch Changes
+
+-   2409246: Rename require-instanceof-member to no-unnecessary-instanceof
+
 ## 0.2.1
 
 ### Patch Changes
