@@ -29,6 +29,10 @@ If a function returns `void`, the return value shouldn't be used.
 
 TODO TODO
 
+## `require-instanceof-member`
+
+Values tested with `instanceof` should have a union type with the tested class as a member.
+
 ## `no-ignored-params`
 
 Require that all callback parameters are used.
