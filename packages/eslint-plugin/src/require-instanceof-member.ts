@@ -1,4 +1,4 @@
-import {eslint, getType} from "./utils"
+import {eslint, getType, ts} from "./utils"
 
 export const require_instanceof_member = eslint.ESLintUtils.RuleCreator.withoutDocs({
 	meta: {
@@ -24,8 +24,10 @@ export const require_instanceof_member = eslint.ESLintUtils.RuleCreator.withoutD
 				const right_type = getType(node.right, checker, services)
 
 				if (
-					left_type.isUnion() &&
-					left_type.types.some(type => type.symbol === right_type.symbol)
+					left_type.flags & ts.TypeFlags.Any ||
+					left_type.flags & ts.TypeFlags.Unknown ||
+					(left_type.isUnion() &&
+						left_type.types.some(type => type.symbol === right_type.symbol))
 				) {
 					return
 				}

@@ -21,6 +21,16 @@ ruleTester.run("require-instanceof-member", rule.require_instanceof_member, {
 				const b = Math.random() > 0.5 ? new A() : new B()
 				if (b instanceof A) {}
 			`},
+		{ 	name: "unknown",
+			code: /*javascript*/ `
+				const a = ({}) as unknown
+				if (a instanceof Error) {}
+			`},
+		{ 	name: "any",
+			code: /*javascript*/ `
+				const a = ({}) as any
+				if (a instanceof Error) {}
+			`},
 	],
 	invalid: [
 		{	name: "class",
