@@ -38,7 +38,7 @@
 			"warn",
 			{"allowShortCircuit": true, "allowTernary": true}
 		],
-		"@nothing-but/require-instanceof-member": "warn",
+		"@nothing-but/no-unnecessary-instanceof": "warn",
 		"eslint-comments/no-unused-disable": "warn",
 		/*
             code style | readability

@@ -29,7 +29,7 @@ If a function returns `void`, the return value shouldn't be used.
 
 TODO TODO
 
-## `require-instanceof-member`
+## `no-unnecessary-instanceof`
 
 Values tested with `instanceof` should have a union type with the tested class as a member.
 

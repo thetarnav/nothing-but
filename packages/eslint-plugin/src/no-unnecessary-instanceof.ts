@@ -1,13 +1,13 @@
 import {eslint, getType, ts} from "./utils"
 
-export const require_instanceof_member = eslint.ESLintUtils.RuleCreator.withoutDocs({
+export const no_unnecessary_instanceof = eslint.ESLintUtils.RuleCreator.withoutDocs({
 	meta: {
 		type: "problem",
 		schema: [],
 		messages: {
 			not_a_union: "Left side of `instanceof` should be a union type.",
 			not_a_class: "Right side of `instanceof` should be a class.",
-			require_instanceof_member:
+			no_unnecessary_instanceof:
 				"Values tested with `instanceof` should have a union type including the tested class as a member.",
 		},
 	},
@@ -53,7 +53,7 @@ export const require_instanceof_member = eslint.ESLintUtils.RuleCreator.withoutD
 					}
 				}
 
-				ctx.report({node, messageId: "require_instanceof_member"})
+				ctx.report({node, messageId: "no_unnecessary_instanceof"})
 			},
 		}
 	},

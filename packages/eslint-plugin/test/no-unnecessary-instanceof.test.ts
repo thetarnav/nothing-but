@@ -1,7 +1,7 @@
 import {RuleTester} from "@typescript-eslint/rule-tester"
 import path from "node:path"
 
-import * as rule from "../src/require-instanceof-member.js"
+import * as rule from "../src/no-unnecessary-instanceof.js"
 
 const ruleTester = new RuleTester({
 	parser: "@typescript-eslint/parser",
@@ -12,7 +12,7 @@ const ruleTester = new RuleTester({
 })
 
 // prettier-ignore
-ruleTester.run("require-instanceof-member", rule.require_instanceof_member, {
+ruleTester.run("no-unnecessary-instanceof", rule.no_unnecessary_instanceof, {
 	valid: [
 		{	name: "union",
 			code: /*javascript*/ `
@@ -51,7 +51,7 @@ ruleTester.run("require-instanceof-member", rule.require_instanceof_member, {
 				const b = Math.random() > 0.5 ? 1 : "1"
 				if (b instanceof Number) {}
 			`,
-			errors: [{messageId: "require_instanceof_member"}],
+			errors: [{messageId: "no_unnecessary_instanceof"}],
 		},
 		{	name: "not a class",
 			code: /*javascript*/ `
@@ -67,7 +67,7 @@ ruleTester.run("require-instanceof-member", rule.require_instanceof_member, {
 				const b = Math.random() > 0.5 ? new A() : new B()
 				if (b instanceof Number) {}
 			`,
-			errors: [{messageId: "require_instanceof_member"}],
+			errors: [{messageId: "no_unnecessary_instanceof"}],
 		},
 	],
 })
