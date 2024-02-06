@@ -24,8 +24,7 @@ export const require_instanceof_member = eslint.ESLintUtils.RuleCreator.withoutD
 				const right_type = getType(node.right, checker, services)
 
 				if (
-					left_type.flags & ts.TypeFlags.Any ||
-					left_type.flags & ts.TypeFlags.Unknown ||
+					left_type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown) ||
 					(left_type.isUnion() &&
 						left_type.types.some(type => type.symbol === right_type.symbol))
 				) {
