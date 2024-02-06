@@ -1,5 +1,11 @@
 # @nothing-but/eslint-plugin
 
+## 0.2.1
+
+### Patch Changes
+
+-   bdc8740: Better handle constructors in require-instanceof-member
+
 ## 0.2.0
 
 ### Minor Changes
