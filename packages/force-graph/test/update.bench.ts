@@ -1,65 +1,83 @@
-/*
-
 import * as vi from 'vitest'
-import * as fg from '../src/index.js'
+import * as graph from '../src/graph.js'
+import * as graph2 from '../src/graph2.js'
 // import * as graph2 from '../src/index2'
 
-function generateExampleGraph(mod: typeof fg.graph, length: number): FG.Graph {
-    const nodes: FG.Node[] = Array.from({length}, FG.makeNode)
+const fns: Record<string, {
+	make:     (len: number) => unknown,
+	simulate: (graph: unknown) => void,
+}> = {
+	// Accurate: graph.updatePositionsAccurate,
+	// Optimized: graph.updatePositionsOptimized,
+	"og": {
+		make(len) {
+			const nodes: graph.Node[] = Array.from({length: len}, graph.zeroNode)
+			const edges: graph.Edge[] = []
 
-    const edges: FG.Edge[] = []
+			for (let i = 0; i < len; i++) {
+				if (i % 3 === 0) continue
 
-    for (let i = 0; i < length; i++) {
-        if (i % 3 === 0) continue
+				const node_a = nodes[i]!
+				const node_b = nodes[(i+1) % len]!
 
-        const node = nodes[i]!
-        const node_b = nodes[(i + 1) % length]!
+				edges.push(graph.connect(node_a, node_b))
+			}
 
-        edges.push(mod.connect(node, node_b))
-    }
+			const options = graph.DEFAULT_OPTIONS
 
-    const options = FG.default_options
+			// graph.randomizeNodePositions(nodes, options.grid_size)
 
-    FG.randomizeNodePositions(nodes, options.grid_size)
+			return graph.makeGraph(options, nodes, edges)
+		},
+		simulate(g) {
+			graph.simulate(g as graph.Graph)
+		},
+	},
+	"new": {
+		make(len) {
+			let g = graph2.makeGraph(
+				graph2.DEFAULT_OPTIONS,
+				Array.from({length: len}, graph2.zeroNode),
+			)
 
-    return FG.makeGraph(options, nodes, edges)
-}
+			for (let i = 0; i < len; i++) {
+				if (i % 3 === 0) continue
 
-const fns = {
-    // Accurate: graph.updatePositionsAccurate,
-    // Optimized: graph.updatePositionsOptimized,
-    1: {
-        fn: FG.simulateGraph,
-        mod: FG,
-    },
-    // 2: {
-    //     fn: graph2.updatePositions,
-    //     mod: graph2,
-    // },
+				graph2.connect_idx(g, i, (i+1) % len)
+			}
+
+			return g
+		},
+		simulate(g) {
+			graph2.simulate(g as graph2.Graph)
+		},
+	}
+	// 2: {
+	//     fn: graph2.updatePositions,
+	//     mod: graph2,
+	// },
 }
 
 ;[
-    // 64,
-    // 256,
-    // 512,
-    1024, 2048, 4096,
-    // 6144,
+	// 64,
+	// 256,
+	// 512,
+	// 1024,
+	2048,
+	// 4096,
+	// 6144,
 ].forEach(n => {
-    describe(`update ${n} nodes`, () => {
-        for (const [name, {fn, mod}] of Object.entries(fns)) {
-            const graph = generateExampleGraph(mod, n)
+	vi.describe(`update ${n} nodes`, () => {
+		for (const [name, api] of Object.entries(fns)) {
+			const g = api.make(n)
 
-            bench(
-                name,
-                () => {
-                    for (let i = 0; i < 36; i++) {
-                        fn(graph)
-                    }
-                },
-                {iterations: 14},
-            )
-        }
-    })
+			vi.bench(name, () => {
+				for (let i = 0; i < 36; i++) {
+					api.simulate(g)
+				}
+			}, {iterations: 14})
+		}
+	})
 })
 
 // const distance = (a: trig.Vec, b: trig.Vec) => {
@@ -91,5 +109,3 @@ const fns = {
 //         })
 //     }
 // })
-
-*/

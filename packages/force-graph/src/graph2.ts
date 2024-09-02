@@ -119,17 +119,28 @@ export function resetGraphGrid(grid: Grid, nodes: readonly Node[]): void {
 }
 
 export type Graph = {
-	nodes: Node[]
-	edges: Edge[]
-	grid: Grid
-	options: Options
+	nodes:          Node[]
+	edges_a:        Int32Array // idx to Graph.nodes
+	edges_b:        Int32Array // idx to Graph.nodes
+	edges_strength: Float32Array
+	edges_len:      number
+	grid:           Grid
+	options:        Options
 }
 
-export function makeGraph(options: Options, nodes: Node[] = [], edges: Edge[] = []): Graph {
+export function makeGraph(options: Options, nodes: Node[] = []): Graph {
 	const grid = graphGrid(options)
 	addNodesToGrid(grid, nodes)
 
-	return {nodes, edges, grid, options}
+	return {
+		nodes,
+		edges_a       : new Int32Array  (nodes.length),
+		edges_b       : new Int32Array  (nodes.length),
+		edges_strength: new Float32Array(nodes.length),
+		edges_len     : 0,
+		grid,
+		options,
+	}
 }
 
 export interface Node {
@@ -142,24 +153,23 @@ export interface Node {
 	 *
 	 * Otherwise, you can use object references to match nodes.
 	 */
-	key: string | number | undefined
+	key:      string | number | undefined
 	/** Label to display on the node when rendering. Set it to an empty string to hide the label. */
-	label: string
+	label:    string
 	/** Current position of the node. */
 	position: T.Position
 	/** Current node velocity, will be added to the position each frame. */
 	velocity: T.Position
-	edges: Edge[]
 	/** Do not change the position of this node. */
-	anchor: boolean
+	anchor:   boolean
 	/**
 	 * Has the node moved since the last frame?
 	 *
 	 * This value is not changed back to `false` automatically. Change it manually if you handled
 	 * the movement.
 	 */
-	moved: boolean
-	mass: number
+	moved:    boolean
+	mass:     number
 }
 
 /**
@@ -175,55 +185,78 @@ export interface Node {
  */
 export function zeroNode(): Node {
 	return {
-		key: undefined,
-		label: "",
+		key:      undefined,
+		label:    "",
 		position: {x: 0, y: 0},
 		velocity: {x: 0, y: 0},
-		edges: [],
-		anchor: false,
-		moved: false,
-		mass: 1,
+		anchor:   false,
+		moved:    false,
+		mass:     1,
 	}
 }
 
-export interface Edge {
-	a: Node
-	b: Node
-	strength: number
-}
-
-export function getEdge(a: Node, b: Node): Edge | undefined {
-	for (const edge of a.edges) {
-		if (edge.a === b || edge.b === b) return edge
+export function get_node_idx(graph: Graph, node: Node): number {
+	for (let i = 0; i < graph.nodes.length; i += 1) {
+		if (graph.nodes[i] === node) return i
 	}
+	return -1
 }
 
 /**
  * Connects two nodes and returns the new edge.
  *
- * **It doesn't check if the nodes are already connected.** Use {@link getEdge} to check before
- * connecting.
+ * **It doesn't check if the nodes are already connected.**
+ * Use {@link connect_or_increase_strength} if the nodes might already be connected.
  */
-export function connect(a: Node, b: Node, strength = 1): Edge {
-	const edge: Edge = {a, b, strength}
-	a.edges.push(edge)
-	b.edges.push(edge)
-	return edge
+export function connect(graph: Graph, a: Node, b: Node, strength = 1): void {
+	graph.edges_a       [graph.edges_len] = get_node_idx(graph, a)
+	graph.edges_b       [graph.edges_len] = get_node_idx(graph, b)
+	graph.edges_strength[graph.edges_len] = strength
+	graph.edges_len += 1
 }
 
-export function disconnect(a: Node, b: Node): void {
-	for (let i = 0; i < a.edges.length; i++) {
-		const edge = a.edges[i]!
-		if (edge.a === b || edge.b === b) {
-			a.edges.splice(i, 1)
-			for (let j = 0; j < b.edges.length; j++) {
-				if (edge === b.edges[j]) {
-					b.edges.splice(j, 1)
-					return
-				}
-			}
+export function connect_idx(graph: Graph, a: number, b: number, strength = 1): void {
+	graph.edges_a       [graph.edges_len] = a
+	graph.edges_b       [graph.edges_len] = b
+	graph.edges_strength[graph.edges_len] = strength
+	graph.edges_len += 1
+}
+
+export function connect_or_increase_strength(graph: Graph, a: Node, b: Node, strength = 1): void {
+	let a_idx = get_node_idx(graph, a)
+	let b_idx = get_node_idx(graph, b)
+
+	for (let i = 0; i < graph.edges_len; i += 1) {
+		if (graph.edges_a[i] === a_idx && graph.edges_b[i] === b_idx) {
+			graph.edges_strength[i]! += strength
+			return
 		}
 	}
+
+	connect(graph, a, b, strength)
+}
+
+/**
+ * @returns true if removed, false if not
+ */
+export function disconnect(graph: Graph, a: Node, b: Node): boolean {
+	let a_idx = get_node_idx(graph, a)
+	let b_idx = get_node_idx(graph, b)
+
+	for (let i = 0; i < graph.edges_len; i += 1) {
+		if (graph.edges_a[i] === a_idx && graph.edges_b[i] === b_idx) {
+			
+			/* unordered remove */
+			graph.edges_len -= 1
+			;[graph.edges_a       [i], graph.edges_a       [graph.edges_len]] = [graph.edges_a       [graph.edges_len], graph.edges_a       [i]]
+			;[graph.edges_b       [i], graph.edges_b       [graph.edges_len]] = [graph.edges_b       [graph.edges_len], graph.edges_b       [i]]
+			;[graph.edges_strength[i], graph.edges_strength[graph.edges_len]] = [graph.edges_strength[graph.edges_len], graph.edges_strength[i]]
+
+			return true
+		}
+	}
+
+	return false
 }
 
 export function nodeMassFromEdges(edges_length: number): number {
@@ -281,16 +314,16 @@ export function findClosestNode(
 		y_axis_idx = Math.floor(pos_idx / grid.axis_cells)
 
 	/*
-        1 | -1, depending on which side of the cell the position is on
-    */
+		1 | -1, depending on which side of the cell the position is on
+	*/
 	const idx_delta = trig.map(
 		pos,
 		n => Math.floor(num.remainder(n / grid.cell_size, 1) + 0.5) * 2 - 1,
 	)
 
 	/*
-        clamp the index to the grid -> 1 | 0 | -1
-    */
+		clamp the index to the grid -> 1 | 0 | -1
+	*/
 	idx_delta.x = num.clamp(idx_delta.x, -x_axis_idx, grid.axis_cells - 1 - x_axis_idx)
 	idx_delta.y = num.clamp(idx_delta.y, -y_axis_idx, grid.axis_cells - 1 - y_axis_idx)
 
@@ -298,9 +331,9 @@ export function findClosestNode(
 	let closest: Node | undefined
 
 	/*
-        check the 4 cells around the position
-        including the cell the position is in
-    */
+		check the 4 cells around the position
+		including the cell the position is in
+	*/
 	for (let xi = 0; xi <= 1; xi++) {
 		const dxi = idx_delta.x * xi
 
@@ -310,8 +343,8 @@ export function findClosestNode(
 
 			if (dxi == -1) {
 				/*
-                    right to left
-                */
+					right to left
+				*/
 				for (let i = order.length - 1; i >= 0; i--) {
 					const node = order[i]!
 					if (x - node.position.x > closest_dist) break
@@ -324,8 +357,8 @@ export function findClosestNode(
 				}
 			} else {
 				/*
-                    left to right
-                */
+					left to right
+				*/
 				for (const node of order) {
 					if (x - node.position.x > closest_dist) continue
 					if (node.position.x - x > closest_dist) break
@@ -413,23 +446,23 @@ export function pushNodesAway(
  *   simulation with time.
  */
 export function simulate(graph: Graph, alpha: number = 1): void {
-	const {nodes, edges, grid, options} = graph
+	const {nodes, grid, options} = graph
 
 	for (const node of nodes) {
 		const {velocity, position} = node,
 			{x, y} = position
 
 		/*
-            towards the origin
-        */
+			towards the origin
+		*/
 		velocity.x += ((grid.size / 2 - x) * options.origin_strength * alpha) / node.mass
 		velocity.y += ((grid.size / 2 - y) * options.origin_strength * alpha) / node.mass
 
 		/*
-            away from other nodes
-            look only at the nodes right to the current node
-            and apply the force to both nodes
-        */
+			away from other nodes
+			look only at the nodes right to the current node
+			and apply the force to both nodes
+		*/
 		const node_idx = toGridIdx(grid, position),
 			dy_min = node_idx >= grid.axis_cells ? -1 : 0,
 			dy_max = node_idx < grid.cells.length - grid.axis_cells ? 1 : 0,
@@ -439,8 +472,8 @@ export function simulate(graph: Graph, alpha: number = 1): void {
 			const idx = node_idx + dy_idx * grid.axis_cells
 
 			/*
-                from the right cell edge to the node
-            */
+				from the right cell edge to the node
+			*/
 			let order = grid.cells[idx]!
 
 			for (let i = order.length - 1; i >= 0; i--) {
@@ -457,8 +490,8 @@ export function simulate(graph: Graph, alpha: number = 1): void {
 			}
 
 			/*
-                from the left edge of neighboring right cell to the end of repel distance
-            */
+				from the left edge of neighboring right cell to the end of repel distance
+			*/
 			if (at_right_edge) continue
 
 			order = grid.cells[idx + 1]!
@@ -476,13 +509,17 @@ export function simulate(graph: Graph, alpha: number = 1): void {
 	}
 
 	/*
-        towards the edges
-        the more edges a node has, the more velocity it accumulates
-        so the velocity is divided by the number of edges
-    */
-	for (const {a, b, strength} of edges) {
-		const dx = (b.position.x - a.position.x) * options.link_strength * strength * alpha
-		const dy = (b.position.y - a.position.y) * options.link_strength * strength * alpha
+		towards the edges
+		the more edges a node has, the more velocity it accumulates
+		so the velocity is divided by the number of edges
+	*/
+	for (let i = 0; i < graph.edges_len; i++) {
+		let a        = graph.nodes[graph.edges_a[i]]
+		let b        = graph.nodes[graph.edges_b[i]]
+		let strength = graph.edges_strength[i]
+
+		let dx = (b.position.x - a.position.x) * options.link_strength * strength * alpha
+		let dy = (b.position.y - a.position.y) * options.link_strength * strength * alpha
 
 		a.velocity.x += dx / a.mass / a.mass
 		a.velocity.y += dy / a.mass / a.mass
@@ -494,8 +531,8 @@ export function simulate(graph: Graph, alpha: number = 1): void {
 		const {velocity, position} = node
 
 		/*
-            commit and sort
-        */
+			commit and sort
+		*/
 		if (!node.anchor) {
 			if (velocity.x * velocity.x + velocity.y * velocity.y > options.min_move) {
 				changeNodePosition(grid, node, position.x + velocity.x, position.y + velocity.y)
@@ -503,8 +540,8 @@ export function simulate(graph: Graph, alpha: number = 1): void {
 		}
 
 		/*
-            inertia
-        */
+			inertia
+		*/
 		velocity.x *= options.inertia_strength * alpha
 		velocity.y *= options.inertia_strength * alpha
 	}

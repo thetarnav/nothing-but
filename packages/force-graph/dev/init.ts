@@ -47,7 +47,6 @@ export function getLA2Graph(): graph.Graph {
 
 export function getLAGraph(): graph.Graph {
 	const nodes: graph.Node[] = new Array(la_raw.length)
-
 	const edges: graph.Edge[] = []
 
 	const node_map = new Map<string, graph.Node>()
@@ -67,8 +66,7 @@ export function getLAGraph(): graph.Graph {
 
 			if (!link_node || graph.getEdge(node, link_node)) continue
 
-			const edge = graph.connect(node, link_node, 1 + link.count / 10)
-			edges.push(edge)
+			edges.push(graph.connect(node, link_node, 1 + link.count/10))
 		}
 	}
 

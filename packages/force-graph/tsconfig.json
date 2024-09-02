@@ -2,6 +2,7 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"lib": ["ESNext", "DOM"],
+		"noUncheckedIndexedAccess": false,
 		"types": []
 	},
 	"include": ["src/**/*", "test/**/*"]
