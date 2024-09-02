@@ -11,6 +11,7 @@ TODO:
 -   [x] `bool && returningFunc()` expressions
 -   [x] `never` doesn't need to be used
 -   [ ] ignore `super()`
+-   [ ] awaiting `Promise<some_value>`
 
 ## `no-return-to-void`
 
@@ -32,6 +33,8 @@ TODO TODO
 ## `no-unnecessary-instanceof`
 
 Values tested with `instanceof` should have a union type with the tested class as a member.
+
+-   [ ] Allow extended types
 
 ## `no-ignored-params`
 

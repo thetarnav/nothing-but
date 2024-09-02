@@ -36,16 +36,18 @@ export interface FrameIterationsLimit {
 	last_timestamp: number
 }
 
-export const frameIterationsLimit = (
+export function frameIterationsLimit(
 	target_fps: number = DEFAULT_TARGET_FPS,
-): FrameIterationsLimit => ({
-	target_fps,
-	last_timestamp: performance.now(),
-})
+): FrameIterationsLimit {
+	return {
+		target_fps,
+		last_timestamp: performance.now(),
+	}
+}
 export function calcIterations(limit: FrameIterationsLimit, current_time: number): number {
-	const target_ms = 1000 / limit.target_fps
-	const delta_time = current_time - limit.last_timestamp
-	const times = Math.floor(delta_time / target_ms)
+	let target_ms  = 1000 / limit.target_fps
+	let delta_time = current_time - limit.last_timestamp
+	let times      = Math.floor(delta_time / target_ms)
 	limit.last_timestamp += times * target_ms
 	return times
 }
