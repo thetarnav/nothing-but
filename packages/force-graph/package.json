@@ -15,8 +15,8 @@
 	"scripts": {
 		"dev": "vite serve dev",
 		"build:demo": "vite build dev",
-		"build": "pnpm tsc -p ./tsconfig.build.json",
-		"prepublish": "pnpm build",
+		"build": "bun tsc -p ./tsconfig.build.json",
+		"prepublish": "bun run build",
 		"test": "vitest -c ../../configs/vitest.config.js",
 		"typecheck": "echo \"Built with TSC\""
 	},

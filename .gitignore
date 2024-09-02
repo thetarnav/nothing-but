@@ -29,8 +29,5 @@ Thumbs.db
 # solid
 .solid
 
-# tsup
-tsup.config.bundled*.*
-
 # Vite
 **/vite.config.ts.timestamp-*.*

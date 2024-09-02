@@ -27,6 +27,7 @@ type Emit<T> = <E extends keyof EventsTable<T>>(
 	e: E,
 	// @ts-expect-error
 	...args: EventsTable<T>[E][0]
+	// @ts-expect-error idk
 ) => EventsTable<T>[E][1] | (RequiredEventsUnion<T>[E] extends true ? never : void)
 
 export function createEmit<T>(source: Accessor<T>): Emit<T> {

@@ -605,8 +605,8 @@ export function moveByAngle(
 	angle: number,
 	distance: number,
 ): void {
-	out[vec_idx] += Math.cos(angle) * distance
-	out[vec_idx + 1] += Math.sin(angle) * distance
+	;(out[vec_idx+0] as number) += Math.cos(angle) * distance
+	;(out[vec_idx+1] as number) += Math.sin(angle) * distance
 }
 
 /**
