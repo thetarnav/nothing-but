@@ -4,21 +4,6 @@ import * as solid from "solid-js"
 import * as fg from "../src/index.js"
 import * as init from "./init.js"
 
-const Shell: solid.FlowComponent = props => {
-	return (
-		<div class="min-h-110vh min-w-110vw">
-			<div class="w-screen h-screen center-child flex-col">
-				<div
-					ref={utils.event.preventMobileScrolling}
-					class="relative aspect-3/4 sm:aspect-4/3 w-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
-				>
-					{props.children}
-				</div>
-			</div>
-		</div>
-	)
-}
-
 export const graph_options: fg.graph.Options = {
 	...fg.graph.DEFAULT_OPTIONS,
 	inertia_strength: 0.3,
@@ -66,8 +51,7 @@ export const App: solid.Component = () => {
 	const ro = new ResizeObserver(() => {
 		const changed = utils.canvas.resizeCanvasToDisplaySize(el)
 		if (changed) {
-			fg.canvas.updateTranslate(
-				canvas_state,
+			fg.canvas.updateTranslate(canvas_state,
 				canvas_state.translate.x,
 				canvas_state.translate.y,
 			)
@@ -81,29 +65,42 @@ export const App: solid.Component = () => {
 		onGesture(e) {
 			// eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
 			switch (e.type) {
-				case fg.canvas.GestureEventType.NodeDrag: {
-					fg.graph.changeNodePosition(canvas_state.graph.grid, e.node, e.pos.x, e.pos.y)
-					break
-				}
-				case fg.canvas.GestureEventType.NodeClick: {
-					// eslint-disable-next-line no-console
-					console.log("click", e.node)
-					break
-				}
+			case fg.canvas.GestureEventType.NodeDrag: {
+				fg.graph.set_position(canvas_state.graph, e.node, e.pos)
+				break
+			}
+			case fg.canvas.GestureEventType.NodeClick: {
+				// eslint-disable-next-line no-console
+				console.log("click", e.node)
+				break
+			}
 			}
 		},
 	})
 	s.addCleanup(gestures, fg.canvas.cleanupCanvasGestures)
 
+	return <>
+		<Shell>{el}</Shell>
+		<button
+			class="absolute top-0 right-0"
+			onClick={() => (bump_end = utils.raf.bump(bump_end))}
+		>
+			bump
+		</button>
+	</>
+}
+
+const Shell: solid.FlowComponent = props => {
 	return (
-		<>
-			<Shell>{el}</Shell>
-			<button
-				class="absolute top-0 right-0"
-				onClick={() => (bump_end = utils.raf.bump(bump_end))}
-			>
-				bump
-			</button>
-		</>
+		<div class="min-h-110vh min-w-110vw">
+			<div class="w-screen h-screen center-child flex-col">
+				<div
+					ref={utils.event.preventMobileScrolling}
+					class="relative aspect-3/4 sm:aspect-4/3 w-90vmin m-auto relative overflow-hidden overscroll-none touch-none b b-solid b-red rounded-md"
+				>
+					{props.children}
+				</div>
+			</div>
+		</div>
 	)
 }
