@@ -27,6 +27,7 @@ jobs:
       - name: Version and release to npm
         uses: changesets/action@v1
         with:
+          version: pnpm run version
           publish: pnpm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
