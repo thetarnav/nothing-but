@@ -102,6 +102,11 @@ export function mutate_filter<T>(
 	array.push.apply(array, temp)
 }
 
+export function unordered_remove(array: any[], idx: number): void {
+	[array[idx], array[array.length-1]] = [array[array.length-1], array[idx]]
+	array.length -= 1
+}
+
 export function remove<T>(array: T[], item: T): void {
 	array.splice(array.indexOf(item), 1)
 }

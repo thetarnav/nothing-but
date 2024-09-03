@@ -10,9 +10,11 @@ export function random_int(max: number): number {
 export function random_int_from(min: number, max: number): number {
 	return Math.floor(Math.random() * (max - min)) + min
 }
+
 export function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max)
 }
+
 export function remainder(a: number, b: number): number {
 	return ((a % b) + b) % b
 }
@@ -30,16 +32,26 @@ export function bounce(value: number, min: number, max: number): number {
 }
 
 /**
- * Linear interpolation
- *
- * @param start Start value
- * @param end   End value
- * @param t     Interpolation factor
- *
- *   ```ts
- *   start + (end - start) * t
- *   ```
- */
+ Because sometimes `n - Number.EPSILON == n`
+*/
+export function find_open_upper_bound(max: number): number {
+	let m = 0, n = max
+	while (max === n) 
+		n = max - Number.EPSILON * (++m)
+	return n
+}
+
+/**
+ Linear interpolation
+
+ @param start Start value
+ @param end   End value
+ @param t     Interpolation factor
+
+ ```ts
+ start + (end - start) * t
+ ```
+*/
 export function lerp(start: number, end: number, t: number): number {
 	return start + (end - start) * t
 }
