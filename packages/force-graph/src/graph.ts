@@ -68,6 +68,7 @@ export type Grid = {
 	size:       number
 	cell_size:  number
 	axis_cells: number
+	max_pos:    number
 }
 
 export function graphGrid(options: Options): Grid {
@@ -79,6 +80,7 @@ export function graphGrid(options: Options): Grid {
 		axis_cells: cols,
 		cell_size:  options.repel_distance,
 		size:       size,
+		max_pos:    num.find_open_upper_bound(options.grid_size),
 	}
 }
 
@@ -352,12 +354,25 @@ export function randomizeNodePositions(nodes: readonly Node[], grid_size: number
 	}
 }
 
+export function spread_positions(g: Graph): void {
+	
+	let margin    = g.grid.size / 4
+	let max_width = g.grid.size - margin*2
+	let cols      = g.grid.axis_cells
+
+	for (let i = 0; i < g.nodes.length; i++) {
+		let x = margin + i%cols/cols                 * max_width
+		let y = margin + Math.ceil(i/cols)%cols/cols * max_width
+		changeNodePosition(g.grid, g.nodes[i], x, y)
+	}
+}
+
 export function changeNodePosition(grid: Grid, node: Node, x: number, y: number): void {
 	const prev_idx = toGridIdx(grid, node.position)
 	const prev_x = node.position.x
 
-	node.position.x = num.clamp(x, 0, grid.size)
-	node.position.y = num.clamp(y, 0, grid.size)
+	node.position.x = num.clamp(x, 0, grid.max_pos)
+	node.position.y = num.clamp(y, 0, grid.max_pos)
 	node.moved = true
 
 	const idx = toGridIdx(grid, node.position)
@@ -366,7 +381,6 @@ export function changeNodePosition(grid: Grid, node: Node, x: number, y: number)
 
 	if (idx !== prev_idx) {
 		order.splice(order_idx, 1)
-
 		addNodeToGrid(grid, node, idx)
 	} else {
 		if (x - prev_x < 0) {
