@@ -23,11 +23,11 @@ const fns: Record<string, {
 				edges.push(graph.connect(node_a, node_b))
 			}
 
-			const options = graph.DEFAULT_OPTIONS
+			let g = graph.makeGraph(graph.DEFAULT_OPTIONS, nodes, edges)
 
-			// graph.randomizeNodePositions(nodes, options.grid_size)
+			graph.spread_positions(g)
 
-			return graph.makeGraph(options, nodes, edges)
+			return g
 		},
 		simulate(g) {
 			graph.simulate(g as graph.Graph)
@@ -35,16 +35,22 @@ const fns: Record<string, {
 	},
 	"new": {
 		make(len) {
-			let g = graph2.makeGraph(
-				graph2.DEFAULT_OPTIONS,
-				Array.from({length: len}, graph2.zeroNode),
-			)
+			let g = graph2.make_graph(graph2.DEFAULT_OPTIONS)
+
+			for (let i = 0; i < len; i++) {
+				graph2.add_node(g, graph2.make_node())
+			}
 
 			for (let i = 0; i < len; i++) {
 				if (i % 3 === 0) continue
 
-				graph2.connect_idx(g, i, (i+1) % len)
+				let a = g.nodes[i]
+				let b = g.nodes[(i+1) % len]
+
+				graph2.connect(g, a, b)
 			}
+
+			graph2.spread_positions(g)
 
 			return g
 		},
@@ -61,10 +67,10 @@ const fns: Record<string, {
 ;[
 	// 64,
 	// 256,
-	// 512,
-	// 1024,
+	512,
+	1024,
 	2048,
-	// 4096,
+	4096,
 	// 6144,
 ].forEach(n => {
 	vi.describe(`update ${n} nodes`, () => {
