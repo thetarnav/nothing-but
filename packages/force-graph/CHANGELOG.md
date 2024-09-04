@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.8.2
+
+### Patch Changes
+
+- 3a58f6b: Don't draw nodes outside of the screen
+
 ## 0.8.0
 
 ### Minor Changes
