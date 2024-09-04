@@ -2,10 +2,10 @@ import {T, event, num, trig} from "@nothing-but/utils"
 import {graph} from "./index.js"
 
 export interface Options {
-	readonly ctx: CanvasRenderingContext2D
-	readonly graph: graph.Graph
-	readonly max_scale: number
-	readonly init_scale: number
+	readonly ctx:           CanvasRenderingContext2D
+	readonly graph:         graph.Graph
+	readonly max_scale:     number
+	readonly init_scale:    number
 	readonly init_grid_pos: T.Position
 }
 
@@ -16,10 +16,10 @@ export const DEFAULT_OPTIONS = {
 } as const satisfies Partial<Options>
 
 export interface CanvasState extends Options {
-	/** camera translate from the center of the canvas in graph plane Default: `{ x: 0, y: 0 }` */
-	translate: T.Position
+	/** camera translate from the center of the canvas in graph plane Default: `{x: 0, y: 0}` */
+	translate:    T.Position
 	/** from 1 to max_scale */
-	scale: number
+	scale:        number
 	hovered_node: graph.Node | null
 }
 
@@ -40,23 +40,24 @@ function clampCanvasScale(options: Options, new_scale: number): number {
 	return num.clamp(new_scale, 1, options.max_scale)
 }
 
-export function updateTranslate(canvas: CanvasState, x: number, y: number): void {
-	const grid_size = canvas.graph.options.grid_size,
-		{width, height} = canvas.ctx.canvas,
-		{scale, translate} = canvas,
-		radius = grid_size / 2,
-		ar_offset_x = arMargin(width / height) * (grid_size / scale),
-		ar_offset_y = arMargin(height / width) * (grid_size / scale)
+export function updateTranslate(c: CanvasState, x: number, y: number): void {
 
-	translate.x = num.clamp(
+	let grid_size       = c.graph.options.grid_size
+	let {width, height} = c.ctx.canvas
+
+	let radius      = grid_size / 2
+	let ar_offset_x = arMargin(width/height) * (grid_size/c.scale)
+	let ar_offset_y = arMargin(height/width) * (grid_size/c.scale)
+
+	c.translate.x = num.clamp(
 		x,
-		radius / scale - radius - ar_offset_x,
-		radius - radius / scale + ar_offset_x,
+		radius/c.scale - radius - ar_offset_x,
+		radius - radius/c.scale + ar_offset_x,
 	)
-	translate.y = num.clamp(
+	c.translate.y = num.clamp(
 		y,
-		radius / scale - radius - ar_offset_y,
-		radius - radius / scale + ar_offset_y,
+		radius/c.scale - radius - ar_offset_y,
+		radius - radius/c.scale + ar_offset_y,
 	)
 }
 
@@ -81,12 +82,10 @@ export function arMargin(ar: number): number {
 	return (1 - Math.min(1, ar)) / 2
 }
 
-export function eventToPointRatio(
-	canvas: CanvasState,
-	e: PointerEvent | WheelEvent | MouseEvent,
-): T.Position {
-	const ratio = event.ratioInElement(e, canvas.ctx.canvas)
-	const {width, height} = canvas.ctx.canvas
+export function eventToPointRatio(c: CanvasState, e: PointerEvent | WheelEvent | MouseEvent): T.Position {
+
+	let ratio = event.ratioInElement(e, c.ctx.canvas)
+	let {width, height} = c.ctx.canvas
 
 	/*
         correct for aspect ratio by shifting the shorter side's axis
@@ -105,136 +104,175 @@ function eventToPointGraph(
 	return pointRatioToGraph(canvas, ratio)
 }
 
-function pointRatioToGraph(canvas: CanvasState, pos: T.Position): T.Position {
-	const {scale, translate} = canvas,
-		grid_size = canvas.graph.options.grid_size
+export function pointRatioToGraph(c: CanvasState, pos: T.Position): T.Position {
+	let grid_size = c.graph.options.grid_size
 
-	let x = pos.x
-	let y = pos.y
+	let {x, y} = pos
 
-	/*
-        to graph plane, correct for scale shifting the origin
-    */
-	const scaled_grid_size = grid_size / scale
-	const correct_origin = grid_size / 2 - scaled_grid_size / 2
-	x = x * scaled_grid_size + correct_origin
-	y = y * scaled_grid_size + correct_origin
+	/* to graph plane */
+	x = x * grid_size/c.scale
+	y = y * grid_size/c.scale
 
-	/*
-        add user T.Position
-    */
-	x += translate.x
-	y += translate.y
+	/* correct for scale shifting the origin */
+	x += grid_size/2 - grid_size/c.scale/2
+	y += grid_size/2 - grid_size/c.scale/2
+
+	/* add user position */
+	x += c.translate.x
+	y += c.translate.y
 
 	return {x, y}
 }
 
-export function resetFrame(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{scale, translate: grid_pos} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
+export function get_canvas_translate(c: CanvasState): T.Position {
 
-	/*
-        clear
-    */
-	ctx.resetTransform()
-	ctx.clearRect(0, 0, max_size, max_size)
+	let {width, height} = c.ctx.canvas
+	let max_size        = Math.max(width, height)
+	let grid_size       = c.graph.options.grid_size
 
-	/*
-        origin (top-left corner) gets shifted away from the center
-    */
-	let translate_x = (1-scale) * max_size / 2
-	let translate_y = (1-scale) * max_size / 2
+	/* origin (top-left corner) gets shifted away from the center */
+	let x = (1-c.scale) * max_size / 2
+	let y = (1-c.scale) * max_size / 2
 
-	/*
-        subtract user T.Position (to move camera in the opposite direction)
-    */
-	translate_x -= grid_pos.x / graph.options.grid_size * max_size * scale
-	translate_y -= grid_pos.y / graph.options.grid_size * max_size * scale
+	/* subtract user position (to move camera in the opposite direction) */
+	x -= c.translate.x / grid_size * max_size * c.scale
+	y -= c.translate.y / grid_size * max_size * c.scale
 
-	/*
-        correct for aspect ratio by shifting the shorter side's axis
-    */
-	translate_x += -arMargin(width/height) * max_size
-	translate_y += -arMargin(height/width) * max_size
+	/* correct for aspect ratio by shifting the shorter side's axis */
+	x += -arMargin(width/height) * max_size
+	y += -arMargin(height/width) * max_size
 
-	ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
+	return {x, y}
 }
 
-export function drawEdges(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
-	let grid_size = canvas.graph.options.grid_size
+export type Rect = T.Position & {
+	w: number
+	h: number
+}
 
-	const edge_width = edgeWidth(max_size, canvas.scale)
+/**
+Assumes there is no rotaton!
+*/
+export function get_ctx_clip_rect(ctx: CanvasRenderingContext2D, margin: T.Position = trig.ZERO): Rect {
+	let {width, height} = ctx.canvas
+	let t = ctx.getTransform()
+	let w = (-margin.x -t.e) / t.a
+	let n = (-margin.y -t.f) / t.d
+	let e = (width  + margin.x -t.e) / t.a
+	let s = (height + margin.y -t.f) / t.d
+	return {
+		x: w,
+		y: n,
+		w: e-w,
+		h: s-n,
+	}
+}
 
-	for (const {a, b} of graph.edges) {
-		const opacity = 0.2 + ((a.mass + b.mass - 2) / 100) * 2 * canvas.scale
+export function in_rect_xy(rect: Rect, x: number, y: number): boolean {
+	return x >= rect.x        &&
+	       x <  rect.x+rect.w &&
+	       y >= rect.y        &&
+	       y <  rect.y+rect.h
+}
+export function in_rect(rect: Rect, p: T.Position): boolean {
+	return in_rect_xy(rect, p.x, p.y)
+}
 
-		ctx.strokeStyle = a.anchor || b.anchor || canvas.hovered_node === a || canvas.hovered_node === b
+export function resetFrame(c: CanvasState): void {
+
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
+
+	/* clear */
+	c.ctx.resetTransform()
+	c.ctx.clearRect(0, 0, max_size, max_size)
+
+	let translate = get_canvas_translate(c)
+
+	c.ctx.setTransform(c.scale, 0, 0, c.scale, translate.x, translate.y)
+}
+
+export function drawEdges(c: CanvasState): void {
+
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
+	let grid_size = c.graph.options.grid_size
+
+	let edge_width = edgeWidth(max_size, c.scale)
+
+	for (let {a, b} of c.graph.edges) {
+		let opacity = 0.2 + ((a.mass + b.mass - 2) / 100) * 2 * c.scale
+
+		c.ctx.strokeStyle = a.anchor || b.anchor || c.hovered_node === a || c.hovered_node === b
 			? `rgba(129, 140, 248, ${opacity})`
 			: `rgba(150, 150, 150, ${opacity})`
-		ctx.lineWidth = edge_width
-		ctx.beginPath()
-		ctx.moveTo(a.pos.x/grid_size * max_size,
-		           a.pos.y/grid_size * max_size)
-		ctx.lineTo(b.pos.x/grid_size * max_size,
-		           b.pos.y/grid_size * max_size)
-		ctx.stroke()
+		c.ctx.lineWidth = edge_width
+		c.ctx.beginPath()
+		c.ctx.moveTo(a.pos.x / grid_size * max_size,
+		             a.pos.y / grid_size * max_size)
+		c.ctx.lineTo(b.pos.x / grid_size * max_size,
+		             b.pos.y / grid_size * max_size)
+		c.ctx.stroke()
 	}
 }
 
-export function drawDotNodes(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
+export function drawDotNodes(c: CanvasState): void {
 
-	const node_radius = nodeRadius(max_size)
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
+	let grid_size = c.graph.options.grid_size
+	let radius    = nodeRadius(max_size)
 
-	for (const node of graph.nodes) {
-		const {x, y} = node.pos
-		const opacity = 0.6 + (node.mass / 10) * 4
+	let clip_rect = get_ctx_clip_rect(c.ctx, {x: radius, y: radius})
 
-		ctx.fillStyle =
-			node.anchor || canvas.hovered_node === node
+	for (let node of c.graph.nodes) {
+
+		let x = node.pos.x / grid_size * max_size
+		let y = node.pos.y / grid_size * max_size
+
+		if (in_rect_xy(clip_rect, x, y)) {
+			
+			let opacity = 0.6 + (node.mass / 10) * 4
+	
+			c.ctx.fillStyle = node.anchor || c.hovered_node === node
 				? `rgba(129, 140, 248, ${opacity})`
 				: `rgba(248, 113, 113, ${opacity})`
-		ctx.beginPath()
-		ctx.ellipse(
-			x/graph.options.grid_size * max_size,
-			y/graph.options.grid_size * max_size,
-			node_radius,
-			node_radius,
-			0,
-			0,
-			Math.PI * 2,
-		)
-		ctx.fill()
+			c.ctx.beginPath()
+			c.ctx.ellipse(
+				x, y,
+				radius, radius,
+				0, 0,
+				Math.PI * 2,
+			)
+			c.ctx.fill()
+		}
 	}
 }
 
-export function drawTextNodes(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
+export function drawTextNodes(c: CanvasState, clip_margin: T.Position = {x: 100, y: 20}): void {
 
-	ctx.textAlign = "center"
-	ctx.textBaseline = "middle"
+	let {width, height} = c.ctx.canvas
+	let max_size        = Math.max(width, height)
+	let grid_size       = c.graph.options.grid_size
 
-	for (const node of graph.nodes) {
-		const {x, y} = node.pos
-		const opacity = 0.6 + ((node.mass-1) / 50) * 4
+	let clip_rect = get_ctx_clip_rect(c.ctx, clip_margin)
 
-		ctx.font = `${max_size/200 + (((node.mass-1) / 5) * (max_size/100)) / canvas.scale}px sans-serif`
-		ctx.fillStyle = node.anchor || canvas.hovered_node === node
-			? `rgba(129, 140, 248, ${opacity})`
-			: `rgba(248, 113, 113, ${opacity})`
+	c.ctx.textAlign    = "center"
+	c.ctx.textBaseline = "middle"
 
-		ctx.fillText(node.label,
-			x/graph.options.grid_size * max_size,
-			y/graph.options.grid_size * max_size)
+	for (let node of c.graph.nodes) {
+
+		let x = node.pos.x / grid_size * max_size
+		let y = node.pos.y / grid_size * max_size
+
+		if (in_rect_xy(clip_rect, x, y)) {
+
+			let opacity = 0.6 + ((node.mass-1) / 50) * 4
+	
+			c.ctx.font = `${max_size/200 + (((node.mass-1) / 5) * (max_size/100)) / c.scale}px sans-serif`
+			c.ctx.fillStyle = node.anchor || c.hovered_node === node
+				? `rgba(129, 140, 248, ${opacity})`
+				: `rgba(248, 113, 113, ${opacity})`
+	
+			c.ctx.fillText(node.label, x, y)
+		}
 	}
 }
 
@@ -386,8 +424,8 @@ function draggingNodeState(
 		if (e.pointerId !== state.pointer_id) return
 
 		state.goal_point_ratio = eventToPointRatio(canvas, e)
-		goal_graph_node_pos = pointRatioToGraph(canvas, state.goal_point_ratio)
-		const graph_node_pos = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
+		goal_graph_node_pos    = pointRatioToGraph(canvas, state.goal_point_ratio)
+		const graph_node_pos   = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
 
 		if (!state.click_prevented) {
 			const dist = trig.distance(down_event_pos, {x: e.clientX, y: e.clientY})
@@ -729,13 +767,16 @@ function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): 
 		let pointer_id: number
 		let ratio: T.Position
 
-		if (e.pointerId === mode.pointer_id_0) {
+		switch (e.pointerId) {
+		case mode.pointer_id_0:
 			pointer_id = mode.pointer_id_1
-			ratio = mode.last_ratio_1
-		} else if (e.pointerId === mode.pointer_id_1) {
+			ratio      = mode.last_ratio_1
+			break
+		case mode.pointer_id_1:
 			pointer_id = mode.pointer_id_0
-			ratio = mode.last_ratio_0
-		} else {
+			ratio      = mode.last_ratio_0
+			break
+		default:
 			return
 		}
 
@@ -824,11 +865,11 @@ function handleWheelEvent(canvas: CanvasState, e: WheelEvent): void {
 
 export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
 	const gesture: CanvasGestures = {
-		canvas: options.canvas,
+		canvas:    options.canvas,
 		onGesture: options.onGesture,
-		mode: null!,
-		cleanup1: null!,
-		cleanup2: null!,
+		mode:      null!,
+		cleanup1:  null!,
+		cleanup2:  null!,
 	}
 	gesture.mode = defaultState(gesture)
 
