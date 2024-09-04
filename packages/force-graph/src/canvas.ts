@@ -248,9 +248,8 @@ export function drawDotNodes(c: CanvasState): void {
 
 export function drawTextNodes(c: CanvasState, clip_margin: T.Position = {x: 100, y: 20}): void {
 
-	let {width, height} = c.ctx.canvas
-	let max_size        = Math.max(width, height)
-	let grid_size       = c.graph.options.grid_size
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
+	let grid_size = c.graph.options.grid_size
 
 	let clip_rect = get_ctx_clip_rect(c.ctx, clip_margin)
 

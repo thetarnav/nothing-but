@@ -152,13 +152,27 @@ export function pos_to_grid_idx(options: Options, pos: T.Position): number {
 	return xi + yi * get_grid_cols(options)
 }
 
+export function add_edge(g: Graph, edge: Edge): void {
+	g.edges.push(edge)
+}
+export function add_edges(g: Graph, edges: readonly Edge[]): void {
+	g.edges.push(...edges)
+}
+
 export function add_node(g: Graph, node: Node): void {
 	g.nodes.push(node)
 	add_node_to_grid(g, node)
 }
 export function add_nodes(g: Graph, nodes: readonly Node[]): void {
-	for (let node of nodes) {
-		add_node(g, node)
+	g.nodes.push(...nodes)
+	add_nodes_to_grid(g, nodes)
+}
+
+export function clear_nodes(g: Graph): void {
+	g.nodes.length = 0
+	g.edges.length = 0
+	for (let cell of g.grid) {
+		cell.length = 0
 	}
 }
 
@@ -173,15 +187,6 @@ export function add_node_to_grid(
 	}
 	cell.splice(i, 0, node)
 }
-
-export function clear_nodes(g: Graph): void {
-	g.nodes.length = 0
-	g.edges.length = 0
-	for (let cell of g.grid) {
-		cell.length = 0
-	}
-}
-
 export function add_nodes_to_grid(g: Graph, nodes: readonly Node[]): void {
 	for (const node of nodes) {
 		add_node_to_grid(g, node)
@@ -349,9 +354,9 @@ export function find_closest_node(
 export function randomize_positions(g: Graph): void {
 	let margin = g.options.grid_size / 4
 	for (let node of g.nodes) {
-		node.pos.x = num.random_from(margin, g.options.grid_size - margin)
-		node.pos.y = num.random_from(margin, g.options.grid_size - margin)
-		node.moved = true
+		let x = num.random_from(margin, g.options.grid_size - margin)
+		let y = num.random_from(margin, g.options.grid_size - margin)
+		set_position_xy(g, node, x, y)
 	}
 }
 
