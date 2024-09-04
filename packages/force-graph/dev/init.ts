@@ -18,7 +18,6 @@ export function getLA2Graph(): graph.Graph {
 		const node = graph.make_node()
 		node.key   = key
 		node.label = raw.prettyName
-		node.mass  = graph.node_mass_from_edges(raw.connections.length)
 		node.pos.x = num.random_from(0, graph_options.grid_size)
 		node.pos.y = num.random_from(0, graph_options.grid_size)
 
@@ -38,6 +37,11 @@ export function getLA2Graph(): graph.Graph {
 				graph.connect(g, node, link_node)
 			}
 		}
+	}
+
+	for (const node of g.nodes) {
+		let edges = graph.get_node_edges(g, node)
+		node.mass = graph.node_mass_from_edges(edges.length)
 	}
 
 	return g
