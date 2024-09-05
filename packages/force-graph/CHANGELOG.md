@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.8.4
+
+### Patch Changes
+
+- Cleanup
+
 ## 0.8.2
 
 ### Patch Changes

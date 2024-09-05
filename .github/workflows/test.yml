@@ -15,21 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
 
-      - name: Setup Node.js environment 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile --ignore-scripts
+      - name: Install Dependencies
+        run: bun i --frozen-lockfile
 
       - name: Run Build and Tests
-        run: pnpm run build-test
+        run: bun run build-test
 
       - name: Lint
         # Will run the step even if lint step failed
         if: success() || failure()
-        run: pnpm lint
+        run: bun lint

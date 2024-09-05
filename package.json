@@ -11,9 +11,9 @@
 		"test": "turbo run test --filter=./packages/*",
 		"typecheck": "turbo run typecheck --filter=./packages/*",
 		"build-test": "turbo run build test typecheck --filter=./packages/*",
-		"lint:packages": "eslint --ignore-path .gitignore --max-warnings 0 packages/*/src/**/*.{js,jsx,ts,tsx}",
-		"lint:tests": "eslint --ignore-path .gitignore packages/*/test/**/*.{js,jsx,ts,tsx} --quiet --rule \"no-only-tests/no-only-tests: error\"",
-		"lint": "bun lint:packages & lint:tests",
+		"lint:packages": "eslint --ignore-path .gitignore --max-warnings 0 packages/*/src/**/*.ts",
+		"lint:tests": "eslint --ignore-path .gitignore packages/*/test/**/*.ts --quiet --rule \"no-only-tests/no-only-tests: error\"",
+		"lint": "bun lint:packages & bun lint:tests",
 		"changeset": "changeset",
 		"version": "changeset version && bun i && git add .",
 		"release": "bun run build && changeset publish"
@@ -21,12 +21,12 @@
 	"devDependencies": {
 		"@changesets/cli": "^2.26.2",
 		"@nothing-but/eslint-plugin": "workspace:^",
+		"@types/bun": "^1.1.8",
 		"@types/node": "^20.9.1",
 		"@typescript-eslint/eslint-plugin": "^6.11.0",
 		"@typescript-eslint/parser": "^6.11.0",
 		"@unocss/reset": "^0.57.4",
 		"@unocss/transformer-directives": "^0.57.4",
-		"concurrently": "^8.2.2",
 		"esbuild": "^0.19.5",
 		"eslint": "^8.53.0",
 		"eslint-plugin-eslint-comments": "^3.2.0",
@@ -40,5 +40,5 @@
 		"vitest": "^0.34.6"
 	},
 	"packageManager": "bun@1.1.20",
-	"engines": {"bun": ">=1.1.0"}
+	"engines": { "bun": ">=1.1.0" }
 }

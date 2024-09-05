@@ -263,9 +263,10 @@ export function drawTextNodes(c: CanvasState, clip_margin: T.Position = {x: 100,
 
 		if (in_rect_xy(clip_rect, x, y)) {
 
-			let opacity = 0.6 + ((node.mass-1) / 50) * 4
-	
 			c.ctx.font = `${max_size/200 + (((node.mass-1) / 5) * (max_size/100)) / c.scale}px sans-serif`
+			
+			let opacity = 0.6 + ((node.mass-1) / 50) * 4
+			
 			c.ctx.fillStyle = node.anchor || c.hovered_node === node
 				? `rgba(129, 140, 248, ${opacity})`
 				: `rgba(248, 113, 113, ${opacity})`

@@ -42,7 +42,7 @@ export function makeCanvasResizeObserver(canvas: HTMLCanvasElement): CanvasResiz
 		observer: null!,
 	}
 	canvas_observer.observer = new ResizeObserver(resizeCanvasObserver.bind(null, canvas_observer))
-	resizeCanvasObserver(canvas_observer)
+	void resizeCanvasObserver(canvas_observer)
 	canvas_observer.observer.observe(canvas)
 	return canvas_observer
 }

@@ -14,7 +14,7 @@
         */
 		"no-console": "warn",
 		"no-debugger": "warn",
-		"prefer-const": "warn",
+		// "prefer-const": "warn",
 		"require-await": "warn",
 		"@typescript-eslint/await-thenable": "warn",
 		"@typescript-eslint/no-unused-vars": [

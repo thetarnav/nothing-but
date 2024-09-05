@@ -13,7 +13,7 @@
 		"url": "https://github.com/thetarnav/nothing-but/issues"
 	},
 	"scripts": {
-		"build": "bun tsc -p ./tsconfig.build.json",
+		"build": "tsc -p ./tsconfig.build.json",
 		"test": "vitest -c ../../configs/vitest.config.ts",
 		"typecheck": "echo \"Built with TSC\""
 	},

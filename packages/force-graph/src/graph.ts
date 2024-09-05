@@ -352,6 +352,7 @@ export function find_closest_node(
 }
 
 export function randomize_positions(g: Graph): void {
+	
 	let margin = g.options.grid_size / 4
 	for (let node of g.nodes) {
 		let x = num.random_from(margin, g.options.grid_size - margin)
