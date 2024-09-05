@@ -1,16 +1,6 @@
-# @nothing-but/platform
+# `@nothing-but/platform`
 
 A set of const boolean variables identifying device and browser type.
-
-## Installation
-
-```bash
-npm install @nothing-but/platform
-# or
-pnpm add @nothing-but/platform
-# or
-yarn add @nothing-but/platform
-```
 
 ## How to use it
 
