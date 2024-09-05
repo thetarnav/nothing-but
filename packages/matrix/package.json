@@ -1,6 +1,6 @@
 {
 	"name": "@nothing-but/matrix",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"license": "MIT",
 	"author": "Damian Tarnawski <gthetarnav@gmail.com>",
 	"contributors": [],
@@ -13,7 +13,7 @@
 		"url": "https://github.com/thetarnav/nothing-but/issues"
 	},
 	"scripts": {
-		"build": "bun tsc -p ./tsconfig.build.json",
+		"build": "echo \"Ignore for now\"",
 		"prepublish": "bun run build",
 		"test": "vitest -c ../../configs/vitest.config.js",
 		"typecheck": "echo \"Built with TSC\""

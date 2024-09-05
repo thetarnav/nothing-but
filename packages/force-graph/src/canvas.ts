@@ -2,10 +2,10 @@ import {T, event, num, trig} from "@nothing-but/utils"
 import {graph} from "./index.js"
 
 export interface Options {
-	readonly ctx: CanvasRenderingContext2D
-	readonly graph: graph.Graph
-	readonly max_scale: number
-	readonly init_scale: number
+	readonly ctx:           CanvasRenderingContext2D
+	readonly graph:         graph.Graph
+	readonly max_scale:     number
+	readonly init_scale:    number
 	readonly init_grid_pos: T.Position
 }
 
@@ -16,10 +16,10 @@ export const DEFAULT_OPTIONS = {
 } as const satisfies Partial<Options>
 
 export interface CanvasState extends Options {
-	/** camera translate from the center of the canvas in graph plane Default: `{ x: 0, y: 0 }` */
-	translate: T.Position
+	/** camera translate from the center of the canvas in graph plane Default: `{x: 0, y: 0}` */
+	translate:    T.Position
 	/** from 1 to max_scale */
-	scale: number
+	scale:        number
 	hovered_node: graph.Node | null
 }
 
@@ -40,23 +40,24 @@ function clampCanvasScale(options: Options, new_scale: number): number {
 	return num.clamp(new_scale, 1, options.max_scale)
 }
 
-export function updateTranslate(canvas: CanvasState, x: number, y: number): void {
-	const grid_size = canvas.graph.grid.size,
-		{width, height} = canvas.ctx.canvas,
-		{scale, translate} = canvas,
-		radius = grid_size / 2,
-		ar_offset_x = arMargin(width / height) * (grid_size / scale),
-		ar_offset_y = arMargin(height / width) * (grid_size / scale)
+export function updateTranslate(c: CanvasState, x: number, y: number): void {
 
-	translate.x = num.clamp(
+	let grid_size       = c.graph.options.grid_size
+	let {width, height} = c.ctx.canvas
+
+	let radius      = grid_size / 2
+	let ar_offset_x = arMargin(width/height) * (grid_size/c.scale)
+	let ar_offset_y = arMargin(height/width) * (grid_size/c.scale)
+
+	c.translate.x = num.clamp(
 		x,
-		radius / scale - radius - ar_offset_x,
-		radius - radius / scale + ar_offset_x,
+		radius/c.scale - radius - ar_offset_x,
+		radius - radius/c.scale + ar_offset_x,
 	)
-	translate.y = num.clamp(
+	c.translate.y = num.clamp(
 		y,
-		radius / scale - radius - ar_offset_y,
-		radius - radius / scale + ar_offset_y,
+		radius/c.scale - radius - ar_offset_y,
+		radius - radius/c.scale + ar_offset_y,
 	)
 }
 
@@ -81,12 +82,10 @@ export function arMargin(ar: number): number {
 	return (1 - Math.min(1, ar)) / 2
 }
 
-export function eventToPointRatio(
-	canvas: CanvasState,
-	e: PointerEvent | WheelEvent | MouseEvent,
-): T.Position {
-	const ratio = event.ratioInElement(e, canvas.ctx.canvas)
-	const {width, height} = canvas.ctx.canvas
+export function eventToPointRatio(c: CanvasState, e: PointerEvent | WheelEvent | MouseEvent): T.Position {
+
+	let ratio = event.ratioInElement(e, c.ctx.canvas)
+	let {width, height} = c.ctx.canvas
 
 	/*
         correct for aspect ratio by shifting the shorter side's axis
@@ -105,142 +104,174 @@ function eventToPointGraph(
 	return pointRatioToGraph(canvas, ratio)
 }
 
-function pointRatioToGraph(canvas: CanvasState, pos: T.Position): T.Position {
-	const {scale, translate} = canvas,
-		grid_size = canvas.graph.grid.size
+export function pointRatioToGraph(c: CanvasState, pos: T.Position): T.Position {
+	let grid_size = c.graph.options.grid_size
 
-	let x = pos.x
-	let y = pos.y
+	let {x, y} = pos
 
-	/*
-        to graph plane, correct for scale shifting the origin
-    */
-	const scaled_grid_size = grid_size / scale
-	const correct_origin = grid_size / 2 - scaled_grid_size / 2
-	x = x * scaled_grid_size + correct_origin
-	y = y * scaled_grid_size + correct_origin
+	/* to graph plane */
+	x = x * grid_size/c.scale
+	y = y * grid_size/c.scale
 
-	/*
-        add user T.Position
-    */
-	x += translate.x
-	y += translate.y
+	/* correct for scale shifting the origin */
+	x += grid_size/2 - grid_size/c.scale/2
+	y += grid_size/2 - grid_size/c.scale/2
+
+	/* add user position */
+	x += c.translate.x
+	y += c.translate.y
 
 	return {x, y}
 }
 
-export function resetFrame(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{scale, translate: grid_pos} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
+export function get_canvas_translate(c: CanvasState): T.Position {
 
-	/*
-        clear
-    */
-	ctx.resetTransform()
-	ctx.clearRect(0, 0, max_size, max_size)
+	let {width, height} = c.ctx.canvas
+	let max_size        = Math.max(width, height)
+	let grid_size       = c.graph.options.grid_size
 
-	/*
-        origin (top-left corner) gets shifted away from the center
-    */
-	const correct_origin = ((1 - scale) * max_size) / 2
-	let translate_x = correct_origin
-	let translate_y = correct_origin
+	/* origin (top-left corner) gets shifted away from the center */
+	let x = (1-c.scale) * max_size / 2
+	let y = (1-c.scale) * max_size / 2
 
-	/*
-        subtract user T.Position (to move camera in the opposite direction)
-    */
-	translate_x -= (grid_pos.x / graph.grid.size) * max_size * scale
-	translate_y -= (grid_pos.y / graph.grid.size) * max_size * scale
+	/* subtract user position (to move camera in the opposite direction) */
+	x -= c.translate.x / grid_size * max_size * c.scale
+	y -= c.translate.y / grid_size * max_size * c.scale
 
-	/*
-        correct for aspect ratio by shifting the shorter side's axis
-    */
-	translate_x += -arMargin(width / height) * max_size
-	translate_y += -arMargin(height / width) * max_size
+	/* correct for aspect ratio by shifting the shorter side's axis */
+	x += -arMargin(width/height) * max_size
+	y += -arMargin(height/width) * max_size
 
-	ctx.setTransform(scale, 0, 0, scale, translate_x, translate_y)
+	return {x, y}
 }
 
-export function drawEdges(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
+export type Rect = T.Position & {
+	w: number
+	h: number
+}
 
-	const edge_width = edgeWidth(max_size, canvas.scale)
-
-	for (const {a, b} of graph.edges) {
-		const opacity = 0.2 + ((a.mass + b.mass - 2) / 100) * 2 * canvas.scale
-
-		ctx.strokeStyle =
-			a.anchor || b.anchor || canvas.hovered_node === a || canvas.hovered_node === b
-				? `rgba(129, 140, 248, ${opacity})`
-				: `rgba(150, 150, 150, ${opacity})`
-		ctx.lineWidth = edge_width
-		ctx.beginPath()
-		ctx.moveTo(
-			(a.position.x / graph.grid.size) * max_size,
-			(a.position.y / graph.grid.size) * max_size,
-		)
-		ctx.lineTo(
-			(b.position.x / graph.grid.size) * max_size,
-			(b.position.y / graph.grid.size) * max_size,
-		)
-		ctx.stroke()
+/**
+Assumes there is no rotaton!
+*/
+export function get_ctx_clip_rect(ctx: CanvasRenderingContext2D, margin: T.Position = trig.ZERO): Rect {
+	let {width, height} = ctx.canvas
+	let t = ctx.getTransform()
+	let w = (-margin.x -t.e) / t.a
+	let n = (-margin.y -t.f) / t.d
+	let e = (width  + margin.x -t.e) / t.a
+	let s = (height + margin.y -t.f) / t.d
+	return {
+		x: w,
+		y: n,
+		w: e-w,
+		h: s-n,
 	}
 }
 
-export function drawDotNodes(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
+export function in_rect_xy(rect: Rect, x: number, y: number): boolean {
+	return x >= rect.x        &&
+	       x <  rect.x+rect.w &&
+	       y >= rect.y        &&
+	       y <  rect.y+rect.h
+}
+export function in_rect(rect: Rect, p: T.Position): boolean {
+	return in_rect_xy(rect, p.x, p.y)
+}
 
-	const node_radius = nodeRadius(max_size)
+export function resetFrame(c: CanvasState): void {
 
-	for (const node of graph.nodes) {
-		const {x, y} = node.position
-		const opacity = 0.6 + (node.mass / 10) * 4
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
 
-		ctx.fillStyle =
-			node.anchor || canvas.hovered_node === node
-				? `rgba(129, 140, 248, ${opacity})`
-				: `rgba(248, 113, 113, ${opacity})`
-		ctx.beginPath()
-		ctx.ellipse(
-			(x / graph.grid.size) * max_size,
-			(y / graph.grid.size) * max_size,
-			node_radius,
-			node_radius,
-			0,
-			0,
-			Math.PI * 2,
-		)
-		ctx.fill()
+	/* clear */
+	c.ctx.resetTransform()
+	c.ctx.clearRect(0, 0, max_size, max_size)
+
+	let translate = get_canvas_translate(c)
+
+	c.ctx.setTransform(c.scale, 0, 0, c.scale, translate.x, translate.y)
+}
+
+export function drawEdges(c: CanvasState): void {
+
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
+	let grid_size = c.graph.options.grid_size
+
+	let edge_width = edgeWidth(max_size, c.scale)
+
+	for (let {a, b} of c.graph.edges) {
+		let opacity = 0.2 + ((a.mass + b.mass - 2) / 100) * 2 * c.scale
+
+		c.ctx.strokeStyle = a.anchor || b.anchor || c.hovered_node === a || c.hovered_node === b
+			? `rgba(129, 140, 248, ${opacity})`
+			: `rgba(150, 150, 150, ${opacity})`
+		c.ctx.lineWidth = edge_width
+		c.ctx.beginPath()
+		c.ctx.moveTo(a.pos.x / grid_size * max_size,
+		             a.pos.y / grid_size * max_size)
+		c.ctx.lineTo(b.pos.x / grid_size * max_size,
+		             b.pos.y / grid_size * max_size)
+		c.ctx.stroke()
 	}
 }
 
-export function drawTextNodes(canvas: CanvasState): void {
-	const {ctx, graph} = canvas,
-		{width, height} = canvas.ctx.canvas,
-		max_size = Math.max(width, height)
+export function drawDotNodes(c: CanvasState): void {
 
-	ctx.textAlign = "center"
-	ctx.textBaseline = "middle"
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
+	let grid_size = c.graph.options.grid_size
+	let radius    = nodeRadius(max_size)
 
-	for (const node of graph.nodes) {
-		const {x, y} = node.position
-		const opacity = 0.6 + ((node.mass - 1) / 50) * 4
+	let clip_rect = get_ctx_clip_rect(c.ctx, {x: radius, y: radius})
 
-		ctx.font = `${
-			max_size / 200 + (((node.mass - 1) / 5) * (max_size / 100)) / canvas.scale
-		}px sans-serif`
-		ctx.fillStyle =
-			node.anchor || canvas.hovered_node === node
+	for (let node of c.graph.nodes) {
+
+		let x = node.pos.x / grid_size * max_size
+		let y = node.pos.y / grid_size * max_size
+
+		if (in_rect_xy(clip_rect, x, y)) {
+			
+			let opacity = 0.6 + (node.mass / 10) * 4
+	
+			c.ctx.fillStyle = node.anchor || c.hovered_node === node
 				? `rgba(129, 140, 248, ${opacity})`
 				: `rgba(248, 113, 113, ${opacity})`
+			c.ctx.beginPath()
+			c.ctx.ellipse(
+				x, y,
+				radius, radius,
+				0, 0,
+				Math.PI * 2,
+			)
+			c.ctx.fill()
+		}
+	}
+}
 
-		ctx.fillText(node.label, (x / graph.grid.size) * max_size, (y / graph.grid.size) * max_size)
+export function drawTextNodes(c: CanvasState, clip_margin: T.Position = {x: 100, y: 20}): void {
+
+	let max_size  = Math.max(c.ctx.canvas.width, c.ctx.canvas.height)
+	let grid_size = c.graph.options.grid_size
+
+	let clip_rect = get_ctx_clip_rect(c.ctx, clip_margin)
+
+	c.ctx.textAlign    = "center"
+	c.ctx.textBaseline = "middle"
+
+	for (let node of c.graph.nodes) {
+
+		let x = node.pos.x / grid_size * max_size
+		let y = node.pos.y / grid_size * max_size
+
+		if (in_rect_xy(clip_rect, x, y)) {
+
+			let opacity = 0.6 + ((node.mass-1) / 50) * 4
+	
+			c.ctx.font = `${max_size/200 + (((node.mass-1) / 5) * (max_size/100)) / c.scale}px sans-serif`
+			c.ctx.fillStyle = node.anchor || c.hovered_node === node
+				? `rgba(129, 140, 248, ${opacity})`
+				: `rgba(248, 113, 113, ${opacity})`
+	
+			c.ctx.fillText(node.label, x, y)
+		}
 	}
 }
 
@@ -282,7 +313,7 @@ export interface NodeHoverEvent {
 export interface NodeDragEvent {
 	type: GestureEventType.NodeDrag
 	node: graph.Node
-	pos: T.Position
+	pos:  T.Position
 }
 export interface ModeChangeEvent {
 	type: GestureEventType.ModeChange
@@ -316,10 +347,9 @@ function handleMouseMoveEvent(gesture: CanvasGestures, state: DefaultState, e: M
 		max_size = Math.max(width, height)
 
 	const point_graph = eventToPointGraph(canvas, e)
-	const pointer_node_radius = pointerNodeRadius(max_size, canvas.graph.grid.size)
+	const pointer_node_radius = pointerNodeRadius(max_size, canvas.graph.options.grid_size)
 
-	const node =
-		graph.findClosestNodeLinear(canvas.graph.nodes, point_graph, pointer_node_radius) ?? null
+	const node = graph.find_closest_node_linear(canvas.graph, point_graph, pointer_node_radius)
 
 	if (canvas.hovered_node !== node) {
 		canvas.hovered_node = node
@@ -366,7 +396,7 @@ function draggingNodeState(
 
 	node.anchor = true
 
-	const goal_node_pos_delta = trig.difference(input.point_graph, node.position)
+	const goal_node_pos_delta = trig.difference(input.point_graph, node.pos)
 
 	let goal_graph_node_pos = input.point_graph
 
@@ -393,8 +423,8 @@ function draggingNodeState(
 		if (e.pointerId !== state.pointer_id) return
 
 		state.goal_point_ratio = eventToPointRatio(canvas, e)
-		goal_graph_node_pos = pointRatioToGraph(canvas, state.goal_point_ratio)
-		const graph_node_pos = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
+		goal_graph_node_pos    = pointRatioToGraph(canvas, state.goal_point_ratio)
+		const graph_node_pos   = trig.difference(goal_graph_node_pos, goal_node_pos_delta)
 
 		if (!state.click_prevented) {
 			const dist = trig.distance(down_event_pos, {x: e.clientX, y: e.clientY})
@@ -453,7 +483,7 @@ function handleMoveEvent(state: MovingDraggingState, e: PointerEvent): boolean {
 	state.last_ratio = ratio
 
 	const delta = trig.difference(state.init_ratio, ratio)
-	trig.multiply(delta, canvas.graph.grid.size / canvas.scale)
+	trig.multiply(delta, canvas.graph.options.grid_size / canvas.scale)
 
 	updateTranslate(
 		canvas,
@@ -536,7 +566,7 @@ function handleMultiTouchEvent(state: MovingMultiTouchState, e: PointerEvent): b
 		trig.difference(state.init_ratio_0, ratio_0),
 		trig.difference(state.init_ratio_1, ratio_1),
 	)
-	trig.multiply(delta, canvas.graph.grid.size / scale)
+	trig.multiply(delta, canvas.graph.options.grid_size / scale)
 
 	updateTranslate(
 		canvas,
@@ -588,41 +618,31 @@ function moveMultiTouchState(
 }
 
 export interface ModeStateMap {
-	[Mode.Default]: DefaultState
-	[Mode.DraggingNode]: DraggingNodeState
-	[Mode.MovingSpace]: MovingSpaceState
-	[Mode.MovingDragging]: MovingDraggingState
+	[Mode.Default]:          DefaultState
+	[Mode.DraggingNode]:     DraggingNodeState
+	[Mode.MovingSpace]:      MovingSpaceState
+	[Mode.MovingDragging]:   MovingDraggingState
 	[Mode.MovingMultiTouch]: MovingMultiTouchState
 }
 
 const mode_state_setup_map = {
-	[Mode.Default]: defaultState,
-	[Mode.DraggingNode]: draggingNodeState,
-	[Mode.MovingSpace]: movingSpaceState,
-	[Mode.MovingDragging]: moveDraggingState,
+	[Mode.Default]:          defaultState,
+	[Mode.DraggingNode]:     draggingNodeState,
+	[Mode.MovingSpace]:      movingSpaceState,
+	[Mode.MovingDragging]:   moveDraggingState,
 	[Mode.MovingMultiTouch]: moveMultiTouchState,
 }
 
 export type ModeState = ModeStateMap[Mode]
 
-export type ModeStateInput<T extends Mode> = Parameters<(typeof mode_state_setup_map)[T]> extends [
-	CanvasGestures,
-	...infer U,
-]
-	? U
-	: []
+export type ModeStateInput<T extends Mode> =
+	Parameters<typeof mode_state_setup_map[T]> extends [CanvasGestures, ...infer U] ? U : []
 
 export function changeModeState<T extends Mode>(
-	gesture: CanvasGestures,
-	type: T,
-	...args: ModeStateInput<T>
+	gesture: CanvasGestures, type: T, ...args: ModeStateInput<T>
 ): void {
 	cleanupModeState(gesture)
-	gesture.mode = mode_state_setup_map[type](
-		gesture,
-		// @ts-ignore
-		...args,
-	)
+	gesture.mode = mode_state_setup_map[type](gesture, ...(args as [any]))
 	gesture.onGesture({type: GestureEventType.ModeChange, mode: type})
 }
 
@@ -631,30 +651,30 @@ export function cleanupModeState(gesture: CanvasGestures): void {
 
 	// eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
 	switch (mode.type) {
-		case Mode.Default: {
-			mode.removeListener()
-			if (canvas.hovered_node) {
-				canvas.hovered_node = null
-				gesture.onGesture({type: GestureEventType.NodeHover, node: null})
-			}
+	case Mode.Default: {
+		mode.removeListener()
+		if (canvas.hovered_node) {
+			canvas.hovered_node = null
+			gesture.onGesture({type: GestureEventType.NodeHover, node: null})
+		}
 
-			break
-		}
-		case Mode.DraggingNode: {
-			mode.node.anchor = false
-			clearInterval(mode.interval)
-			mode.removeListener()
+		break
+	}
+	case Mode.DraggingNode: {
+		mode.node.anchor = false
+		clearInterval(mode.interval)
+		mode.removeListener()
 
-			break
-		}
-		case Mode.MovingDragging: {
-			mode.removeListener()
-			break
-		}
-		case Mode.MovingMultiTouch: {
-			mode.removeListener()
-			break
-		}
+		break
+	}
+	case Mode.MovingDragging: {
+		mode.removeListener()
+		break
+	}
+	case Mode.MovingMultiTouch: {
+		mode.removeListener()
+		break
+	}
 	}
 }
 
@@ -666,60 +686,53 @@ function handlePointerDownEvent(gesture: CanvasGestures, e: PointerEvent): void 
 
 	// eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
 	switch (mode.type) {
-		case Mode.Default: {
-			const point_ratio = eventToPointRatio(canvas, e),
-				point_graph = pointRatioToGraph(canvas, point_ratio)
+	case Mode.Default: {
+		const point_ratio = eventToPointRatio(canvas, e),
+			point_graph = pointRatioToGraph(canvas, point_ratio)
 
-			const pointer_node_radius = pointerNodeRadius(max_size, canvas.graph.grid.size)
+		const pointer_node_radius = pointerNodeRadius(max_size, canvas.graph.options.grid_size)
 
-			const node = graph.findClosestNodeLinear(
-				canvas.graph.nodes,
-				point_graph,
-				pointer_node_radius,
-			)
+		const node = graph.find_closest_node_linear(canvas.graph, point_graph, pointer_node_radius)
 
-			if (node) {
-				changeModeState(gesture, Mode.DraggingNode, {
-					node,
-					e,
-					point_graph,
-					point_ratio,
-				})
-			} else {
-				changeModeState(gesture, Mode.MovingDragging, {
-					from: Mode.Default,
-					init_ratio: point_ratio,
-					pointer_id: e.pointerId,
-				})
-			}
-			break
-		}
-		case Mode.DraggingNode: {
-			changeModeState(gesture, Mode.MovingMultiTouch, {
-				e,
-				from: Mode.Default,
-				pointer_id_0: mode.pointer_id,
-				init_ratio_0: mode.goal_point_ratio,
+		if (node) {
+			changeModeState(gesture, Mode.DraggingNode, {
+				node, e, point_graph, point_ratio,
 			})
-			break
-		}
-		case Mode.MovingSpace: {
+		} else {
 			changeModeState(gesture, Mode.MovingDragging, {
-				from: Mode.MovingSpace,
-				init_ratio: eventToPointRatio(canvas, e),
+				from: Mode.Default,
+				init_ratio: point_ratio,
 				pointer_id: e.pointerId,
 			})
-			break
 		}
-		case Mode.MovingDragging: {
-			changeModeState(gesture, Mode.MovingMultiTouch, {
-				e,
-				from: mode.from,
-				pointer_id_0: mode.pointer_id,
-				init_ratio_0: mode.last_ratio,
-			})
-			break
-		}
+		break
+	}
+	case Mode.DraggingNode: {
+		changeModeState(gesture, Mode.MovingMultiTouch, {
+			e,
+			from: Mode.Default,
+			pointer_id_0: mode.pointer_id,
+			init_ratio_0: mode.goal_point_ratio,
+		})
+		break
+	}
+	case Mode.MovingSpace: {
+		changeModeState(gesture, Mode.MovingDragging, {
+			from: Mode.MovingSpace,
+			init_ratio: eventToPointRatio(canvas, e),
+			pointer_id: e.pointerId,
+		})
+		break
+	}
+	case Mode.MovingDragging: {
+		changeModeState(gesture, Mode.MovingMultiTouch, {
+			e,
+			from: mode.from,
+			pointer_id_0: mode.pointer_id,
+			init_ratio_0: mode.last_ratio,
+		})
+		break
+	}
 	}
 }
 
@@ -728,48 +741,51 @@ function handlePointerUpEvent(gesture: CanvasGestures, e: PointerEvent | null): 
 
 	// eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
 	switch (mode.type) {
-		case Mode.DraggingNode: {
-			if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
+	case Mode.DraggingNode: {
+		if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
 
-			if (!mode.click_prevented) {
-				gesture.onGesture({type: GestureEventType.NodeClick, node: mode.node})
-			}
+		if (!mode.click_prevented) {
+			gesture.onGesture({type: GestureEventType.NodeClick, node: mode.node})
+		}
 
+		changeModeState(gesture, Mode.Default)
+		break
+	}
+	case Mode.MovingDragging: {
+		if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
+
+		changeModeState(gesture, mode.from)
+		break
+	}
+	case Mode.MovingMultiTouch: {
+		if (e == null) {
 			changeModeState(gesture, Mode.Default)
-			break
+			return
 		}
-		case Mode.MovingDragging: {
-			if (e instanceof PointerEvent && e.pointerId !== mode.pointer_id) return
 
-			changeModeState(gesture, mode.from)
+		let pointer_id: number
+		let ratio: T.Position
+
+		switch (e.pointerId) {
+		case mode.pointer_id_0:
+			pointer_id = mode.pointer_id_1
+			ratio      = mode.last_ratio_1
 			break
-		}
-		case Mode.MovingMultiTouch: {
-			if (e == null) {
-				changeModeState(gesture, Mode.Default)
-				return
-			}
-
-			let pointer_id: number
-			let ratio: T.Position
-
-			if (e.pointerId === mode.pointer_id_0) {
-				pointer_id = mode.pointer_id_1
-				ratio = mode.last_ratio_1
-			} else if (e.pointerId === mode.pointer_id_1) {
-				pointer_id = mode.pointer_id_0
-				ratio = mode.last_ratio_0
-			} else {
-				return
-			}
-
-			changeModeState(gesture, Mode.MovingDragging, {
-				from: mode.from,
-				init_ratio: ratio,
-				pointer_id,
-			})
+		case mode.pointer_id_1:
+			pointer_id = mode.pointer_id_0
+			ratio      = mode.last_ratio_0
 			break
+		default:
+			return
 		}
+
+		changeModeState(gesture, Mode.MovingDragging, {
+			from: mode.from,
+			init_ratio: ratio,
+			pointer_id,
+		})
+		break
+	}
 	}
 }
 
@@ -779,19 +795,17 @@ function handleKeyDownEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
 	const {mode} = gesture
 
 	switch (e.key) {
-		case "Control": {
-			if (mode.type !== Mode.Default) return
-			e.preventDefault()
-			changeModeState(gesture, Mode.MovingSpace)
-			break
-		}
+	case "Control": 
+		if (mode.type !== Mode.Default) return
+		e.preventDefault()
+		changeModeState(gesture, Mode.MovingSpace)
+		break
 
-		case "Escape": {
-			if (mode.type === Mode.Default) return
-			e.preventDefault()
-			changeModeState(gesture, Mode.Default)
-			break
-		}
+	case "Escape": 
+		if (mode.type === Mode.Default) return
+		e.preventDefault()
+		changeModeState(gesture, Mode.Default)
+		break
 	}
 }
 
@@ -804,14 +818,14 @@ function handleKeyUpEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
 
 	// eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
 	switch (mode.type) {
-		case Mode.MovingSpace: {
-			changeModeState(gesture, Mode.Default)
-			break
-		}
-		case Mode.MovingDragging: {
-			mode.from = Mode.Default
-			break
-		}
+	case Mode.MovingSpace: {
+		changeModeState(gesture, Mode.Default)
+		break
+	}
+	case Mode.MovingDragging: {
+		mode.from = Mode.Default
+		break
+	}
 	}
 }
 
@@ -842,20 +856,19 @@ function handleWheelEvent(canvas: CanvasState, e: WheelEvent): void {
 	const graph_point_after = eventToPointGraph(canvas, e)
 	const delta = trig.difference(graph_point_before, graph_point_after)
 
-	updateTranslate(
-		canvas,
-		canvas.translate.x + delta.x + e.deltaX * (0.1 / scale),
+	updateTranslate(canvas,
+		canvas.translate.x + delta.x + e.deltaX * (0.1/scale),
 		canvas.translate.y + delta.y,
 	)
 }
 
 export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
 	const gesture: CanvasGestures = {
-		canvas: options.canvas,
+		canvas:    options.canvas,
 		onGesture: options.onGesture,
-		mode: null!,
-		cleanup1: null!,
-		cleanup2: null!,
+		mode:      null!,
+		cleanup1:  null!,
+		cleanup2:  null!,
 	}
 	gesture.mode = defaultState(gesture)
 
@@ -870,21 +883,11 @@ export function canvasGestures(options: CanvasGesturesOptions): CanvasGestures {
 	})
 
 	gesture.cleanup2 = event.listenerMap(document, {
-		pointerup(e) {
-			handlePointerUpEvent(gesture, e)
-		},
-		pointercancel(e) {
-			handlePointerUpEvent(gesture, e)
-		},
-		contextmenu() {
-			handlePointerUpEvent(gesture, null)
-		},
-		keydown(e) {
-			handleKeyDownEvent(gesture, e)
-		},
-		keyup(e) {
-			handleKeyUpEvent(gesture, e)
-		},
+		pointerup(e)     {handlePointerUpEvent(gesture, e)},
+		pointercancel(e) {handlePointerUpEvent(gesture, e)},
+		contextmenu()    {handlePointerUpEvent(gesture, null)},
+		keydown(e)       {handleKeyDownEvent(gesture, e)},
+		keyup(e)         {handleKeyUpEvent(gesture, e)},
 	})
 
 	return gesture
