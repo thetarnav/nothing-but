@@ -1,5 +1,17 @@
 # @nothing-but/force-graph
 
+## 0.9.0
+
+### Minor Changes
+
+- c082501: Add `set_positions_smart` and other helpers
+
+### Patch Changes
+
+- Updated dependencies [12c6da6]
+- Updated dependencies [0f86073]
+  - @nothing-but/utils@0.16.0
+
 ## 0.8.4
 
 ### Patch Changes
