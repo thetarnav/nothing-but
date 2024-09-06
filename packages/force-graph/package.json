@@ -65,7 +65,7 @@
 		}
 	},
 	"dependencies": {
-		"@nothing-but/utils": "^0.15.0"
+		"@nothing-but/utils": "workspace:^"
 	},
 	"devDependencies": {
 		"@nothing-but/solid": "workspace:^",
