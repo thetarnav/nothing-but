@@ -1,3 +1,44 @@
+export type HSL = [hue: number, saturation: number, lightness: number]
+
+export function hsl_zero(): HSL {
+	return new Int16Array(3) as any as HSL
+}
+
+export function hsl(hue: number, saturation: number, lightness: number): HSL {
+	let c = hsl_zero()
+	c[0] = hue
+	c[1] = saturation
+	c[2] = lightness
+	return c
+}
+
+export function hsl_to_string(c: HSL): string {
+	return `hsl(${c[0]} ${c[1]}% ${c[2]}%)`
+}
+
+export function hsl_to_hsla_string(c: HSL, alpha: number): string {
+	return `hsl(${c[0]} ${c[1]}% ${c[2]}% / ${alpha})`
+}
+
+export function mix(a: HSL, b: HSL, ar: number, br: number): HSL {
+	let sum = ar + br
+	ar = ar/sum
+	br = br/sum
+	let ah = a[0], bh = b[0]
+	if (Math.abs(ah - bh) > 180) {
+		if (ah > bh) {
+			bh += 360
+		} else {
+			ah += 360
+		}
+	}
+	let c = hsl_zero()
+	c[0] = (ah*ar + bh*br + 360) % 360
+	c[1] = a[1]*ar + b[1]*br
+	c[2] = a[2]*ar + b[2]*br
+	return c
+}
+
 /** Represents a color in the RGB color space. */
 export class RGB {
 	/**
@@ -158,7 +199,7 @@ export function rgba_to_hex(rgba: RGBA): string {
 /**
  * Converts a hex color to an rgb color
  *
- * @example hexToRGBA('#ff0000') // { r: 255, g: 0, b: 0 } hexToRGBA('#f00') // { r: 255, g: 0, b: 0
+ * @example hex_to_rgb('#ff0000') // { r: 255, g: 0, b: 0 } hex_to_rgb('#f00') // { r: 255, g: 0, b: 0
  * }
  */
 export function hex_to_rgb(hex: string): RGB {
@@ -178,8 +219,8 @@ export function hex_to_rgb(hex: string): RGB {
 /**
  * Converts a hex color to an rgba color
  *
- * @example hexToRGBA('#ff0000') // { r: 255, g: 0, b: 0, a: 1 } hexToRGBA('#ff000000') // { r: 255,
- * g: 0, b: 0, a: 0 } hexToRGBA('#f00') // { r: 255, g: 0, b: 0, a: 1 } hexToRGBA('#f000') // { r:
+ * @example hex_to_rgba('#ff0000') // { r: 255, g: 0, b: 0, a: 1 } hex_to_rgba('#ff000000') // { r: 255,
+ * g: 0, b: 0, a: 0 } hex_to_rgba('#f00') // { r: 255, g: 0, b: 0, a: 1 } hex_to_rgba('#f000') // { r:
  * 255, g: 0, b: 0, a: 0 }
  */
 export function hex_to_rgba(hex: string): RGBA {
