@@ -1,5 +1,13 @@
 # @nothing-but/matrix
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [12c6da6]
+- Updated dependencies [0f86073]
+  - @nothing-but/utils@0.16.0
+
 ## 0.0.3
 
 ### Patch Changes

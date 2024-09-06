@@ -1,5 +1,12 @@
 # @nothing-but/utils
 
+## 0.16.0
+
+### Minor Changes
+
+- 12c6da6: Add HSL helpers
+- 0f86073: Add `distance_xy` and `normalize` to trig
+
 ## 0.15.0
 
 ### Minor Changes
