@@ -45,20 +45,15 @@ export function updateTranslate(c: CanvasState, x: number, y: number): void {
 	let grid_size       = c.graph.options.grid_size
 	let {width, height} = c.ctx.canvas
 
-	let radius      = grid_size / 2
+	let radius      = grid_size/2
 	let ar_offset_x = arMargin(width/height) * (grid_size/c.scale)
 	let ar_offset_y = arMargin(height/width) * (grid_size/c.scale)
 
-	c.translate.x = num.clamp(
-		x,
-		radius/c.scale - radius - ar_offset_x,
-		radius - radius/c.scale + ar_offset_x,
-	)
-	c.translate.y = num.clamp(
-		y,
-		radius/c.scale - radius - ar_offset_y,
-		radius - radius/c.scale + ar_offset_y,
-	)
+	let min = radius/c.scale - radius
+	let max = radius - radius/c.scale
+
+	c.translate.x = num.clamp(x, min-ar_offset_x, max+ar_offset_x)
+	c.translate.y = num.clamp(y, min-ar_offset_y, max+ar_offset_y)
 }
 
 export function updateCanvasSize(canvas: CanvasState): void {

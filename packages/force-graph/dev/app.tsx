@@ -17,6 +17,9 @@ export const App: solid.Component = () => {
 	// const force_graph = generateInitialGraph(1024)
 	const force_graph = init.getLA2Graph()
 
+	fg.graph.set_positions_smart(force_graph)
+	// fg.graph.set_positions_random(force_graph)
+
 	const el = (<canvas class="absolute w-full h-full" />) as HTMLCanvasElement
 
 	const ctx = el.getContext("2d")

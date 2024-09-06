@@ -18,8 +18,6 @@ export function getLA2Graph(): graph.Graph {
 		const node = graph.make_node()
 		node.key   = key
 		node.label = raw.prettyName
-		node.pos.x = num.random_from(0, graph_options.grid_size)
-		node.pos.y = num.random_from(0, graph_options.grid_size)
 
 		graph.add_node(g, node)
 		node_map.set(key, node)
@@ -78,8 +76,6 @@ export function getLAGraph(): graph.Graph {
 		node.mass = graph.node_mass_from_edges(edges.length)
 	}
 
-	graph.randomize_positions(g)
-
 	return g
 }
 
@@ -107,8 +103,6 @@ export function generateInitialGraph(length: number = 256): graph.Graph {
 
 		graph.connect(g, node, node_b)
 	}
-
-	graph.randomize_positions(g)
 
 	return g
 }

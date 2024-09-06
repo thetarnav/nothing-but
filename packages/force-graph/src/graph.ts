@@ -50,7 +50,7 @@ export const DEFAULT_OPTIONS: Options = {
 	inertia_strength: 0.7,
 	repel_strength:   0.4,
 	repel_distance:   20,
-	link_strength:    0.02,
+	link_strength:    0.025,
 	origin_strength:  0.012,
 	min_move:         0.001,
 	grid_size:        200,
@@ -210,15 +210,32 @@ export function get_edge(g: Graph, a: Node, b: Node): Edge | undefined {
 		return g.edges[idx]
 	}
 }
+export function get_connection(edge: Edge, node: Node): Node | null {
+	if (edge.a === node) return edge.b
+	if (edge.b === node) return edge.a
+	return null
+}
+
+export function* each_node_edge(g: Graph, node: Node): IterableIterator<Edge> {
+	for (let edge of g.edges) {
+		if (edge.a === node || edge.b === node)
+			yield edge
+	}	
+}
+export function* each_node_connection(g: Graph, node: Node): IterableIterator<Node> {
+	for (let edge of g.edges) {
+		if (edge.a === node)
+			yield edge.b
+		else if (edge.b === node)
+			yield edge.a
+	}	
+}
 
 export function get_node_edges(g: Graph, node: Node): Edge[] {
-	let edges: Edge[] = []
-	for (let edge of g.edges) {
-		if (edge.a === node || edge.b === node) {
-			edges.push(edge)
-		}
-	}
-	return edges
+	return Array.from(each_node_edge(g, node))
+}
+export function get_node_connections(g: Graph, node: Node): Node[] {
+	return Array.from(each_node_connection(g, node))
 }
 
 /**
@@ -351,9 +368,13 @@ export function find_closest_node(
 	return closest_node
 }
 
-export function randomize_positions(g: Graph): void {
+/**
+ Set positions for all nodes randomly around the whole grid.
+ Will give different result each time.
+*/
+export function set_positions_random(g: Graph): void {
 	
-	let margin = g.options.grid_size / 4
+	let margin = g.options.grid_size/4
 	for (let node of g.nodes) {
 		let x = num.random_from(margin, g.options.grid_size - margin)
 		let y = num.random_from(margin, g.options.grid_size - margin)
@@ -361,9 +382,13 @@ export function randomize_positions(g: Graph): void {
 	}
 }
 
-export function spread_positions(g: Graph): void {
+/**
+ Set positions for all nodes distributed evenly around the whole grid.
+ Will give the same result each time.
+*/
+export function set_positions_spread(g: Graph): void {
 
-	let margin    = g.options.grid_size / 4
+	let margin    = g.options.grid_size/4
 	let max_width = g.options.grid_size - margin*2
 	let cols      = get_grid_cols(g.options)
 
@@ -374,10 +399,44 @@ export function spread_positions(g: Graph): void {
 	}
 }
 
+/**
+ Set positions for all nodes based on their connections and mass.
+ Approximates state of the graph after the simulation has been played out.
+ Minimizes movement.
+ Will give different result each time.
+*/
+export function set_positions_smart(g: Graph): void {
+
+	let margin = g.options.grid_size/6
+	let placed = new WeakSet<Node>()
+
+	for (let node of g.nodes) {
+
+		let x = num.random_from(margin, g.options.grid_size - margin)
+		let y = num.random_from(margin, g.options.grid_size - margin)
+
+		for (let edge of g.edges) {
+
+			let b: Node
+			if      (edge.a === node) b = edge.b
+			else if (edge.b === node) b = edge.a
+			else continue
+
+			if (placed.has(b) && trig.distance_xy(x, y, b.pos.x, b.pos.y) > g.options.repel_distance) {
+				
+				x += (b.pos.x-x) * g.options.link_strength * edge.strength * 40 / node.mass
+				y += (b.pos.y-y) * g.options.link_strength * edge.strength * 40 / node.mass
+			}
+		}
+
+		set_position_xy(g, node, x, y)
+		placed.add(node)
+	}
+}
+
 export function set_position(g: Graph, node: Node, pos: T.Position): void {
 	set_position_xy(g, node, pos.x, pos.y)
 }
-
 export function set_position_xy(g: Graph, node: Node, x: number, y: number): void {
 	let prev_idx = pos_to_grid_idx(g.options, node.pos)
 	let prev_x   = node.pos.x
@@ -512,6 +571,7 @@ export function simulate(g: Graph, alpha: number = 1): void {
 		so the velocity is divided by the number of edges
 	*/
 	for (let {a, b, strength} of edges) {
+
 		let dx = (b.pos.x - a.pos.x) * options.link_strength * strength * alpha
 		let dy = (b.pos.y - a.pos.y) * options.link_strength * strength * alpha
 
