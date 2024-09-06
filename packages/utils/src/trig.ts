@@ -75,6 +75,12 @@ export function equals(a: Position, b: Position): boolean {
 	return a.x === b.x && a.y === b.y
 }
 
+export function normalize(p: Position): void {
+	let len = Math.hypot(p.x, p.y)
+	p.x /= len
+	p.y /= len
+}
+
 /** Subtracts a vector from another vector in place. The first vector is **mutated**. */
 export function subtract(a: Position, b: Position): void {
 	a.x -= b.x
@@ -163,24 +169,28 @@ export function mut(vec: Position, fn: (xy: number) => number): void {
 }
 
 /**
- * Calculates the distance between two vectors.
- *
- * @returns The distance between the vectors.
- */
+ Calculates the distance between two vectors.
+
+ @returns The distance between the vectors.
+*/
 export function distance(a: Position, b: Position): number {
-	const x = a.x - b.x
-	const y = a.y - b.y
-	return Math.sqrt(x * x + y * y)
+	let x = a.x - b.x
+	let y = a.y - b.y
+	return Math.sqrt(x*x + y*y)
+}
+export function distance_xy(ax: number, ay: number, bx: number, by: number): number {
+	let x = ax - bx
+	let y = ay - by
+	return Math.sqrt(x*x + y*y)
 }
 
 export function average(...vectors: Position[]): Vector {
-	let x = 0,
-		y = 0
-	for (const vec of vectors) {
+	let x = 0, y = 0
+	for (let vec of vectors) {
 		x += vec.x
 		y += vec.y
 	}
-	return vector(x / vectors.length, y / vectors.length)
+	return vector(x/vectors.length, y/vectors.length)
 }
 
 /**
