@@ -25,11 +25,3 @@ export function returnTypeEquals(type: ts.Type, flag: ts.TypeFlags): boolean {
 
 	return true
 }
-
-export function getType(
-	node: eslint.TSESTree.Node,
-	checker: ts.TypeChecker,
-	services: eslint.ParserServices,
-): ts.Type {
-	return checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node))
-}

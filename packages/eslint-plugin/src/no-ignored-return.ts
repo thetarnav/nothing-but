@@ -1,4 +1,4 @@
-import {eslint, getType, returnTypeEquals, ts} from "./utils"
+import {eslint, returnTypeEquals, ts} from "./utils"
 
 const MUTATING_METHODS: Record<string, Set<string>> = {
 	Array: new Set(["push", "pop", "shift", "unshift", "splice", "sort", "reverse"]),
@@ -19,12 +19,14 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
 	create(ctx) {
 		const services = ctx.sourceCode.parserServices
 
-		if (!services.program) return {}
+		if (!services || !services.program) return {}
 
 		const checker = services.program.getTypeChecker()
 
 		return {
 			CallExpression(node) {
+				if (!services.esTreeNodeToTSNodeMap) return
+
 				let callee: eslint.TSESTree.Expression = node.callee
 				const parent = node.parent
 
@@ -50,7 +52,7 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
 					return
 				}
 
-				const type = getType(callee, checker, services)
+				const type = checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(callee))
 				if (
 					returnTypeEquals(type, ts.TypeFlags.Void) ||
 					returnTypeEquals(type, ts.TypeFlags.Never)
@@ -65,7 +67,7 @@ export const no_ignored_return = eslint.ESLintUtils.RuleCreator.withoutDocs({
 					callee.type === eslint.AST_NODE_TYPES.MemberExpression &&
 					callee.property.type === eslint.AST_NODE_TYPES.Identifier
 				) {
-					const obj_type = getType(callee.object, checker, services)
+					const obj_type = checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(callee.object))
 					if (
 						// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 						!obj_type.symbol ||

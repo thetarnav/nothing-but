@@ -1,16 +1,7 @@
-import {RuleTester} from "@typescript-eslint/rule-tester"
-import path from "node:path"
 import * as rule from "../src/no-return-to-void.js"
+import { rule_tester } from "./setup.js"
 
-const ruleTester = new RuleTester({
-	parser: "@typescript-eslint/parser",
-	parserOptions: {
-		project: path.resolve(__dirname, "resources", "tsconfig.json"),
-		tsconfigRootDir: path.resolve(__dirname, "resources"),
-	},
-})
-
-ruleTester.run("no-return-to-void", rule.no_return_to_void, {
+rule_tester.run("no-return-to-void", rule.no_return_to_void, {
 	valid: [
 		{
 			name: "arrow: empty callback",

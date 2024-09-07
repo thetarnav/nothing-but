@@ -1,16 +1,7 @@
-import {RuleTester} from "@typescript-eslint/rule-tester"
-import path from "node:path"
-import * as rule from "../src/no-ignored-return.js"
+import * as rule       from "../src/no-ignored-return.js"
+import { rule_tester } from "./setup.js"
 
-const ruleTester = new RuleTester({
-	parser: "@typescript-eslint/parser",
-	parserOptions: {
-		project: path.resolve(__dirname, "resources", "tsconfig.json"),
-		tsconfigRootDir: path.resolve(__dirname, "resources"),
-	},
-})
-
-ruleTester.run("no-ignored-return", rule.no_ignored_return, {
+rule_tester.run("no-ignored-return", rule.no_ignored_return, {
 	valid: [
 		{
 			name: "captured",

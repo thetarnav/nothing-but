@@ -14,7 +14,7 @@
 	},
 	"scripts": {
 		"build": "tsc -p ./tsconfig.build.json",
-		"test": "vitest -c ../../configs/vitest.config.ts",
+		"test": "bun test",
 		"typecheck": "echo \"Built with TSC\""
 	},
 	"private": false,
@@ -28,14 +28,14 @@
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"dependencies": {
-		"@typescript-eslint/utils": "^6.11.0"
+		"@typescript-eslint/utils": "^8.4.0"
 	},
 	"devDependencies": {
-		"@typescript-eslint/parser": "^6.11.0",
-		"@typescript-eslint/rule-tester": "^6.11.0"
+		"@typescript-eslint/parser": "^8.4.0",
+		"@typescript-eslint/rule-tester": "^8.4.0"
 	},
 	"peerDependencies": {
-		"eslint": "^6.0.0 || ^7.0.0 || ^8.0.0",
+		"eslint": "^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0",
 		"typescript": "~5.2.0"
 	}
 }

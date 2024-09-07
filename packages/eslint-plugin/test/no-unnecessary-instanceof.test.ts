@@ -1,18 +1,7 @@
-import {RuleTester} from "@typescript-eslint/rule-tester"
-import path from "node:path"
-
 import * as rule from "../src/no-unnecessary-instanceof.js"
+import { rule_tester } from "./setup.js"
 
-const ruleTester = new RuleTester({
-	parser: "@typescript-eslint/parser",
-	parserOptions: {
-		project: path.resolve(__dirname, "resources", "tsconfig.json"),
-		tsconfigRootDir: path.resolve(__dirname, "resources"),
-	},
-})
-
-// prettier-ignore
-ruleTester.run("no-unnecessary-instanceof", rule.no_unnecessary_instanceof, {
+rule_tester.run("no-unnecessary-instanceof", rule.no_unnecessary_instanceof, {
 	valid: [
 		{	name: "union",
 			code: /*javascript*/ `

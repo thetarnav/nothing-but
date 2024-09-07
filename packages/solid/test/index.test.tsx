@@ -1,7 +1,7 @@
-import {describe, expect, it} from "vitest"
+import * as t from "bun:test"
 
-describe(".", () => {
-	it(".", () => {
-		expect(1).toBe(1)
+t.describe(".", () => {
+	t.it(".", () => {
+		t.expect(1).toBe(1)
 	})
 })

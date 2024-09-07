@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p ./tsconfig.build.json",
 		"prepublish": "bun run build",
-		"test": "vitest -c ../../configs/vitest.config.js",
+		"test": "bun test",
 		"typecheck": "echo \"Built with TSC\""
 	},
 	"private": false,

@@ -1,4 +1,4 @@
-import {eslint, getType, ts} from "./utils"
+import {eslint, ts} from "./utils"
 
 export const no_unnecessary_instanceof = eslint.ESLintUtils.RuleCreator.withoutDocs({
 	meta: {
@@ -14,15 +14,18 @@ export const no_unnecessary_instanceof = eslint.ESLintUtils.RuleCreator.withoutD
 	defaultOptions: [],
 	create(ctx) {
 		const services = ctx.sourceCode.parserServices
-		if (!services.program) return {}
+
+		if (!services || !services.program) return {}
 
 		const checker = services.program.getTypeChecker()
 
 		return {
 			BinaryExpression(node) {
+				if (!services.esTreeNodeToTSNodeMap) return
+
 				if (node.operator !== "instanceof") return
 
-				const left_type = getType(node.left, checker, services)
+				const left_type = checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node.left))
 				if (left_type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) return
 
 				if (!left_type.isUnion()) {
@@ -30,7 +33,7 @@ export const no_unnecessary_instanceof = eslint.ESLintUtils.RuleCreator.withoutD
 					return
 				}
 
-				const right_type = getType(node.right, checker, services)
+				const right_type = checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node.right))
 				if (left_type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) return
 
 				const constructs = right_type.getConstructSignatures()

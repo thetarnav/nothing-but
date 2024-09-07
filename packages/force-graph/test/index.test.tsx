@@ -1,5 +1,4 @@
-import {Position} from "@nothing-but/utils/types"
-import * as vi from "vitest"
+import * as t from "bun:test"
 import * as graph from "../src/graph.js"
 
 const test_options: graph.Options = {
@@ -8,15 +7,15 @@ const test_options: graph.Options = {
 	repel_distance: 10,
 }
 
-void vi.describe("makeGraphGrid", () => {
-	vi.test("makeGraphGrid", () => {
+void t.describe("makeGraphGrid", () => {
+	t.test("makeGraphGrid", () => {
 		const g = graph.make_graph(test_options)
-		vi.expect(graph.get_grid_cols(test_options)).toBe(4)
-		vi.expect(g.grid.length).toBe(16)
+		t.expect(graph.get_grid_cols(test_options)).toBe(4)
+		t.expect(g.grid.length).toBe(16)
 	})
 })
 
-void vi.describe("find closest node", () => {
+void t.describe("find closest node", () => {
 	/*
         0    10    20    30    40
         ------------------------- 0
@@ -60,31 +59,31 @@ void vi.describe("find closest node", () => {
 	graph.add_nodes(g, [node_a, node_b, node_c, node_d, node_e])
 
 	Object.entries(fns).forEach(([name, fn]) => {
-		void vi.describe(name, () => {
+		void t.describe(name, () => {
 
-			vi.test("simple cases", () => {
-				vi.expect(fn(g, {x: 11, y: 12}), "same pos")        .toBe(node_a)
-				vi.expect(fn(g, {x: 24, y: 12}), "same cell")       .toBe(node_b)
-				vi.expect(fn(g, {x: 19, y: 22}), "cell above")      .toBe(node_c)
-				vi.expect(fn(g, {x: 11, y:  9}), "cell below")      .toBe(node_a)
-				vi.expect(fn(g, {x: 32, y: 25}), "cell left")       .toBe(node_d)
-				vi.expect(fn(g, {x: 19, y: 28}), "cell right")      .toBe(node_e)
+			t.test("simple cases", () => {
+				t.expect(fn(g, {x: 11, y: 12}), "same pos")        .toBe(node_a)
+				t.expect(fn(g, {x: 24, y: 12}), "same cell")       .toBe(node_b)
+				t.expect(fn(g, {x: 19, y: 22}), "cell above")      .toBe(node_c)
+				t.expect(fn(g, {x: 11, y:  9}), "cell below")      .toBe(node_a)
+				t.expect(fn(g, {x: 32, y: 25}), "cell left")       .toBe(node_d)
+				t.expect(fn(g, {x: 19, y: 28}), "cell right")      .toBe(node_e)
 				/* TODO: these used to work: */
-				// vi.expect(fn(g, {x: 32, y: 31}), "cell above left") .toBe(node_d) 
-				// vi.expect(fn(g, {x: 19, y: 31}), "cell above right").toBe(node_e)
-				vi.expect(fn(g, {x: 32, y: 19}), "cell below left") .toBe(node_d)
-				vi.expect(fn(g, {x:  9, y:  9}), "cell below right").toBe(node_a)
+				// t.expect(fn(g, {x: 32, y: 31}), "cell above left") .toBe(node_d) 
+				// t.expect(fn(g, {x: 19, y: 31}), "cell above right").toBe(node_e)
+				t.expect(fn(g, {x: 32, y: 19}), "cell below left") .toBe(node_d)
+				t.expect(fn(g, {x:  9, y:  9}), "cell below right").toBe(node_a)
 			})
 
 
-			vi.test("max distance", () => {
+			t.test("max distance", () => {
 				const pos = {x: 34, y: 25}
 
 				const fail = fn(g, pos, 5)
-				vi.expect(fail).toBeNull()
+				t.expect(fail).toBeNull()
 
 				const success = fn(g, pos, 10)
-				vi.expect(success).toBe(node_d)
+				t.expect(success).toBe(node_d)
 			})
 		})
 	})

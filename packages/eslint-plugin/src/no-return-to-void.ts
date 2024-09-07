@@ -1,4 +1,4 @@
-import {eslint, getType, returnTypeEquals, ts} from "./utils"
+import {eslint, returnTypeEquals, ts} from "./utils"
 
 export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
 	meta: {
@@ -13,13 +13,15 @@ export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
 	create(ctx) {
 		const services = ctx.sourceCode.parserServices
 
-		if (!services.program) return {}
+		if (!services || !services.program) return {}
 
 		const checker = services.program.getTypeChecker()
 
 		const handleFunction: eslint.TSESLint.RuleFunction<
 			eslint.TSESTree.ArrowFunctionExpression | eslint.TSESTree.FunctionExpression
 		> = node => {
+			if (!services.esTreeNodeToTSNodeMap) return
+			
 			const {parent} = node
 			if (parent.type !== eslint.AST_NODE_TYPES.CallExpression) return
 
@@ -42,7 +44,7 @@ export const no_return_to_void = eslint.ESLintUtils.RuleCreator.withoutDocs({
 			const arg_return_type = checker.getTypeAtLocation(arg_type)
 			if (!returnTypeEquals(arg_return_type, ts.TypeFlags.Void)) return
 
-			const type = getType(node, checker, services)
+			const type = checker.getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node))
 			if (returnTypeEquals(type, ts.TypeFlags.Void)) return
 
 			ctx.report({node, messageId: "no_return_to_void"})
