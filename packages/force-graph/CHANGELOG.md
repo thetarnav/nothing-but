@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.9.4
+
+### Patch Changes
+
+- Improve `set_positions_smart`
+
 ## 0.9.1
 
 ### Patch Changes
