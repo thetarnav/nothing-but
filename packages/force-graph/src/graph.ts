@@ -399,38 +399,74 @@ export function set_positions_spread(g: Graph): void {
 	}
 }
 
+function get_circumference(radius: number): number {
+    return 2 * Math.PI * radius
+}
+
+function hash_position_xy(x: number, y: number): number {
+    return (x*73856093) ^ (y*19349663)
+}
+
 /**
  Set positions for all nodes based on their connections and mass.
  Approximates state of the graph after the simulation has been played out.
  Minimizes movement.
- Will give different result each time.
+ Will give the same result each time.
 */
 export function set_positions_smart(g: Graph): void {
 
-	let margin = g.options.grid_size/6
+	if (g.nodes.length === 0) return
+	
+	let mid    = g.options.grid_size/2
 	let placed = new WeakSet<Node>()
+	let n_map  = new Map<number, number>()
 
 	for (let node of g.nodes) {
-
-		let x = num.random_from(margin, g.options.grid_size - margin)
-		let y = num.random_from(margin, g.options.grid_size - margin)
-
-		for (let edge of g.edges) {
-
-			let b: Node
-			if      (edge.a === node) b = edge.b
-			else if (edge.b === node) b = edge.a
-			else continue
-
-			if (placed.has(b) && trig.distance_xy(x, y, b.pos.x, b.pos.y) > g.options.repel_distance) {
+		let x = mid, y = mid, placed_conns = 0
+	
+		for (let b of each_node_connection(g, node)) {
+			if (!placed.has(b)) continue
+	
+			if (placed_conns === 0) {
+				x = b.pos.x
+				y = b.pos.y
+			} else {
+				x = (x+b.pos.x)/2
+				y = (y+b.pos.y)/2
+			}
+			placed_conns++
+		}
+	
+		if (placed_conns <= 1) {
+			let hash = hash_position_xy(x, y)
+			
+			let n = n_map.get(hash) ?? 0
+			n_map.set(hash, n+1)
+			
+			for (let radius = 0, max_n = 0;;) {
+				radius += 5
+				if (radius > mid) break
+	
+				n -= max_n
+				max_n = Math.floor(get_circumference(radius)/6)
+				if (n >= max_n) continue
+	
+				let theta = 2*Math.PI * n/max_n + hash
+				let new_x = x + radius * Math.cos(theta)
+				let new_y = x + radius * Math.sin(theta)
+				if (new_x < 0 || new_x >= g.options.grid_size || new_y < 0 || new_y >= g.options.grid_size) {
+					n += max_n + 1
+					continue
+				}
 				
-				x += (b.pos.x-x) * g.options.link_strength * edge.strength * 40 / node.mass
-				y += (b.pos.y-y) * g.options.link_strength * edge.strength * 40 / node.mass
+				x = new_x
+				y = new_y
+				break
 			}
 		}
-
-		set_position_xy(g, node, x, y)
+	
 		placed.add(node)
+		set_position_xy(g, node, x, y)
 	}
 }
 
