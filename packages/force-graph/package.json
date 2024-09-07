@@ -1,6 +1,6 @@
 {
 	"name": "@nothing-but/force-graph",
-	"version": "0.9.0",
+	"version": "0.9.3",
 	"license": "MIT",
 	"author": "Damian Tarnawski <gthetarnav@gmail.com>",
 	"contributors": [],
@@ -65,10 +65,10 @@
 		}
 	},
 	"dependencies": {
-		"@nothing-but/utils": "workspace:^"
+		"@nothing-but/utils": "^0.16.0"
 	},
 	"devDependencies": {
-		"@nothing-but/solid": "workspace:^",
+		"@nothing-but/solid": "workspace:*",
 		"@solid-primitives/event-listener": "^2.3.0",
 		"@solid-primitives/refs": "^1.0.5",
 		"@solid-primitives/rootless": "^1.4.2"

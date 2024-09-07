@@ -1,5 +1,11 @@
 # @nothing-but/force-graph
 
+## 0.9.1
+
+### Patch Changes
+
+- "@nothing-but/utils": "workspace:\*"
+
 ## 0.9.0
 
 ### Minor Changes
