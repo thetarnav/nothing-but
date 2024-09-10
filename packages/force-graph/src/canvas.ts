@@ -825,15 +825,13 @@ function handleKeyUpEvent(gesture: CanvasGestures, e: KeyboardEvent): void {
 	}
 }
 
-function handleWheelEvent(canvas: CanvasState, e: WheelEvent): void {
+function handleWheelEvent(c: CanvasState, e: WheelEvent): void {
 	e.preventDefault()
 
 	/*
         keep the same graph point under the cursor
     */
-	const graph_point_before = eventToPointGraph(canvas, e)
-
-	let {scale} = canvas
+	const graph_point_before = eventToPointGraph(c, e)
 
 	/*
         Use a sine function slow down the zooming as it gets closer to the min and max zoom
@@ -841,20 +839,18 @@ function handleWheelEvent(canvas: CanvasState, e: WheelEvent): void {
         the current zoom need to be converted to a % with a small offset
         because sin(0) = sin(π) = 0 which would completely stop the zooming
     */
-	const offset = 1 / ((canvas.max_scale - 1) * 2),
-		scale_with_offset = num.map_range(scale, 1, canvas.max_scale, offset, 1 - offset),
-		zoom_mod = Math.sin(scale_with_offset * Math.PI)
+	let offset            = 1 / ((c.max_scale - 1) * 2)
+	let scale_with_offset = num.map_range(c.scale, 1, c.max_scale, offset, 1 - offset)
+	let zoom_mod          = Math.sin(scale_with_offset * Math.PI)
 
-	scale += e.deltaY * -0.005 * zoom_mod
-	scale = clampCanvasScale(canvas, scale)
-	canvas.scale = scale
+	c.scale = clampCanvasScale(c, c.scale + e.deltaY * zoom_mod * -0.005)
 
-	const graph_point_after = eventToPointGraph(canvas, e)
+	const graph_point_after = eventToPointGraph(c, e)
 	const delta = trig.difference(graph_point_before, graph_point_after)
 
-	updateTranslate(canvas,
-		canvas.translate.x + delta.x + e.deltaX * (0.1/scale),
-		canvas.translate.y + delta.y,
+	updateTranslate(c,
+		c.translate.x + delta.x + e.deltaX * (0.1/c.scale),
+		c.translate.y + delta.y,
 	)
 }
 

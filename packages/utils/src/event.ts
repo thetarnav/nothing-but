@@ -150,7 +150,7 @@ export function ratioInElement(
 	const rect = el.getBoundingClientRect()
 	return {
 		x: (e.clientX - rect.left) / rect.width,
-		y: (e.clientY - rect.top) / rect.height,
+		y: (e.clientY - rect.top ) / rect.height,
 	}
 }
 
