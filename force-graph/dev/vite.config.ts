@@ -1,7 +1,7 @@
 import unocss from "unocss/vite"
 import solid from "vite-plugin-solid"
-import {defineConfig} from "vitest/config"
-import uno_config from "../../../uno.config.js"
+import {defineConfig} from "vite"
+import uno_config from "../../uno.config.js"
 
 export default defineConfig({
 	server: {port: 3000},
