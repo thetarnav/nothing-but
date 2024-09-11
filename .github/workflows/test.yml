@@ -17,6 +17,8 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      - uses: pnpm/action-setup@v4
+
       - name: Install Dependencies
         run: pnpm i --frozen-lockfile --no-frozen-lockfile
 
