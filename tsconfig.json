@@ -13,7 +13,11 @@
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"noPropertyAccessFromIndexSignature": true,
-		"noUncheckedIndexedAccess": true
+		"noUncheckedIndexedAccess": true,
+
+		"paths": {
+			"@nothing-but/*": ["./*/src"],
+		}
 	},
 	"exclude": ["node_modules", "**/dist/**/*"]
 }

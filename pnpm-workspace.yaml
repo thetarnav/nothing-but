@@ -1,0 +1,6 @@
+packages:
+  - eslint-plugin
+  - force-graph
+  - matrix
+  - solid
+  - utils

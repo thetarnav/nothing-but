@@ -5,14 +5,13 @@
 	"license": "MIT",
 	"private": true,
 	"type": "module",
-	"workspaces": ["packages/*"],
 	"scripts": {
-		"build": "turbo run build --filter=./packages/*",
-		"test": "turbo run test --filter=./packages/*",
-		"typecheck": "turbo run typecheck --filter=./packages/*",
-		"build-test": "turbo run build test typecheck --filter=./packages/*",
-		"lint:packages": "eslint --ignore-path .gitignore --max-warnings 0 packages/*/src/**/*.ts",
-		"lint:tests": "eslint --ignore-path .gitignore packages/*/test/**/*.ts --quiet --rule \"no-only-tests/no-only-tests: error\"",
+		"build": "turbo run build",
+		"test": "turbo run test",
+		"typecheck": "turbo run typecheck",
+		"build-test": "turbo run build test typecheck",
+		"lint:packages": "eslint --ignore-path .gitignore --max-warnings 0 */src/**/*.ts",
+		"lint:tests": "eslint --ignore-path .gitignore */test/**/*.ts --quiet --rule \"no-only-tests/no-only-tests: error\"",
 		"lint": "bun lint:packages & bun lint:tests",
 		"changeset": "changeset",
 		"version": "changeset version && bun i && git add .",
@@ -37,6 +36,6 @@
 		"vite": "4.5.0",
 		"vite-plugin-solid": "^2.7.2"
 	},
-	"packageManager": "bun@1.1.20",
+	"packageManager": "pnpm@9.9.0",
 	"engines": { "bun": ">=1.1.0" }
 }
