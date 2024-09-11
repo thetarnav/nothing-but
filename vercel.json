@@ -2,6 +2,6 @@
 	"$schema": "https://openapi.vercel.sh/vercel.json",
 	"installCommand": "pnpm i",
 	"buildCommand": "bun run build && bun run --filter ./force-graph build:demo",
-	"outputDirectory": "packages/force-graph/dev/dist",
+	"outputDirectory": "force-graph/dev/dist",
 	"public": true
 }
