@@ -1,6 +1,6 @@
 {
 	"name": "@nothing-but/force-graph",
-	"version": "0.9.4",
+	"version": "0.9.5",
 	"license": "MIT",
 	"author": "Damian Tarnawski <gthetarnav@gmail.com>",
 	"contributors": [],
@@ -65,7 +65,7 @@
 		}
 	},
 	"dependencies": {
-		"@nothing-but/utils": "^0.16.0"
+		"@nothing-but/utils": "workspace:*"
 	},
 	"devDependencies": {
 		"@nothing-but/solid": "workspace:*",

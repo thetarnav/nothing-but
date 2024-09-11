@@ -82,8 +82,8 @@ importers:
   force-graph:
     dependencies:
       '@nothing-but/utils':
-        specifier: ^0.16.0
-        version: 0.16.0
+        specifier: workspace:*
+        version: link:../utils
     devDependencies:
       '@nothing-but/solid':
         specifier: workspace:*
@@ -528,9 +528,6 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
-
-  '@nothing-but/utils@0.16.0':
-    resolution: {integrity: sha512-Oi6T7NnQJK+qrRISmPFsmbEr/fp332FDCOmaUS63cTETMYwRifiqPhGwyn2kXw6ftTDYMcxzF358hQpzhRZT0w==}
 
   '@polka/url@1.0.0-next.25':
     resolution: {integrity: sha512-j7P6Rgr3mmtdkeDGTe0E/aYyWEWVtc5yFXtHCRHs28/jptDEWfaVOc5T7cblqy1XKPPfCxJc/8DwQ5YgLOZOVQ==}
@@ -2311,8 +2308,6 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
-
-  '@nothing-but/utils@0.16.0': {}
 
   '@polka/url@1.0.0-next.25': {}
 

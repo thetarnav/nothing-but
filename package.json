@@ -14,7 +14,7 @@
 		"lint:tests": "eslint --ignore-path .gitignore */test/**/*.ts --quiet --rule \"no-only-tests/no-only-tests: error\"",
 		"lint": "bun lint:packages & bun lint:tests",
 		"changeset": "changeset",
-		"version": "changeset version && bun i && git add .",
+		"version": "changeset version && pnpm i && git add .",
 		"release": "bun run build && changeset publish"
 	},
 	"devDependencies": {

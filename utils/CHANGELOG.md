@@ -1,5 +1,11 @@
 # @nothing-but/utils
 
+## 0.17.0
+
+### Minor Changes
+
+- 4debfd1: Add platform submodule
+
 ## 0.16.0
 
 ### Minor Changes
