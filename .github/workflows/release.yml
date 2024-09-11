@@ -16,7 +16,7 @@ jobs:
       - uses: oven-sh/setup-bun@v2
 
       - name: Install Dependencies
-        run: bun i --frozen-lockfile
+        run: pnpm i --frozen-lockfile --no-frozen-lockfile
 
       - name: Version and release to npm
         uses: changesets/action@v1
